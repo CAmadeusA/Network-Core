@@ -1,0 +1,6 @@
+name: Archr
+version: 0.01
+description: Network
+author: CAmadeusA
+# All rights reserved
+main: com.camadeusa.NetworkCore
