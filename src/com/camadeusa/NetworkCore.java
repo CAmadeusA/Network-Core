@@ -11,6 +11,7 @@ import com.camadeusa.timing.CoreLoop;
 import com.camadeusa.utility.ConfigUtil;
 import com.camadeusa.utility.GSheetDBUtil;
 import com.camadeusa.utility.command.CommandFramework;
+import com.camadeusa.utility.menu.InventoryManager;
 
 public class NetworkCore extends JavaPlugin {
 	static NetworkCore instance;
@@ -41,7 +42,8 @@ public class NetworkCore extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new ArchrPlayer(), this);
 		getServer().getPluginManager().registerEvents(new ChatManager(), this);
 		getServer().getPluginManager().registerEvents(new NetworkCommandEvents(), this);
-	}
+		getServer().getPluginManager().registerEvents(new InventoryManager(), this);
+		}
 	
 	
 	@Override 
