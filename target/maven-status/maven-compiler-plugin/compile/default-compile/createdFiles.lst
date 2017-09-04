@@ -19,3 +19,4 @@ com/camadeusa/utility/command/BukkitCommand.class
 com/camadeusa/timing/CoreLoop$1.class
 com/camadeusa/utility/command/BukkitCompleter.class
 com/camadeusa/player/PlayerState$1.class
+com/camadeusa/utility/RawMessage$1.class

@@ -292,12 +292,14 @@ public enum PlayerRank {
 			commandsDD.add("list");
 			commandsDD.add("stop");
 			commandsDD.add("tp");
+			// Custom commands
 			commandsDD.add("whitelist");
 			commandsDD.add("checkdata");
+			commandsDD.add("setstate");
+			commandsDD.add("generaterandomdata");
 			return commandsDD;
 		case Owner:
 			ArrayList<String> commandsO = getCommandsAvailable(PlayerRank.Developer);
-			// commands.add("foobar");
 			return commandsO;
 		default:
 			return null;

@@ -4,11 +4,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -16,9 +14,9 @@ import com.camadeusa.NetworkCore;
 import com.camadeusa.player.ArchrPlayer;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.player.PlayerState;
+import com.camadeusa.utility.Random;
 import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
-import com.camadeusa.utility.fetcher.ArchrCallback;
 import com.camadeusa.utility.fetcher.UUIDFetcher;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
@@ -28,51 +26,56 @@ public class StaffCommands {
 	public void kickPlayer(CommandArgs args) throws Exception {
 		if (args.getArgs().length > 1) {
 			ArchrPlayer kicker = ArchrPlayer.getArchrPlayerByUUID(args.getPlayer().getUniqueId().toString());
-			if (Bukkit.getPlayer(args.getArgs(0)).isOnline()) {
+			if (PlayerRank.canUseCommand(kicker.getPlayerRank(), "kick")) {
+				if (Bukkit.getPlayer(args.getArgs(0)).isOnline()) {
 
-				ArchrPlayer kicked = ArchrPlayer
-						.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
-				// if they are at least a helper, and the person they are kicking has a lower
-				// rank than them.
-				if (PlayerRank
-						.getValueByRank(kicker.getPlayerRank()) > PlayerRank.getValueByRank(kicked.getPlayerRank())) {
-					if (kicked != null) {
-						String reason = "";
-						for (int i = 1; i < args.getArgs().length; i++) {
-							reason = reason + args.getArgs(i) + " ";
-						}
-						Map<String, Object> data = ArchrPlayer
-								.getArchrPlayerByUUID(kicked.getPlayer().getUniqueId().toString()).getData();
-						kicked.getPlayer().kickPlayer(reason);
-						JSONArray kicks = new JSONArray((String) data.get("kicks").toString());
-						JSONObject kick = new JSONObject();
-						kick.put("kicker", args.getPlayer().getUniqueId().toString());
-						kick.put("reason", reason);
-						kick.put("time", System.currentTimeMillis());
-
-						kicks.put(kick);
-
-						data.put("kicks", kicks);
-
-						Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-							@Override
-							public void run() {
-								try {
-									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid",
-											kicked.getPlayer().getUniqueId());
-									NetworkCore.getInstance().playersDB.updateRow(row, data);
-									row.update();
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
+					ArchrPlayer kicked = ArchrPlayer
+							.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
+					// if they are at least a helper, and the person they are kicking has a lower
+					// rank than them.
+					if (PlayerRank.getValueByRank(kicker.getPlayerRank()) > PlayerRank
+							.getValueByRank(kicked.getPlayerRank())) {
+						if (kicked != null) {
+							String reason = "";
+							for (int i = 1; i < args.getArgs().length; i++) {
+								reason = reason + args.getArgs(i) + " ";
 							}
-						});
+							Map<String, Object> data = ArchrPlayer
+									.getArchrPlayerByUUID(kicked.getPlayer().getUniqueId().toString()).getData();
+							kicked.getPlayer().kickPlayer(reason);
+							JSONArray kicks = new JSONArray((String) data.get("kicks").toString());
+							JSONObject kick = new JSONObject();
+							kick.put("kicker", args.getPlayer().getUniqueId().toString());
+							kick.put("reason", reason);
+							kick.put("time", System.currentTimeMillis());
+
+							kicks.put(kick);
+
+							data.put("kicks", kicks);
+
+							Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+								@Override
+								public void run() {
+									try {
+										ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid",
+												kicked.getPlayer().getUniqueId());
+										NetworkCore.getInstance().playersDB.updateRow(row, data);
+										row.update();
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								}
+							});
+						}
+					} else {
+						args.getPlayer().sendMessage("No.");
 					}
 				} else {
-					args.getPlayer().sendMessage("No.");
+					args.getPlayer().sendMessage(NetworkCore.prefixError + "Player is not online. ");
 				}
 			} else {
-				args.getPlayer().sendMessage(NetworkCore.prefixError + "Player is not online. ");
+				args.getPlayer()
+						.sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
 			}
 		} else {
 			args.getPlayer().sendMessage(NetworkCore.prefixError + args.getCommand().getUsage());
@@ -82,10 +85,12 @@ public class StaffCommands {
 	@Command(name = "mute", aliases = {
 			"gag" }, usage = "/mute {playername} {integer/permanent} {units for integer} {reason}")
 	public void mutePlayer(CommandArgs args) throws Exception {
-		if (args.getArgs().length > 3) {
-			ArchrPlayer muter = args.getArchrPlayer();
-			// if they are at least a helper, and the person they are kicking has a lower
-			// rank than them.
+		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "mute")) {
+
+			if (args.getArgs().length > 3) {
+				ArchrPlayer muter = args.getArchrPlayer();
+				// if they are at least a helper, and the person they are kicking has a lower
+				// rank than them.
 				if (Bukkit.getPlayer(args.getArgs(0)) != null) {
 					ArchrPlayer muted = ArchrPlayer
 							.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
@@ -275,9 +280,7 @@ public class StaffCommands {
 									}
 
 									Map<String, Object> data = ArchrPlayer.generateBaseDBData(uuid.toString(),
-											args.getArgs(0), PlayerRank.Player.toString(), "0", -1, -1, 0L,
-											new JSONArray(), new JSONArray(), new JSONArray(), new JSONArray(),
-											new JSONArray());
+											args.getArgs(0), PlayerRank.Player.toString(), "0", -1, -1, 0L);
 									NetworkCore.getInstance().playersDB.addData(data);
 
 									String reason = "";
@@ -372,16 +375,14 @@ public class StaffCommands {
 									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
 									if (row == null) {
 										data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-												PlayerRank.Player.toString(), "0", -1, -1, 0L, new JSONArray(),
-												new JSONArray(), new JSONArray(), new JSONArray(), new JSONArray());
+												PlayerRank.Player.toString(), "0", -1, -1, 0L);
 										NetworkCore.getInstance().playersDB.addData(data);
 									} else {
 										data = NetworkCore.getInstance().playersDB.getRowData(row);
 									}
 								} catch (Exception e) {
 									data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-											PlayerRank.Player.toString(), "0", -1, -1, 0L, new JSONArray(),
-											new JSONArray(), new JSONArray(), new JSONArray(), new JSONArray());
+											PlayerRank.Player.toString(), "0", -1, -1, 0L);
 									NetworkCore.getInstance().playersDB.addData(data);
 									e.printStackTrace();
 								}
@@ -461,19 +462,23 @@ public class StaffCommands {
 						});
 					}
 				}
-			
+
+			} else {
+				args.getPlayer().sendMessage(args.getCommand().getUsage());
+			}
 		} else {
-			args.getPlayer().sendMessage(args.getCommand().getUsage());
+			args.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
 		}
 	}
 
 	@Command(name = "ban", aliases = {
 			"banhammer" }, usage = "/ban {playername} {integer/permanent} {units for integer} {reason}")
 	public void banPlayer(CommandArgs args) throws Exception {
-		if (args.getArgs().length > 3) {
-			ArchrPlayer banner = args.getArchrPlayer();
-			// if they are at least a helper, and the person they are kicking has a lower
-			// rank than them.
+		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "ban")) {
+			if (args.getArgs().length > 3) {
+				ArchrPlayer banner = args.getArchrPlayer();
+				// if they are at least a helper, and the person they are kicking has a lower
+				// rank than them.
 				if (Bukkit.getPlayer(args.getArgs(0)) != null) {
 					ArchrPlayer banned = ArchrPlayer
 							.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
@@ -664,9 +669,7 @@ public class StaffCommands {
 									}
 
 									Map<String, Object> data = ArchrPlayer.generateBaseDBData(uuid.toString(),
-											args.getArgs(0), PlayerRank.Player.toString(), "0", -1, -1, 0L,
-											new JSONArray(), new JSONArray(), new JSONArray(), new JSONArray(),
-											new JSONArray());
+											args.getArgs(0), PlayerRank.Player.toString(), "0", -1, -1, 0L);
 									NetworkCore.getInstance().playersDB.addData(data);
 
 									String reason = "";
@@ -761,16 +764,14 @@ public class StaffCommands {
 									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
 									if (row == null) {
 										data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-												PlayerRank.Player.toString(), "0", -1, -1, 0L, new JSONArray(),
-												new JSONArray(), new JSONArray(), new JSONArray(), new JSONArray());
+												PlayerRank.Player.toString(), "0", -1, -1, 0L);
 										NetworkCore.getInstance().playersDB.addData(data);
 									} else {
 										data = NetworkCore.getInstance().playersDB.getRowData(row);
 									}
 								} catch (Exception e) {
 									data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-											PlayerRank.Player.toString(), "0", -1, -1, 0L, new JSONArray(),
-											new JSONArray(), new JSONArray(), new JSONArray(), new JSONArray());
+											PlayerRank.Player.toString(), "0", -1, -1, 0L);
 									NetworkCore.getInstance().playersDB.addData(data);
 									e.printStackTrace();
 								}
@@ -850,24 +851,31 @@ public class StaffCommands {
 						});
 					}
 				}
+			} else {
+				args.getPlayer().sendMessage(args.getCommand().getUsage());
+			}
+
 		} else {
-			args.getPlayer().sendMessage(args.getCommand().getUsage());
+			args.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
 		}
+
 	}
 
 	@Command(name = "lookup", usage = "/lookup {playername}")
 	public void lookupPlayer(CommandArgs args) throws Exception {
-		if (Bukkit.getOnlinePlayers().contains(args.getArgs(0))) {
-			ArchrPlayer lookedup = ArchrPlayer
-					.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
+		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "lookup")) {
+			if (Bukkit.getOnlinePlayers().contains(args.getArgs(0))) {
+
+				ArchrPlayer lookedup = ArchrPlayer
+						.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
 				if (PlayerRank
 						.getValueByRank(ArchrPlayer.getArchrPlayerByUUID(lookedup.getPlayer().getUniqueId().toString())
 								.getPlayerRank()) < PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank())) {
-					
+
 					JSONArray jsonArrayKicks = new JSONArray(lookedup.getData().get("kicks").toString());
 					JSONArray jsonArrayMutes = new JSONArray(lookedup.getData().get("mutes").toString());
 					JSONArray jsonArrayBans = new JSONArray(lookedup.getData().get("bans").toString());
-					
+
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
@@ -882,7 +890,7 @@ public class StaffCommands {
 											.format(new Date(Long.parseLong(entry.get("time").toString()))));
 
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-							
+
 						}
 					} else {
 						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -892,10 +900,10 @@ public class StaffCommands {
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
 					if (jsonArrayMutes.length() > 0) {
 						for (int i = 0; i < jsonArrayMutes.length(); i++) {
-							JSONObject entry =jsonArrayMutes.getJSONObject(i);
+							JSONObject entry = jsonArrayMutes.getJSONObject(i);
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muter: " + entry.getString("name")
-									+ " with uuid: " + entry.getString("muter"));
+							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muter: "
+									+ entry.getString("name") + " with uuid: " + entry.getString("muter"));
 							args.getPlayer().sendMessage(
 									NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
 											.format(new Date(Long.parseLong(entry.get("time").toString()))));
@@ -910,7 +918,7 @@ public class StaffCommands {
 					} else {
 						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 					}
-					
+
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
@@ -919,87 +927,6 @@ public class StaffCommands {
 							JSONObject entry = jsonArrayBans.getJSONObject(i);
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: " + entry.get("name")
-							+ " with uuid: " + entry.get("banner"));
-					args.getPlayer().sendMessage(
-							NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-									.format(new Date(Long.parseLong(entry.get("time").toString()))));
-
-					long time = Long.parseLong(entry.get("time").toString());
-					long amount = Long.parseLong(entry.get("amount").toString());
-
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
-							+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-						}
-					} else {
-						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-					}
-				}
-			
-		} else {
-			OfflinePlayer op = Bukkit.getOfflinePlayer(args.getArgs(0));
-			if (op.hasPlayedBefore()) {
-				Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						try {
-							ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", op.getUniqueId().toString());
-							Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
-							JSONArray jsonArrayKicks = new JSONArray(data.get("kicks").toString());
-							JSONArray jsonArrayMutes = new JSONArray(data.get("mutes").toString());
-							JSONArray jsonArrayBans = new JSONArray(data.get("bans").toString());
-							
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
-							if (jsonArrayKicks.length() > 0) {
-								for (int i = 0; i < jsonArrayKicks.length(); i++) {
-									JSONObject entry = jsonArrayKicks.getJSONObject(i);
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Kicker: " + entry.get("name")
-											+ " with uuid: " + entry.get("kicker"));
-									args.getPlayer().sendMessage(
-											NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-													.format(new Date(Long.parseLong(entry.get("time").toString()))));
-
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-									
-								}
-							} else {
-								args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-							}
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
-							if (jsonArrayMutes.length() > 0) {
-								for (int i = 0; i < jsonArrayMutes.length(); i++) {
-									JSONObject entry =jsonArrayMutes.getJSONObject(i);
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muter: " + entry.getString("name")
-											+ " with uuid: " + entry.getString("muter"));
-									args.getPlayer().sendMessage(
-											NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-													.format(new Date(Long.parseLong(entry.get("time").toString()))));
-
-									long time = Long.parseLong(entry.get("time").toString());
-									long amount = Long.parseLong(entry.get("amount").toString());
-
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
-											+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-								}
-							} else {
-								args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-							}
-							
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
-							if (jsonArrayBans.length() > 0) {
-								for (int i = 0; i < jsonArrayBans.length(); i++) {
-									JSONObject entry = jsonArrayBans.getJSONObject(i);
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: " + entry.get("name")
 									+ " with uuid: " + entry.get("banner"));
 							args.getPlayer().sendMessage(
 									NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
@@ -1011,48 +938,43 @@ public class StaffCommands {
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
 									+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-								}
-							} else {
-								args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-							}
-							
-							
-						} catch (Exception e) {
-							e.printStackTrace();
-							args.getPlayer().sendMessage(NetworkCore.prefixError + "Player has no data in the database.");
 						}
-						
+					} else {
+						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 					}
-				});
+				}
+
 			} else {
-				Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						UUID uuid = UUIDFetcher.getUUID(args.getArgs(0));
-						if (uuid != null) {
-							ListEntry row;
+				OfflinePlayer op = Bukkit.getOfflinePlayer(args.getArgs(0));
+				if (op.hasPlayedBefore()) {
+					Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+						@Override
+						public void run() {
 							try {
-								row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid.toString());
+								ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid",
+										op.getUniqueId().toString());
 								Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
 								JSONArray jsonArrayKicks = new JSONArray(data.get("kicks").toString());
 								JSONArray jsonArrayMutes = new JSONArray(data.get("mutes").toString());
 								JSONArray jsonArrayBans = new JSONArray(data.get("bans").toString());
-								
+
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
 								if (jsonArrayKicks.length() > 0) {
 									for (int i = 0; i < jsonArrayKicks.length(); i++) {
 										JSONObject entry = jsonArrayKicks.getJSONObject(i);
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Kicker: " + entry.get("name")
-												+ " with uuid: " + entry.get("kicker"));
 										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-														.format(new Date(Long.parseLong(entry.get("time").toString()))));
+												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Kicker: "
+												+ entry.get("name") + " with uuid: " + entry.get("kicker"));
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+														new Date(Long.parseLong(entry.get("time").toString()))));
 
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-										
+										args.getPlayer().sendMessage(
+												NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+
 									}
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1062,72 +984,190 @@ public class StaffCommands {
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
 								if (jsonArrayMutes.length() > 0) {
 									for (int i = 0; i < jsonArrayMutes.length(); i++) {
-										JSONObject entry =jsonArrayMutes.getJSONObject(i);
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muter: " + entry.getString("name")
-												+ " with uuid: " + entry.getString("muter"));
+										JSONObject entry = jsonArrayMutes.getJSONObject(i);
 										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-														.format(new Date(Long.parseLong(entry.get("time").toString()))));
+												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muter: "
+												+ entry.getString("name") + " with uuid: " + entry.getString("muter"));
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+														new Date(Long.parseLong(entry.get("time").toString()))));
 
 										long time = Long.parseLong(entry.get("time").toString());
 										long amount = Long.parseLong(entry.get("amount").toString());
 
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
-												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+										args.getPlayer()
+												.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+														+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
+																.format(new Date(time + amount)));
+										args.getPlayer().sendMessage(
+												NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
 									}
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 								}
-								
+
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
 								if (jsonArrayBans.length() > 0) {
 									for (int i = 0; i < jsonArrayBans.length(); i++) {
 										JSONObject entry = jsonArrayBans.getJSONObject(i);
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: " + entry.get("name")
-										+ " with uuid: " + entry.get("banner"));
-								args.getPlayer().sendMessage(
-										NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-												.format(new Date(Long.parseLong(entry.get("time").toString()))));
+										args.getPlayer().sendMessage(
+												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: "
+												+ entry.get("name") + " with uuid: " + entry.get("banner"));
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+														new Date(Long.parseLong(entry.get("time").toString()))));
 
-								long time = Long.parseLong(entry.get("time").toString());
-								long amount = Long.parseLong(entry.get("amount").toString());
+										long time = Long.parseLong(entry.get("time").toString());
+										long amount = Long.parseLong(entry.get("amount").toString());
 
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
-										+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+										args.getPlayer()
+												.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+														+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
+																.format(new Date(time + amount)));
+										args.getPlayer().sendMessage(
+												NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
 									}
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 								}
-								
+
 							} catch (Exception e) {
-								args.getPlayer().sendMessage(NetworkCore.prefixError + "Player has no data in the database.");
+								e.printStackTrace();
+								args.getPlayer()
+										.sendMessage(NetworkCore.prefixError + "Player has no data in the database.");
 							}
-						} else {
-							args.getPlayer().sendMessage(NetworkCore.prefixError + "User entered is not a player... Try again later.");
+
 						}
-					}
-				});
+					});
+				} else {
+					Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+						@Override
+						public void run() {
+							UUID uuid = UUIDFetcher.getUUID(args.getArgs(0));
+							if (uuid != null) {
+								ListEntry row;
+								try {
+									row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid.toString());
+									Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
+									JSONArray jsonArrayKicks = new JSONArray(data.get("kicks").toString());
+									JSONArray jsonArrayMutes = new JSONArray(data.get("mutes").toString());
+									JSONArray jsonArrayBans = new JSONArray(data.get("bans").toString());
+
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
+									if (jsonArrayKicks.length() > 0) {
+										for (int i = 0; i < jsonArrayKicks.length(); i++) {
+											JSONObject entry = jsonArrayKicks.getJSONObject(i);
+											args.getPlayer().sendMessage(
+													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Kicker: "
+													+ entry.get("name") + " with uuid: " + entry.get("kicker"));
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+															new Date(Long.parseLong(entry.get("time").toString()))));
+
+											args.getPlayer().sendMessage(
+													NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+
+										}
+									} else {
+										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
+									}
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
+									if (jsonArrayMutes.length() > 0) {
+										for (int i = 0; i < jsonArrayMutes.length(); i++) {
+											JSONObject entry = jsonArrayMutes.getJSONObject(i);
+											args.getPlayer().sendMessage(
+													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
+											args.getPlayer()
+													.sendMessage(NetworkCore.prefixStandard + "Muter: "
+															+ entry.getString("name") + " with uuid: "
+															+ entry.getString("muter"));
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+															new Date(Long.parseLong(entry.get("time").toString()))));
+
+											long time = Long.parseLong(entry.get("time").toString());
+											long amount = Long.parseLong(entry.get("amount").toString());
+
+											args.getPlayer()
+													.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
+																	.format(new Date(time + amount)));
+											args.getPlayer().sendMessage(
+													NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+										}
+									} else {
+										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
+									}
+
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
+									if (jsonArrayBans.length() > 0) {
+										for (int i = 0; i < jsonArrayBans.length(); i++) {
+											JSONObject entry = jsonArrayBans.getJSONObject(i);
+											args.getPlayer().sendMessage(
+													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: "
+													+ entry.get("name") + " with uuid: " + entry.get("banner"));
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+															new Date(Long.parseLong(entry.get("time").toString()))));
+
+											long time = Long.parseLong(entry.get("time").toString());
+											long amount = Long.parseLong(entry.get("amount").toString());
+
+											args.getPlayer()
+													.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
+																	.format(new Date(time + amount)));
+											args.getPlayer().sendMessage(
+													NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+										}
+									} else {
+										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
+									}
+
+								} catch (Exception e) {
+									args.getPlayer().sendMessage(
+											NetworkCore.prefixError + "Player has no data in the database.");
+								}
+							} else {
+								args.getPlayer().sendMessage(
+										NetworkCore.prefixError + "User entered is not a player... Try again later.");
+							}
+						}
+					});
+				}
 			}
+		} else {
+			args.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
 		}
 	}
 
 	@Command(name = "setstate", aliases = { "changestate" }, usage = "/setstate {PLAYER/SPECTATOR/GHOST}")
 	public void setState(CommandArgs args) {
-		ArchrPlayer player = ArchrPlayer.getArchrPlayerByUUID(args.getPlayer().getUniqueId().toString());
-		PlayerState state = PlayerState.valueOf(args.getArgs(0));
-		if (state != null) {
-			player.setPlayerstate(state);
+		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "setstate")) {
+			ArchrPlayer player = ArchrPlayer.getArchrPlayerByUUID(args.getPlayer().getUniqueId().toString());
+			PlayerState state = PlayerState.valueOf(args.getArgs(0));
+			if (state != null) {
+				player.setPlayerstate(state);
+			}
 		}
 	}
-	
+
 	@Command(name = "checkdata", usage = "/checkdata")
 	public void checkData(CommandArgs args) {
-		args.getPlayer().sendMessage(args.getArchrPlayer().getData().toString());
+		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "checkdata")) {
+			args.getPlayer().sendMessage(args.getArchrPlayer().getData().toString());
+		}
 	}
 }

@@ -91,12 +91,6 @@ public class CommandFramework implements CommandExecutor {
 				Method method = commandMap.get(cmdLabel).getKey();
 				Object methodObject = commandMap.get(cmdLabel).getValue();
 				Command command = method.getAnnotation(Command.class);
-				if (sender instanceof Player) {
-					if (!PlayerRank.canUseCommand(ArchrPlayer.getArchrPlayerByUUID(((Player) sender).getUniqueId().toString()).getPlayerRank(), cmdLabel)) {						
-					sender.sendMessage(NetworkCore.prefixError + command.noPerm());
-					return true;
-					}
-				}
 				if (command.inGameOnly() && !(sender instanceof Player)) {
 					sender.sendMessage("This command is only performable in game");
 					return true;

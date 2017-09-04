@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,16 +18,20 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.utility.fetcher.ArchrCallback;
-import com.camadeusa.utility.fetcher.UUIDFetcher;
+import com.camadeusa.module.game.Gamemode;
+import com.camadeusa.module.network.points.Basepoint;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
 public class ArchrPlayer implements Listener {
 	private static List<ArchrPlayer> archrPlayerList = new ArrayList<ArchrPlayer>();
 	private PlayerState playerstate;
 	private PlayerRank rank;
+	private JSONObject elostore = new JSONObject();
+	private JSONObject playersettings = new JSONObject();
+	
 	Player player;
 	Map<String, Object> data = new HashMap<>();
 
@@ -88,6 +90,22 @@ public class ArchrPlayer implements Listener {
 	public void setRank(PlayerRank rank) {
 		this.rank = rank;
 	}
+	
+	public <T extends Basepoint> T getElo(Gamemode eloid) {
+		return (T) elostore.get(eloid.getValue());
+	}
+	
+	public void setElo(Gamemode eloid, int value) {
+		elostore.put(eloid.getValue(), value);
+	}
+	
+	public Object getPlayerSettings(String tag) {
+		return playersettings.get(tag);
+	}
+	
+	public void setPlayerSettings(String tag, Object value) {
+		elostore.put(tag, value);
+	}
 
 	public static Map<String, Object> generateBaseDBData(ArchrPlayer aP) {
 		Map<String, Object> data = new HashMap<>();
@@ -103,13 +121,14 @@ public class ArchrPlayer implements Listener {
 		data.put("kicks", new JSONArray().toString());
 		data.put("mutes", new JSONArray().toString());
 		data.put("bans", new JSONArray().toString());
+		data.put("elos", new JSONObject().toString());
+		data.put("playersettings", new JSONArray().toString());
 
 		return data;
 	}
 
 	public static Map<String, Object> generateBaseDBData(String uuid, String username, String rank, String ipaddress,
-			int banexpiredate, int muteexpiredate, long firstlogin, JSONArray jsonArray, JSONArray jsonArray2,
-			JSONArray jsonArray3, JSONArray jsonArray4, JSONArray jsonArray5) {
+			int banexpiredate, int muteexpiredate, long firstlogin) {
 		Map<String, Object> data = new HashMap<>();
 		data.put("uuid", uuid);
 		data.put("username", username);
@@ -118,11 +137,13 @@ public class ArchrPlayer implements Listener {
 		data.put("banexpiredate", banexpiredate);
 		data.put("muteexpiredate", muteexpiredate);
 		data.put("firstlogin", firstlogin);
-		data.put("previoususernames", jsonArray.toString());
-		data.put("previousipaddresses", jsonArray2.toString());
-		data.put("kicks", jsonArray3.toString());
-		data.put("mutes", jsonArray4.toString());
-		data.put("bans", jsonArray5.toString());
+		data.put("previoususernames", new JSONArray().toString());
+		data.put("previousipaddresses", new JSONArray().toString());
+		data.put("kicks", new JSONArray().toString());
+		data.put("mutes", new JSONArray().toString());
+		data.put("bans", new JSONArray().toString());
+		data.put("elos", new JSONObject().toString());
+		data.put("playersettings", new JSONArray().toString());
 
 		return data;
 	}

@@ -1,3 +1,6 @@
 target
 builds
 *.DS_Store
+.DS_Store
+target/original-Network-Core-0.0.1-SNAPSHOT.jar
+target/original-Network-Core-0.0.1-SNAPSHOT.jar
