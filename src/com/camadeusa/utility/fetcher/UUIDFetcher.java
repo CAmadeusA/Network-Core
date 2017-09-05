@@ -5,13 +5,11 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
-import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
 
 import com.camadeusa.NetworkCore;
-import com.google.gdata.data.spreadsheet.ListEntry;
 
 /*
 Uncomment this if you want the helper method for BungeeCord:

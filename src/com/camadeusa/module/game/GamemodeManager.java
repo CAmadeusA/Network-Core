@@ -70,6 +70,7 @@ public class GamemodeManager {
 		return gamemode;
 	}
 
+	// Not going to work... need to actually code this properly. TODO:
 	public static void setMaxPlayers(int maxPlayers) throws ReflectiveOperationException {
 		String bukkitversion = Bukkit.getServer().getClass().getPackage().getName().substring(23);
 		Object playerlist = Class.forName("org.bukkit.craftbukkit." + bukkitversion + ".CraftServer")

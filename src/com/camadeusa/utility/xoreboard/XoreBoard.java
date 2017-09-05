@@ -1,12 +1,12 @@
 package com.camadeusa.utility.xoreboard;
 
-import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Scoreboard;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+
+import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Scoreboard;
 
 public class XoreBoard {
     private HashMap<Player, XoreBoardPlayerSidebar> players = new HashMap<>();

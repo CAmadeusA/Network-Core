@@ -3,7 +3,6 @@ package com.camadeusa.module.network;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.bukkit.ChatColor;
 import org.bukkit.event.Listener;
 
 import com.camadeusa.NetworkCore;

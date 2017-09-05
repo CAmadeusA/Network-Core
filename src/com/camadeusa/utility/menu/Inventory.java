@@ -1,11 +1,11 @@
 package com.camadeusa.utility.menu;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
-
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 /**
  * Represents a Single-Page Inventory.

@@ -3,11 +3,12 @@ package com.camadeusa.utility;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+
 import javax.imageio.ImageIO;
+
 import org.bukkit.inventory.ItemStack;
 
 public class ImageUtil {

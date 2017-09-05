@@ -1,10 +1,10 @@
 package com.camadeusa.utility.xoreboard;
 
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
-
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 
 public class XoreBoardGlobalSidebar {
     private ConcurrentHashMap<String, Integer> lines = new ConcurrentHashMap<>();

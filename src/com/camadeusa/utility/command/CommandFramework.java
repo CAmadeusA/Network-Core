@@ -24,10 +24,6 @@ import org.bukkit.help.IndexHelpTopic;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
 
-import com.camadeusa.NetworkCore;
-import com.camadeusa.player.ArchrPlayer;
-import com.camadeusa.player.PlayerRank;
-
 /**
  * Command Framework - CommandFramework <br>
  * The main command framework class used for controlling the framework.

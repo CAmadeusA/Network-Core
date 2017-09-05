@@ -6,7 +6,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import org.bukkit.Bukkit;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 

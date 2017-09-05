@@ -14,6 +14,7 @@ import org.bukkit.Bukkit;
 import org.json.simple.JSONArray;
 
 import com.camadeusa.NetworkCore;
+import com.camadeusa.player.ArchrPlayer;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.utility.fetcher.ArchrCallback;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -30,8 +31,6 @@ import com.google.gdata.data.spreadsheet.SpreadsheetFeed;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
 import com.google.gdata.data.spreadsheet.WorksheetFeed;
 import com.google.gdata.util.ServiceException;
-
-import com.camadeusa.player.ArchrPlayer;
 
 /*
  * Author: CAmadeusA
