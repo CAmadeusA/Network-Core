@@ -17,6 +17,10 @@ public class CoreLoop {
 					Bukkit.getServer().getPluginManager().callEvent(new TickSecondEvent("tick"));
 					lastTick = System.currentTimeMillis();
 				}
+				if (System.currentTimeMillis() > (lastTick + 10000)) {
+					Bukkit.getServer().getPluginManager().callEvent(new TickTenSecondEvent("tick"));
+					lastTick = System.currentTimeMillis();
+				}
 			}
 		}, 0, 1); 
 	}

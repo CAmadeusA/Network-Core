@@ -65,16 +65,16 @@ import com.google.gdata.util.ServiceException;
 public class GSheetDBUtil {
 
 	// Flags to define later:
-	private static final String email = "camadeusa@archrnetwork.iam.gserviceaccount.com";
-	private static File servicePKCS12File = null;
+	private  final String email = "camadeusa@archrnetwork.iam.gserviceaccount.com";
+	private  File servicePKCS12File = null;
 
-	private static final String SPREADSHEET_SERVICE_URL = "https://spreadsheets.google.com/feeds/spreadsheets/private/full";
-	private static SpreadsheetService service;
+	private  final String SPREADSHEET_SERVICE_URL = "https://spreadsheets.google.com/feeds/spreadsheets/private/full";
+	private  SpreadsheetService service;
 
-	private static String sheetName = "";
-	private static String workSheetName = "";
+	private  String sheetName = "";
+	private  String workSheetName = "";
 
-	private static WorksheetEntry worksheet;
+	private  WorksheetEntry worksheet;
 
 	public GSheetDBUtil(String sheetName_, String worksheetName) {
 		try {

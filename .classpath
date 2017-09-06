@@ -16,7 +16,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="src/resources/SubServers.Client.Bukkit.jar"/>
-	<classpathentry kind="lib" path="src/resources/BungeeCord.jar"/>
+	<classpathentry kind="lib" path="/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/resources/BungeeCord.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
