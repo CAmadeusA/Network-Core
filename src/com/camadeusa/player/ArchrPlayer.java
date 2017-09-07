@@ -25,6 +25,8 @@ import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.module.network.points.Basepoint;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
+import net.md_5.bungee.api.event.PlayerDisconnectEvent;
+
 public class ArchrPlayer implements Listener {
 	private static List<ArchrPlayer> archrPlayerList = new ArrayList<ArchrPlayer>();
 	private PlayerState playerstate;
@@ -162,6 +164,7 @@ public class ArchrPlayer implements Listener {
 		return getArchrPlayerList().size();
 	}
 
+
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {
 		ArchrPlayer aP = ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString());
@@ -221,8 +224,6 @@ public class ArchrPlayer implements Listener {
 	// Database data pulling and updating on login/join.
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		
-		
 		ArchrPlayer aP = new ArchrPlayer(event.getPlayer());
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			ListEntry row;
@@ -246,7 +247,6 @@ public class ArchrPlayer implements Listener {
 				aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));
 
 				aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
-				archrPlayerList.add(aP);
 
 				try {
 					if (!aP.getPlayer().getName().equalsIgnoreCase(aP.getData().get("username").toString())) {
@@ -275,7 +275,18 @@ public class ArchrPlayer implements Listener {
 			}
 		});
 		event.setJoinMessage("");
-		for (int i = 0; i < 10000; i++) {
+		archrPlayerList.add(aP);
+	}
+	
+	public static void correctArchrPlayerList() {
+		if (Bukkit.getOnlinePlayers().size() != getArchrPlayerList().size()) {
+			ArrayList<ArchrPlayer> toRemove = new ArrayList<>();
+			for (ArchrPlayer ap : getArchrPlayerList()) {
+				if (!ap.getPlayer().isOnline()) {
+					toRemove.add(ap);
+				}
+			}		
+		archrPlayerList.removeAll(toRemove);
 		}
 	}
 

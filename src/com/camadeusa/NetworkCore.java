@@ -1,5 +1,7 @@
 package com.camadeusa;
 
+import java.util.Map;
+
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,6 +16,7 @@ import com.camadeusa.utility.ConfigUtil;
 import com.camadeusa.utility.GSheetDBUtil;
 import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.menu.InventoryManager;
+import com.google.gdata.data.spreadsheet.ListEntry;
 
 public class NetworkCore extends JavaPlugin {
 	static NetworkCore instance;
@@ -54,8 +57,32 @@ public class NetworkCore extends JavaPlugin {
 		}
 	
 	
-	@Override 
+	@Override
 	public void onDisable() {
+		ListEntry row;
+		try {
+			row = NetworkCore.getInstance().serversDB.getRow("uuid",
+					NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getString("uuid"));
+			Map<String, Object> data = NetworkCore.getInstance().serversDB.getRowData(row);
+			boolean changed = false;
+			if (Integer.parseInt(data.get("onlineplayers").toString()) > 0) {
+				data.put("onlineplayers", 0);
+				changed = true;
+			}
+			if (Boolean.parseBoolean(data.get("serveronline").toString()) == true) {
+				data.put("serveronline", false);
+				changed = true;
+			}
+			
+			if (changed) {
+				NetworkCore.getInstance().serversDB.updateRow(row, data);
+				row.update();
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		super.onDisable();
 	}
 	

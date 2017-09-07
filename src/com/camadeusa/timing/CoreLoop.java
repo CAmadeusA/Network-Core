@@ -3,9 +3,9 @@ package com.camadeusa.timing;
 import org.bukkit.Bukkit;
 
 import com.camadeusa.NetworkCore;
+import com.camadeusa.player.ArchrPlayer;
 
 public class CoreLoop {
-	// 50 Ticks per second just to overlap minecraft's 20. 
 	private double lastTick = 0;
 	private double lastThreeTick = 0;
 	private double lastTenTick = 0;
@@ -20,7 +20,7 @@ public class CoreLoop {
 					lastTick = System.currentTimeMillis();
 				}
 				if (System.currentTimeMillis() > (lastThreeTick + 3000)) {
-					Bukkit.getServer().getPluginManager().callEvent(new TickSecondEvent("tick"));
+					Bukkit.getServer().getPluginManager().callEvent(new TickThreeSecondEvent("tick"));
 					lastThreeTick = System.currentTimeMillis();
 				}
 				if (System.currentTimeMillis() > (lastTenTick + 10000)) {
@@ -33,6 +33,6 @@ public class CoreLoop {
 	
 	// Put tasks here: 
 	private void update() {
-		
+		ArchrPlayer.correctArchrPlayerList();
 	}
 }

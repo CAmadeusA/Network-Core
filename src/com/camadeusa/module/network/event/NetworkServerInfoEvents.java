@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.GamemodeManager;
 import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.timing.TickThreeSecondEvent;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
@@ -21,10 +22,15 @@ public class NetworkServerInfoEvents implements Listener {
 			public void run() {
 				try {
 					ListEntry row = NetworkCore.getInstance().serversDB.getRow("uuid",
-							NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()));
+							NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getString("uuid"));
 					Map<String, Object> data = NetworkCore.getInstance().serversDB.getRowData(row);
 					if (Integer.parseInt(data.get("onlineplayers").toString()) != GamemodeManager.currentplayers) {
 						data.put("onlineplayers", GamemodeManager.currentplayers);
+						NetworkCore.getInstance().serversDB.updateRow(row, data);
+						row.update();
+					}
+					if (Boolean.parseBoolean(data.get("serveronline").toString()) == false) {
+						data.put("serveronline", true);
 						NetworkCore.getInstance().serversDB.updateRow(row, data);
 						row.update();
 					}
@@ -33,6 +39,11 @@ public class NetworkServerInfoEvents implements Listener {
 				}
 			}
 		});
+	}
+	
+	@EventHandler
+	public void onTickSecond(TickSecondEvent event) {
+		ArchrPlayer.correctArchrPlayerList();
 	}
 
 }
