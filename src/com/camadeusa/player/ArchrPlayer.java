@@ -147,6 +147,20 @@ public class ArchrPlayer implements Listener {
 
 		return data;
 	}
+	
+	public static int getOnlinePlayers() {
+		int count = 0;
+		for (ArchrPlayer ap : getArchrPlayerList()) {
+			if (ap.getPlayerState() != PlayerState.GHOST) {
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	public static int getOnlinePlayersIncludingGhosts() {
+		return getArchrPlayerList().size();
+	}
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {

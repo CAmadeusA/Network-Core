@@ -20,6 +20,7 @@ public class GamemodeManager {
 	Gamemode gamemode;
 	String serveruuid;
 	int maxplayers;
+	public static int currentplayers;
 
 	public GamemodeManager() {
 		modulemanager = new ModuleManager();

@@ -1,6 +1,5 @@
 package com.camadeusa.module.network.event;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -8,24 +7,32 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.timing.TickTenSecondEvent;
+import com.camadeusa.module.game.GamemodeManager;
+import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.timing.TickThreeSecondEvent;
+import com.google.gdata.data.spreadsheet.ListEntry;
 
 public class NetworkServerInfoEvents implements Listener {
-	public static int maxplayers = 0;
 	@EventHandler
-	public void onTickTenSecondEvent(TickTenSecondEvent event) {
+	public void onTickThreeSecondEvent(TickThreeSecondEvent event) {
+		GamemodeManager.currentplayers = ArchrPlayer.getOnlinePlayers();
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
-				ArrayList<Map<String, Object>> list = NetworkCore.getInstance().serversDB.queryData("where maxplayers >= 1");
-				int tempmaxplayers = 0;
-				for (Map<String, Object> r : list) {
-					tempmaxplayers = tempmaxplayers + Integer.parseInt(r.get("maxplayers").toString());
+				try {
+					ListEntry row = NetworkCore.getInstance().serversDB.getRow("uuid",
+							NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()));
+					Map<String, Object> data = NetworkCore.getInstance().serversDB.getRowData(row);
+					if (Integer.parseInt(data.get("onlineplayers").toString()) != GamemodeManager.currentplayers) {
+						data.put("onlineplayers", GamemodeManager.currentplayers);
+						NetworkCore.getInstance().serversDB.updateRow(row, data);
+						row.update();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-				maxplayers = tempmaxplayers;
 			}
-		});		
+		});
 	}
 
-	
 }

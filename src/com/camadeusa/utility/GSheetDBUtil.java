@@ -71,18 +71,15 @@ public class GSheetDBUtil {
 	private  final String SPREADSHEET_SERVICE_URL = "https://spreadsheets.google.com/feeds/spreadsheets/private/full";
 	private  SpreadsheetService service;
 
-	private  String sheetName = "";
-	private  String workSheetName = "";
-
-	private  WorksheetEntry worksheet;
-
+	String sheetname;
+	String worksheetname;
+	
 	public GSheetDBUtil(String sheetName_, String worksheetName) {
 		try {
-			sheetName = sheetName_;
-			workSheetName = worksheetName;
+			sheetname = sheetName_;
+			worksheetname = worksheetName;
 			servicePKCS12File = new File(new File("").getAbsolutePath() + "/resources/ArchrNetwork-1145bb40af97.p12");
 			createSpreadSheetService();
-			worksheet = getWorkSheet(sheetName, workSheetName);
 		} catch (GeneralSecurityException | IOException | ServiceException e) {
 			e.printStackTrace();
 		}
@@ -179,6 +176,7 @@ public class GSheetDBUtil {
 	 */
 	
 	public  ArrayList<Map<String, Object>> searchDataForString(String query) {
+		WorksheetEntry worksheet = getWorkSheet(sheetname, worksheetname);
 		URL listFeedUrl = worksheet.getListFeedUrl();
 		ListQuery listQuery = new ListQuery(listFeedUrl);
 		listQuery.setFullTextQuery(query);
@@ -192,14 +190,15 @@ public class GSheetDBUtil {
 		}
 		ArrayList<Map<String, Object>> rowList = new ArrayList<>();
 		for (ListEntry row : listFeed.getEntries()) {
-		    Map<String, Object> rowValues = getRowData(row);
+		    Map<String, Object> rowValues = getRowData(row); // Blah
 		    rowList.add(rowValues);
 		}
 		return rowList;
 	}
 	
-	// https://developers.google.com/chart/interactive/docs/querylanguage
+	// https://developers.google.com/chart/interactive/docs/querylanguage?csw=1#Format
 	public ArrayList<Map<String, Object>> queryData(String query) {
+		WorksheetEntry worksheet = getWorkSheet(sheetname, worksheetname);
 		URL listFeedUrl = worksheet.getListFeedUrl();
 		ListQuery listQuery = new ListQuery(listFeedUrl);
 		listQuery.setSpreadsheetQuery(query);
@@ -221,7 +220,7 @@ public class GSheetDBUtil {
 
 	private ListFeed getListFeedForRow(String pkColumnName,
 			Object pkColumnValue) throws Exception {
-		WorksheetEntry worksheet = getWorkSheet(sheetName, workSheetName);
+		WorksheetEntry worksheet = getWorkSheet(sheetname, worksheetname);
 		URL listFeedUrl = worksheet.getListFeedUrl();
 		ListQuery listQuery = new ListQuery(listFeedUrl);
 		if (pkColumnValue instanceof String) {
@@ -248,6 +247,7 @@ public class GSheetDBUtil {
 	}
 
 	public void addData(Map<String, Object> data) {
+		WorksheetEntry worksheet = getWorkSheet(sheetname, worksheetname);
 		URL listFeedUrl = worksheet.getListFeedUrl();
 		Map<String, Object> rowValues = data;
 		ListEntry row = createRow(rowValues);
@@ -257,118 +257,6 @@ public class GSheetDBUtil {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	public void callGetRowAsync(String key, String value, ArchrCallback<Map<String, Object>> callback) {
-		 Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-	            @Override
-	            public void run() {
-	                ListEntry row = null;
-					try {
-						row = getRow(key, value);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-	                Map<String, Object> result = getRowData(row);
-	                // go back to the tick loop
-	                Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-	                    @Override
-	                    public void run() {
-	                        // call the callback with the result
-	                        callback.onFetchDone(result);
-	                    }
-	                });
-	            }
-	        });
-	}
-	public void callEditRowAsync(String key, String value, Map<String, Object> data, ArchrCallback<Boolean> callback) {
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-				ListEntry row = null;
-				boolean tempresult = false;
-				try {
-					row = getRow(key, value);
-					updateRow(row, data);
-					row.update();
-					tempresult = true;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				final boolean result = tempresult;
-				
-				// go back to the tick loop
-				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						// call the callback with the result
-						callback.onFetchDone(result);
-					}
-				});
-			}
-		});
-	}
-	public void callDeleteRowAsync(String key, String value, Map<String, Object> data, ArchrCallback<Boolean> callback) {
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-				ListEntry row = null;
-				boolean tempresult = false;
-				try {
-					row = getRow(key, value);
-					row.delete();
-					tempresult = true;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				final boolean result = tempresult;
-				
-				// go back to the tick loop
-				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						// call the callback with the result
-						callback.onFetchDone(result);
-					}
-				});
-			}
-		});
-	}
-	public void callCreateRowAsync(String uuid, String name, ArchrPlayer aP, ArchrCallback<Map<String, Object>> callback) {
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-					Map<String, Object> data = new HashMap<>();
-					if (aP != null) {
-						data.put("uuid", aP.getPlayer().getUniqueId().toString());
-						data.put("username", aP.getPlayer().getName());
-					} else {
-						data.put("uuid", uuid);
-						data.put("username", name);
-					}
-					data.put("rank", PlayerRank.Player);
-					data.put("ipaddress", "0");
-					data.put("banexpiredate", -1);
-					data.put("muteexpiredate", -1);
-					data.put("firstlogin", System.currentTimeMillis());
-					data.put("previoususernames", new JSONArray().toJSONString());
-					data.put("previousipaddresses", new JSONArray().toJSONString());
-					data.put("kicks", new JSONArray().toJSONString());
-					data.put("mutes", new JSONArray().toJSONString());
-					data.put("bans", new JSONArray().toJSONString());
-					
-					addData(data);
-				
-				// go back to the tick loop
-				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						// call the callback with the result
-						callback.onFetchDone(data);
-					}
-				});
-			}
-		});
 	}
 	
 }

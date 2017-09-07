@@ -7,6 +7,8 @@ import com.camadeusa.NetworkCore;
 public class CoreLoop {
 	// 50 Ticks per second just to overlap minecraft's 20. 
 	private double lastTick = 0;
+	private double lastThreeTick = 0;
+	private double lastTenTick = 0;
 	public CoreLoop() {}
 	public void init() {
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(NetworkCore.getInstance(), new Runnable() {
@@ -17,9 +19,13 @@ public class CoreLoop {
 					Bukkit.getServer().getPluginManager().callEvent(new TickSecondEvent("tick"));
 					lastTick = System.currentTimeMillis();
 				}
-				if (System.currentTimeMillis() > (lastTick + 10000)) {
+				if (System.currentTimeMillis() > (lastThreeTick + 3000)) {
+					Bukkit.getServer().getPluginManager().callEvent(new TickSecondEvent("tick"));
+					lastThreeTick = System.currentTimeMillis();
+				}
+				if (System.currentTimeMillis() > (lastTenTick + 10000)) {
 					Bukkit.getServer().getPluginManager().callEvent(new TickTenSecondEvent("tick"));
-					lastTick = System.currentTimeMillis();
+					lastTenTick = System.currentTimeMillis();
 				}
 			}
 		}, 0, 1); 
