@@ -22,7 +22,9 @@ import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.Gamemode;
+import com.camadeusa.module.network.event.NetworkServerInfoEvents;
 import com.camadeusa.module.network.points.Basepoint;
+import com.camadeusa.utility.Random;
 import com.camadeusa.utility.fetcher.NameFetcher;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
@@ -34,9 +36,9 @@ public class ArchrPlayer implements Listener {
 	private PlayerRank rank;
 	private JSONObject elostore = new JSONObject();
 	private JSONObject playersettings = new JSONObject();
-	
+
 	HashMap<String, Map<String, Object>> dataCache = new HashMap<>();
-	
+
 	Player player;
 	Map<String, Object> data = new HashMap<>();
 
@@ -95,19 +97,19 @@ public class ArchrPlayer implements Listener {
 	public void setRank(PlayerRank rank) {
 		this.rank = rank;
 	}
-	
+
 	public <T extends Basepoint> T getElo(Gamemode eloid) {
 		return (T) elostore.get(eloid.getValue());
 	}
-	
+
 	public void setElo(Gamemode eloid, int value) {
 		elostore.put(eloid.getValue(), value);
 	}
-	
+
 	public Object getPlayerSettings(String tag) {
 		return playersettings.get(tag);
 	}
-	
+
 	public void setPlayerSettings(String tag, Object value) {
 		elostore.put(tag, value);
 	}
@@ -152,21 +154,34 @@ public class ArchrPlayer implements Listener {
 
 		return data;
 	}
-	
-	public static int getOnlinePlayers() {
-		int count = 0;
+
+	public static ArrayList<ArchrPlayer> getOnlinePlayers() {
+		ArrayList<ArchrPlayer> aList = new ArrayList<>();
 		for (ArchrPlayer ap : getArchrPlayerList()) {
 			if (ap.getPlayerState() != PlayerState.GHOST) {
-				count++;
+				aList.add(ap);
 			}
 		}
-		return count;
-	}
-	
-	public static int getOnlinePlayersIncludingGhosts() {
-		return getArchrPlayerList().size();
+		return aList;
 	}
 
+	public static ArrayList<ArchrPlayer> getOnlinePlayersByRank(PlayerRank p) {
+		ArrayList<ArchrPlayer> aList = new ArrayList<>();
+		for (ArchrPlayer ap : getArchrPlayerList()) {
+			if (ap.getPlayerState() != PlayerState.GHOST && ap.getPlayerRank() == p) {
+				aList.add(ap);
+			}
+		}
+		return aList;
+	}
+
+	public static ArrayList<ArchrPlayer> getOnlinePlayersIncludingGhosts() {
+		ArrayList<ArchrPlayer> aList = new ArrayList<>();
+		for (ArchrPlayer ap : getArchrPlayerList()) {
+			aList.add(ap);
+		}
+		return aList;
+	}
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {
@@ -224,9 +239,49 @@ public class ArchrPlayer implements Listener {
 		long start = System.currentTimeMillis();
 		while (System.currentTimeMillis()-start < 9999999999999L) {
 			if (intA.get() == 0) {
-					break;
+				break;
 			}
 		}
+		
+		
+		if (getOnlinePlayers().size() == NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
+			ArrayList<ArchrPlayer> poolToKickFrom = new ArrayList<>();
+			ArchrPlayer playerToKick = null;
+			for (PlayerState ps : PlayerState.valuesOrderedForKickOrder()) {
+				for (PlayerRank pr : PlayerRank.valuesordered()) {
+					if (PlayerRank.getValueByRank(pr) < PlayerRank.getValueByRank(
+							PlayerRank.valueOf(dataCache.get(event.getUniqueId()).get("rank").toString()))) {
+
+						for (ArchrPlayer ap : getOnlinePlayers()) {
+							if (pr == ap.getPlayerRank() && ps == ap.getPlayerState()) {
+								poolToKickFrom.add(ap);
+							}
+						}
+
+						if (poolToKickFrom.size() > 0) {
+							playerToKick = poolToKickFrom.get(Random.instance().nextInt(poolToKickFrom.size()));
+							break;
+						}
+					}
+
+				}
+				if (playerToKick != null) {
+					break;
+				}
+			}
+			if (playerToKick != null) {
+				playerToKick.getPlayer().kickPlayer("You were kicked to make room for a player with a higher rank. We appologize for the inconvienence.");
+			} else {
+				event.disallow(Result.KICK_OTHER, "This server is full. Please Try again later.");
+				try {
+					throw new Exception("Wow you really fucked up");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+		}
+
 	}
 
 	// Database data pulling and updating on login/join.
@@ -254,13 +309,13 @@ public class ArchrPlayer implements Listener {
 						aP.getData().put("ipaddress",
 								aP.getPlayer().getAddress().getAddress().toString().replace("/", ""));
 					}
-					
+
 					ListEntry rowupdate = NetworkCore.getInstance().playersDB.getRow("uuid",
 							aP.getPlayer().getUniqueId());
 					NetworkCore.getInstance().playersDB.updateRow(rowupdate, aP.getData());
 					rowupdate.update();
 
-					aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));		
+					aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));
 					aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
 					event.setJoinMessage("");
 					archrPlayerList.add(aP);
@@ -269,10 +324,9 @@ public class ArchrPlayer implements Listener {
 				}
 			}
 		});
-		
-		
+
 	}
-	
+
 	public static void correctArchrPlayerList() {
 		if (Bukkit.getOnlinePlayers().size() != getArchrPlayerList().size()) {
 			ArrayList<ArchrPlayer> toRemove = new ArrayList<>();
@@ -280,8 +334,8 @@ public class ArchrPlayer implements Listener {
 				if (!ap.getPlayer().isOnline()) {
 					toRemove.add(ap);
 				}
-			}		
-		archrPlayerList.removeAll(toRemove);
+			}
+			archrPlayerList.removeAll(toRemove);
 		}
 	}
 

@@ -1,11 +1,11 @@
 package com.camadeusa.player;
 
-public enum PlayerState {
-NORMAL,
-SPECTATOR,
-GHOST;
+import java.util.LinkedList;
 
-	@Override 
+public enum PlayerState {
+	NORMAL, SPECTATOR, GHOST;
+
+	@Override
 	public String toString() {
 		switch (this) {
 		case NORMAL:
@@ -14,48 +14,66 @@ GHOST;
 			return "spectator";
 		case GHOST:
 			return "ghost";
-			default:
+		default:
 			return "normal";
 		}
-		
+
 	}
-public static boolean canSee(PlayerState ps1, PlayerState ps2) {
-	switch (ps1.toString()) {
-	case "normal":
-		switch (ps2.toString()) {
+
+	public static boolean canSee(PlayerState ps1, PlayerState ps2) {
+		switch (ps1.toString()) {
 		case "normal":
-			return true;
-		case "spectator":
-			return false;
-		case "ghost":
-			return false;
+			switch (ps2.toString()) {
+			case "normal":
+				return true;
+			case "spectator":
+				return false;
+			case "ghost":
+				return false;
 			default:
 				return true;
-		}
-	case "spectator":
-		switch (ps2.toString()) {
-		case "normal":
-			return true;
+			}
 		case "spectator":
-			return true;
-		case "ghost":
-			return false;
+			switch (ps2.toString()) {
+			case "normal":
+				return true;
+			case "spectator":
+				return true;
+			case "ghost":
+				return false;
 			default:
 				return true;
-		}
-	case "ghost":
-		switch (ps2.toString()) {
-		case "normal":
-			return true;
-		case "spectator":
-			return true;
+			}
 		case "ghost":
-			return true;
+			switch (ps2.toString()) {
+			case "normal":
+				return true;
+			case "spectator":
+				return true;
+			case "ghost":
+				return true;
 			default:
 				return true;
+			}
+
 		}
-		
+		return false;
 	}
-	return false;
-}
+
+	public static LinkedList<PlayerState> valuesordered() {
+		LinkedList<PlayerState> psl = new LinkedList<>();
+		psl.add(NORMAL);
+		psl.add(SPECTATOR);
+		psl.add(GHOST);
+		return psl;
+	}
+
+	public static LinkedList<PlayerState> valuesOrderedForKickOrder() {
+		LinkedList<PlayerState> psl = new LinkedList<>();
+		psl.add(SPECTATOR);
+		psl.add(NORMAL);
+		psl.add(GHOST);
+		return psl;
+	}
+	
 }

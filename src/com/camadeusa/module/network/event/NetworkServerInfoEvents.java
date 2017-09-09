@@ -1,5 +1,6 @@
 package com.camadeusa.module.network.event;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -14,9 +15,11 @@ import com.camadeusa.timing.TickThreeSecondEvent;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
 public class NetworkServerInfoEvents implements Listener {
+	public static Map<String, Object> serverInfoCache = new HashMap<>();
 	@EventHandler
 	public void onTickThreeSecondEvent(TickThreeSecondEvent event) {
-		GamemodeManager.currentplayers = ArchrPlayer.getOnlinePlayers();
+		GamemodeManager.currentplayers = ArchrPlayer.getOnlinePlayers().size();
+		
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
@@ -34,6 +37,8 @@ public class NetworkServerInfoEvents implements Listener {
 						NetworkCore.getInstance().serversDB.updateRow(row, data);
 						row.update();
 					}
+					
+					serverInfoCache = data;
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

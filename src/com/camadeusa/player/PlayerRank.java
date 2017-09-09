@@ -1,6 +1,7 @@
 package com.camadeusa.player;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import org.bukkit.ChatColor;
 
@@ -14,6 +15,8 @@ public enum PlayerRank {
 	SrMod,
 	Mod,
 	Helper,
+	Vip,
+	Friend,
 	Donator7,
 	Donator6,
 	Donator5,
@@ -40,6 +43,10 @@ public enum PlayerRank {
 			return 300;
 		case Helper:
 			return 200;
+		case Vip:
+			return 90;
+		case Friend:
+			return 80;
 		case Donator7:
 			return 70;
 		case Donator6: 
@@ -94,6 +101,14 @@ public enum PlayerRank {
 		case Helper:
 			colorPrefix = ChatColor.RED + "";
 			icon = "\u2659";
+			break;
+		case Vip:
+			colorPrefix = ChatColor.DARK_PURPLE + "";
+			icon = "\u2023";
+			break;
+		case Friend:
+			colorPrefix = ChatColor.LIGHT_PURPLE + "";
+			icon = "\u221E";
 			break;
 		case Donator7:
 			colorPrefix = ChatColor.AQUA + "";
@@ -150,12 +165,18 @@ public enum PlayerRank {
 			return "Developer";
 		case Director:
 			return "Director";
+		case Admin:
+			return "Admin";
 		case SrMod:
 			return "SrMod";
 		case Mod: 
 			return "Mod";
 		case Helper:
 			return "Helper";
+		case Vip:
+			return "Vip";
+		case Friend:
+			return "Friend";
 		case Donator7:
 			return "Donator7";
 		case Donator6: 
@@ -187,6 +208,8 @@ public enum PlayerRank {
 			return PlayerRank.Developer;
 		case "Director":
 			return PlayerRank.Director;
+		case "Admin":
+			return PlayerRank.Admin;
 		case "SrMod":
 			return PlayerRank.SrMod;
 		case "Mod":
@@ -283,8 +306,11 @@ public enum PlayerRank {
 			ArrayList<String> commandsSM = getCommandsAvailable(PlayerRank.Mod);
 			// commands.add("foobar");
 			return commandsSM;
+		case Admin:
+			ArrayList<String> commandsA = getCommandsAvailable(PlayerRank.SrMod);
+			return commandsA;
 		case Director:
-			ArrayList<String> commandsD = getCommandsAvailable(PlayerRank.SrMod);
+			ArrayList<String> commandsD = getCommandsAvailable(PlayerRank.Admin);
 			// commands.add("foobar");
 			return commandsD;
 		case Developer:
@@ -331,5 +357,28 @@ public enum PlayerRank {
 		}
 		
 		
+	}
+	
+	public static LinkedList<PlayerRank> valuesordered() {
+		LinkedList<PlayerRank> ll = new LinkedList<>();
+		ll.add(Player);
+		ll.add(Donator1);
+		ll.add(Donator2);
+		ll.add(Donator3);
+		ll.add(Donator4);
+		ll.add(Donator5);
+		ll.add(Donator6);
+		ll.add(Donator7);
+		ll.add(Friend);
+		ll.add(Vip);
+		ll.add(Helper);
+		ll.add(Mod);
+		ll.add(SrMod);
+		ll.add(Admin);
+		ll.add(Director);
+		ll.add(Developer);
+		ll.add(Owner);
+		
+		return ll;
 	}
 }
