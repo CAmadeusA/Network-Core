@@ -222,15 +222,9 @@ public class ArchrPlayer implements Listener {
 
 		// Holds event from finishing while async (only to not lag main game thread) fetch finishes.
 		long start = System.currentTimeMillis();
-		long current = 0;
 		while (System.currentTimeMillis()-start < 9999999999999L) {
 			if (intA.get() == 0) {
-				if (current == 0) {
-					current = System.currentTimeMillis();
-				}
-				if (System.currentTimeMillis() > current+2000) {
 					break;
-				}
 			}
 		}
 	}
