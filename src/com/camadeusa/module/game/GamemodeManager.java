@@ -75,6 +75,12 @@ public class GamemodeManager {
 					if (Integer.parseInt(data.get("maxplayers").toString()) != maxplayers) {
 						data.put("maxplayers", maxplayers);
 					}
+					if (Integer.parseInt(data.get("onlineplayers").toString()) != currentplayers) {
+						data.put("onlineplayers", currentplayers);
+					}
+					if (Boolean.parseBoolean(data.get("serveronline").toString()) != true) {
+						data.put("serveronline", true);
+					}
 					
 					NetworkCore.getInstance().serversDB.updateRow(row, data);
 					row.update();
@@ -85,6 +91,8 @@ public class GamemodeManager {
 					data.put("server", server);
 					data.put("gamemode", gamemode.getValue());
 					data.put("maxplayers", maxplayers);
+					data.put("onlineplayers", currentplayers);
+					data.put("serveronline", true);
 					
 					NetworkCore.getInstance().serversDB.addData(data);
 				}

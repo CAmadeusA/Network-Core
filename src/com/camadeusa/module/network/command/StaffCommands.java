@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -47,6 +48,7 @@ public class StaffCommands {
 							kicked.getPlayer().kickPlayer(reason);
 							JSONArray kicks = new JSONArray((String) data.get("kicks").toString());
 							JSONObject kick = new JSONObject();
+							kick.put("name", kicker.getPlayer().getName());
 							kick.put("kicker", args.getPlayer().getUniqueId().toString());
 							kick.put("reason", reason);
 							kick.put("time", System.currentTimeMillis());
@@ -880,7 +882,7 @@ public class StaffCommands {
 
 					args.getPlayer().sendMessage("");
 					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Kicks" + ChatColor.RESET + "=-");
 					if (jsonArrayKicks.length() > 0) {
 						for (int i = 0; i < jsonArrayKicks.length(); i++) {
 							JSONObject entry = jsonArrayKicks.getJSONObject(i);
@@ -899,7 +901,7 @@ public class StaffCommands {
 					}
 					args.getPlayer().sendMessage("");
 					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Mutes" + ChatColor.RESET + "=-");
 					if (jsonArrayMutes.length() > 0) {
 						for (int i = 0; i < jsonArrayMutes.length(); i++) {
 							JSONObject entry = jsonArrayMutes.getJSONObject(i);
@@ -923,7 +925,7 @@ public class StaffCommands {
 
 					args.getPlayer().sendMessage("");
 					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Bans" + ChatColor.RESET + "=-");
 					if (jsonArrayBans.length() > 0) {
 						for (int i = 0; i < jsonArrayBans.length(); i++) {
 							JSONObject entry = jsonArrayBans.getJSONObject(i);
@@ -962,20 +964,20 @@ public class StaffCommands {
 
 								args.getPlayer().sendMessage("");
 								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
+								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Kicks" + ChatColor.RESET + "=-");
 								if (jsonArrayKicks.length() > 0) {
 									for (int i = 0; i < jsonArrayKicks.length(); i++) {
 										JSONObject entry = jsonArrayKicks.getJSONObject(i);
 										args.getPlayer().sendMessage(
 												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Kicker: "
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Kicker: " + ChatColor.RESET
 												+ entry.get("name") + " with uuid: " + entry.get("kicker"));
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
 												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
 														new Date(Long.parseLong(entry.get("time").toString()))));
 
 										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
 
 									}
 								} else {
@@ -983,15 +985,15 @@ public class StaffCommands {
 								}
 								args.getPlayer().sendMessage("");
 								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
+								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Mutes" + ChatColor.RESET + "=-");
 								if (jsonArrayMutes.length() > 0) {
 									for (int i = 0; i < jsonArrayMutes.length(); i++) {
 										JSONObject entry = jsonArrayMutes.getJSONObject(i);
 										args.getPlayer().sendMessage(
 												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muter: "
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Muter: " + ChatColor.RESET
 												+ entry.getString("name") + " with uuid: " + entry.getString("muter"));
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
 												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
 														new Date(Long.parseLong(entry.get("time").toString()))));
 
@@ -999,11 +1001,11 @@ public class StaffCommands {
 										long amount = Long.parseLong(entry.get("amount").toString());
 
 										args.getPlayer()
-												.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+												.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
 														+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
 																.format(new Date(time + amount)));
 										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
 									}
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1011,15 +1013,15 @@ public class StaffCommands {
 
 								args.getPlayer().sendMessage("");
 								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
+								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Bans" + ChatColor.RESET + "=-");
 								if (jsonArrayBans.length() > 0) {
 									for (int i = 0; i < jsonArrayBans.length(); i++) {
 										JSONObject entry = jsonArrayBans.getJSONObject(i);
 										args.getPlayer().sendMessage(
 												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: "
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Banner: " + ChatColor.RESET
 												+ entry.get("name") + " with uuid: " + entry.get("banner"));
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
 												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
 														new Date(Long.parseLong(entry.get("time").toString()))));
 
@@ -1027,11 +1029,11 @@ public class StaffCommands {
 										long amount = Long.parseLong(entry.get("amount").toString());
 
 										args.getPlayer()
-												.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+												.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
 														+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
 																.format(new Date(time + amount)));
 										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
 									}
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1061,20 +1063,20 @@ public class StaffCommands {
 
 									args.getPlayer().sendMessage("");
 									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Kicks" + ChatColor.RESET + "=-");
 									if (jsonArrayKicks.length() > 0) {
 										for (int i = 0; i < jsonArrayKicks.length(); i++) {
 											JSONObject entry = jsonArrayKicks.getJSONObject(i);
 											args.getPlayer().sendMessage(
 													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Kicker: "
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Kicker: " + ChatColor.RESET
 													+ entry.get("name") + " with uuid: " + entry.get("kicker"));
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
 													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
 															new Date(Long.parseLong(entry.get("time").toString()))));
 
 											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
 
 										}
 									} else {
@@ -1082,17 +1084,17 @@ public class StaffCommands {
 									}
 									args.getPlayer().sendMessage("");
 									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Mutes" + ChatColor.RESET + "=-");
 									if (jsonArrayMutes.length() > 0) {
 										for (int i = 0; i < jsonArrayMutes.length(); i++) {
 											JSONObject entry = jsonArrayMutes.getJSONObject(i);
 											args.getPlayer().sendMessage(
 													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
 											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + "Muter: "
+													.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Muter: " + ChatColor.RESET
 															+ entry.getString("name") + " with uuid: "
 															+ entry.getString("muter"));
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
 													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
 															new Date(Long.parseLong(entry.get("time").toString()))));
 
@@ -1100,11 +1102,11 @@ public class StaffCommands {
 											long amount = Long.parseLong(entry.get("amount").toString());
 
 											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+													.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
 															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
 																	.format(new Date(time + amount)));
 											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
 										}
 									} else {
 										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1112,15 +1114,15 @@ public class StaffCommands {
 
 									args.getPlayer().sendMessage("");
 									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Bans" + ChatColor.RESET + "=-");
 									if (jsonArrayBans.length() > 0) {
 										for (int i = 0; i < jsonArrayBans.length(); i++) {
 											JSONObject entry = jsonArrayBans.getJSONObject(i);
 											args.getPlayer().sendMessage(
 													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: "
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Banner: " + ChatColor.RESET
 													+ entry.get("name") + " with uuid: " + entry.get("banner"));
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Time: "
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
 													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
 															new Date(Long.parseLong(entry.get("time").toString()))));
 
@@ -1128,11 +1130,11 @@ public class StaffCommands {
 											long amount = Long.parseLong(entry.get("amount").toString());
 
 											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
+													.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
 															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
 																	.format(new Date(time + amount)));
 											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
 										}
 									} else {
 										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1155,14 +1157,29 @@ public class StaffCommands {
 		}
 	}
 
-	@Command(name = "setstate", aliases = { "changestate" }, usage = "/setstate {PLAYER/SPECTATOR/GHOST}")
+	@Command(name = "setstate", aliases = { "changestate" }, usage = "/setstate {player/spectator/ghost}")
 	public void setState(CommandArgs args) {
 		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "setstate")) {
 			ArchrPlayer player = ArchrPlayer.getArchrPlayerByUUID(args.getPlayer().getUniqueId().toString());
-			PlayerState state = PlayerState.valueOf(args.getArgs(0));
+			PlayerState state = PlayerState.fromString(args.getArgs(0));
 			if (state != null) {
 				player.setPlayerstate(state);
 			}
+			
+			Bukkit.getServer().getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					ListEntry row;
+					try {
+						row = NetworkCore.getInstance().playersDB.getRow("uuid", args.getPlayer().getUniqueId().toString());
+						Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
+						data.put("state", state.toString());
+						NetworkCore.getInstance().playersDB.updateRow(row, data);
+						row.update();
+					} catch (Exception e) {}
+				}
+			});
+			
 		}
 	}
 

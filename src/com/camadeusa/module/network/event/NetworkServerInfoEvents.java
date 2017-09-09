@@ -15,7 +15,7 @@ import com.camadeusa.timing.TickThreeSecondEvent;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
 public class NetworkServerInfoEvents implements Listener {
-	public static Map<String, Object> serverInfoCache = new HashMap<>();
+	public static Map<String, Map<String, Object>> serverInfoCache = new HashMap<>();
 	@EventHandler
 	public void onTickThreeSecondEvent(TickThreeSecondEvent event) {
 		GamemodeManager.currentplayers = ArchrPlayer.getOnlinePlayers().size();
@@ -38,7 +38,10 @@ public class NetworkServerInfoEvents implements Listener {
 						row.update();
 					}
 					
-					serverInfoCache = data;
+					for (Map<String, Object> dd : NetworkCore.getInstance().serversDB.queryData("serveronline == true")) {
+						serverInfoCache.put(dd.get("uuid").toString(), dd);						
+					}
+					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

@@ -21,6 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
+import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.module.network.event.NetworkServerInfoEvents;
 import com.camadeusa.module.network.points.Basepoint;
@@ -119,6 +120,7 @@ public class ArchrPlayer implements Listener {
 		data.put("uuid", aP.getPlayer().getUniqueId().toString());
 		data.put("username", aP.getPlayer().getName());
 		data.put("rank", PlayerRank.Player);
+		data.put("state", PlayerState.NORMAL.toString());
 		data.put("ipaddress", "0");
 		data.put("banexpiredate", -1);
 		data.put("muteexpiredate", -1);
@@ -140,6 +142,7 @@ public class ArchrPlayer implements Listener {
 		data.put("uuid", uuid);
 		data.put("username", username);
 		data.put("rank", rank);
+		data.put("state", PlayerState.NORMAL.toString());
 		data.put("ipaddress", ipaddress);
 		data.put("banexpiredate", banexpiredate);
 		data.put("muteexpiredate", muteexpiredate);
@@ -158,7 +161,7 @@ public class ArchrPlayer implements Listener {
 	public static ArrayList<ArchrPlayer> getOnlinePlayers() {
 		ArrayList<ArchrPlayer> aList = new ArrayList<>();
 		for (ArchrPlayer ap : getArchrPlayerList()) {
-			if (ap.getPlayerState() != PlayerState.GHOST) {
+			if (!ap.getPlayerState().toString().equals(PlayerState.GHOST.toString())) {
 				aList.add(ap);
 			}
 		}
@@ -250,7 +253,7 @@ public class ArchrPlayer implements Listener {
 			for (PlayerState ps : PlayerState.valuesOrderedForKickOrder()) {
 				for (PlayerRank pr : PlayerRank.valuesordered()) {
 					if (PlayerRank.getValueByRank(pr) < PlayerRank.getValueByRank(
-							PlayerRank.valueOf(dataCache.get(event.getUniqueId()).get("rank").toString()))) {
+							PlayerRank.fromString(dataCache.get(event.getUniqueId().toString()).get("rank").toString())) && PlayerState.fromString(dataCache.get(event.getUniqueId().toString()).get("state").toString()) != PlayerState.GHOST) {
 
 						for (ArchrPlayer ap : getOnlinePlayers()) {
 							if (pr == ap.getPlayerRank() && ps == ap.getPlayerState()) {
@@ -262,6 +265,9 @@ public class ArchrPlayer implements Listener {
 							playerToKick = poolToKickFrom.get(Random.instance().nextInt(poolToKickFrom.size()));
 							break;
 						}
+					} else if (PlayerState.fromString(dataCache.get(event.getUniqueId().toString()).get("state").toString()) == PlayerState.GHOST) {
+						event.allow();
+						return;
 					}
 
 				}
@@ -270,14 +276,15 @@ public class ArchrPlayer implements Listener {
 				}
 			}
 			if (playerToKick != null) {
-				playerToKick.getPlayer().kickPlayer("You were kicked to make room for a player with a higher rank. We appologize for the inconvienence.");
+				final ArchrPlayer pp = playerToKick;
+				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
+					@Override
+					public void run() {
+						pp.getPlayer().kickPlayer(NetworkCore.prefixStandard + ChatManager.translateFor("en", pp, "You were kicked to make room for a player with a higher rank. We appologize for the inconvienence."));
+					}
+				});
 			} else {
 				event.disallow(Result.KICK_OTHER, "This server is full. Please Try again later.");
-				try {
-					throw new Exception("Wow you really fucked up");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
 			}
 
 		}
@@ -315,15 +322,16 @@ public class ArchrPlayer implements Listener {
 					NetworkCore.getInstance().playersDB.updateRow(rowupdate, aP.getData());
 					rowupdate.update();
 
-					aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));
-					aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
-					event.setJoinMessage("");
-					archrPlayerList.add(aP);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		});
+		aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));
+		aP.setPlayerstate(PlayerState.fromString(aP.getData().get("state").toString()));
+		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
+		archrPlayerList.add(aP);
+		event.setJoinMessage("");
 
 	}
 

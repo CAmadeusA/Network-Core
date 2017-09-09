@@ -75,7 +75,7 @@ public class ChatManager implements Listener {
 						info.add(new FancyMessage().text("IP Address: ").color(ChatColor.GOLD).then(sender.getData().get("ipaddress").toString()));
 					}
 				}
-					fm.formattedTooltip(info).then(message).send(sender.getPlayer());
+					fm.formattedTooltip(info).then(message).send(reciever.getPlayer());
 			}
 		} else {
 			reciever.getPlayer().sendMessage(NetworkCore.prefixError + "" + ChatColor.DARK_RED + "BROADCAST: CONSOLE" + ChatColor.RESET + "> " + message);

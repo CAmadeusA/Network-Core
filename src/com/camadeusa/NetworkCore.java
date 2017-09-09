@@ -19,6 +19,9 @@ import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.menu.InventoryManager;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
+import protocolsupport.api.ProtocolSupportAPI;
+import protocolsupport.api.ProtocolVersion;
+
 public class NetworkCore extends JavaPlugin {
 	static NetworkCore instance;
 	static ConfigUtil configManager;
@@ -47,6 +50,12 @@ public class NetworkCore extends JavaPlugin {
 		frameWork.registerCommands(new StaffCommands());
 		frameWork.registerCommands(new NetworkCommands());
 		
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_4_7);
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_5_1);
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_5_2);
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_6_1);
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_6_2);
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_6_4);
 		
 	}
 	

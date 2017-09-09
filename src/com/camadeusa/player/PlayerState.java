@@ -19,6 +19,20 @@ public enum PlayerState {
 		}
 
 	}
+	
+	public static PlayerState fromString(String s) {
+		switch (s) {
+		case "normal":
+			return NORMAL;
+		case "spectator":
+			return SPECTATOR;
+		case "ghost":
+			return GHOST;
+			default:
+				return NORMAL;
+		}
+			
+	}
 
 	public static boolean canSee(PlayerState ps1, PlayerState ps2) {
 		switch (ps1.toString()) {

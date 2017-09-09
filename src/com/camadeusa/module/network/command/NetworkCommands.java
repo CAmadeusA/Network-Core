@@ -32,11 +32,14 @@ public class NetworkCommands {
 			page = commands.size() / lineHeight;
 		}
 
-		args.getPlayer().sendMessage("----------===== " + NetworkCore.prefixStandard + "Help Menu: Showing Page " + page
-				+ " of " + commands.size() / 8 + " =====----------");
+		args.getPlayer().sendMessage("------=== " + NetworkCore.prefixStandard + "Help Menu: Showing Page " + page
+				+ " of " + commands.size() / lineHeight + " ===------");
 		args.getPlayer().sendMessage(ChatColor.GRAY
 				+ "Use /help <page-number> to get the page of help, or hover over the command to get known information on the command.");
 
+		if (commands.size() == 0) {
+			return;
+		}
 		page = page - 1;
 		for (int i = (page * lineHeight); i < ((page + 1) * lineHeight); i++) {			
 			if (CommandFramework.getCommandsByString().contains(commands.get(i))) {
