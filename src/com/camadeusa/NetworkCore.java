@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.GamemodeManager;
+import com.camadeusa.module.network.command.NetworkCommands;
 import com.camadeusa.module.network.command.StaffCommands;
 import com.camadeusa.module.network.event.NetworkCommandEvents;
 import com.camadeusa.module.network.event.NetworkServerInfoEvents;
@@ -44,6 +45,7 @@ public class NetworkCore extends JavaPlugin {
 		serversDB = new GSheetDBUtil("archrservers", "servers");
 		CommandFramework frameWork = new CommandFramework(this);
 		frameWork.registerCommands(new StaffCommands());
+		frameWork.registerCommands(new NetworkCommands());
 		
 		
 	}

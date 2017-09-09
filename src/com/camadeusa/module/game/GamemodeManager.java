@@ -22,6 +22,7 @@ public class GamemodeManager {
 	int maxplayers;
 	public static int currentplayers;
 
+	@SuppressWarnings("deprecation")
 	public GamemodeManager() {
 		modulemanager = new ModuleManager();
 		if (NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()) != null) {
@@ -98,7 +99,6 @@ public class GamemodeManager {
 		case Hub:
 			HashMap<String, ? extends Module> modules = new HashMap<>();
 			modulemanager.modulesToRegister.add(modules.get("hubmodule"));
-			getModulemanager().registerModules();
 			break;
 		case ArenaPVP:
 
@@ -107,6 +107,7 @@ public class GamemodeManager {
 		default:
 			break;
 		}
+		getModulemanager().registerModules();
 	}
 
 	public ModuleManager getModulemanager() {

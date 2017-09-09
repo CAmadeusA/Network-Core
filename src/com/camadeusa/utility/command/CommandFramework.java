@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpTopic;
@@ -36,6 +38,7 @@ public class CommandFramework implements CommandExecutor {
 	private Map<String, Entry<Method, Object>> commandMap = new HashMap<String, Entry<Method, Object>>();
 	private CommandMap map;
 	private Plugin plugin;
+	public static ArrayList<Command> commands = new ArrayList<>();
 
 	/**
 	 * Initializes the command framework and sets up the command maps
@@ -64,15 +67,18 @@ public class CommandFramework implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
 		return handleCommand(sender, cmd, label, args);
 	}
-	
+
 	/**
 	 * Handles commands. Used in the onCommand method in your JavaPlugin class
 	 * 
-	 * @param sender The {@link org.bukkit.command.CommandSender} parsed from
-	 *            onCommand
-	 * @param cmd The {@link org.bukkit.command.Command} parsed from onCommand
-	 * @param label The label parsed from onCommand
-	 * @param args The arguments parsed from onCommand
+	 * @param sender
+	 *            The {@link org.bukkit.command.CommandSender} parsed from onCommand
+	 * @param cmd
+	 *            The {@link org.bukkit.command.Command} parsed from onCommand
+	 * @param label
+	 *            The label parsed from onCommand
+	 * @param args
+	 *            The arguments parsed from onCommand
 	 * @return Always returns true for simplicity's sake in onCommand
 	 */
 	public boolean handleCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -92,8 +98,8 @@ public class CommandFramework implements CommandExecutor {
 					return true;
 				}
 				try {
-					method.invoke(methodObject, new CommandArgs(sender, cmd, label, args,
-							cmdLabel.split("\\.").length - 1));
+					method.invoke(methodObject,
+							new CommandArgs(sender, cmd, label, args, cmdLabel.split("\\.").length - 1));
 				} catch (IllegalArgumentException e) {
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
@@ -109,10 +115,11 @@ public class CommandFramework implements CommandExecutor {
 	}
 
 	/**
-	 * Registers all command and completer methods inside of the object. Similar
-	 * to Bukkit's registerEvents method.
+	 * Registers all command and completer methods inside of the object. Similar to
+	 * Bukkit's registerEvents method.
 	 * 
-	 * @param obj The object to register the commands of
+	 * @param obj
+	 *            The object to register the commands of
 	 */
 	public void registerCommands(Object obj) {
 		for (Method m : obj.getClass().getMethods()) {
@@ -126,12 +133,13 @@ public class CommandFramework implements CommandExecutor {
 				for (String alias : command.aliases()) {
 					registerCommand(command, alias, m, obj);
 				}
+				commands.add(command);
 			} else if (m.getAnnotation(Completer.class) != null) {
 				Completer comp = m.getAnnotation(Completer.class);
 				if (m.getParameterTypes().length > 1 || m.getParameterTypes().length == 0
 						|| m.getParameterTypes()[0] != CommandArgs.class) {
-					System.out.println("Unable to register tab completer " + m.getName()
-							+ ". Unexpected method arguments");
+					System.out.println(
+							"Unable to register tab completer " + m.getName() + ". Unexpected method arguments");
 					continue;
 				}
 				if (m.getReturnType() != List.class) {
@@ -165,7 +173,8 @@ public class CommandFramework implements CommandExecutor {
 
 	public void registerCommand(Command command, String label, Method m, Object obj) {
 		commandMap.put(label.toLowerCase(), new AbstractMap.SimpleEntry<Method, Object>(m, obj));
-		commandMap.put(this.plugin.getName() + ':' + label.toLowerCase(), new AbstractMap.SimpleEntry<Method, Object>(m, obj));
+		commandMap.put(this.plugin.getName() + ':' + label.toLowerCase(),
+				new AbstractMap.SimpleEntry<Method, Object>(m, obj));
 		String cmdLabel = label.split("\\.")[0].toLowerCase();
 		if (map.getCommand(cmdLabel) == null) {
 			org.bukkit.command.Command cmd = new BukkitCommand(cmdLabel, this, plugin);
@@ -216,5 +225,90 @@ public class CommandFramework implements CommandExecutor {
 	private void defaultCommand(CommandArgs args) {
 		args.getSender().sendMessage(args.getLabel() + " is not handled! Oh noes!");
 	}
-	
+
+	public static ArrayList<Command> getCommands() {
+		return commands;
+	}
+
+	public static Command getCommand(String s) {
+		for (Command cmd : commands) {
+			if (cmd.name().equalsIgnoreCase(s)) {
+				return cmd;
+			}
+		}
+		return null;
+	}
+
+	public static ArrayList<String> getCommandsByString() {
+		ArrayList<String> cmdstr = new ArrayList<>();
+		for (Command c : commands) {
+			cmdstr.add(c.name());
+		}
+
+		return cmdstr;
+	}
+
+	public static ArrayList<String> getCommandStringsNotRegisteredByMe() {
+		SimplePluginManager simplePluginManager = (SimplePluginManager) Bukkit.getServer().getPluginManager();
+		Field commandMapField;
+		ArrayList<String> strngs = new ArrayList<>();
+		try {
+			commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
+			commandMapField.setAccessible(true);
+			SimpleCommandMap simpleCommandMap = (SimpleCommandMap) commandMapField.get(simplePluginManager);
+			simpleCommandMap.getCommands().forEach(c -> {
+				strngs.add(c.getName());
+			});
+			commandMapField.setAccessible(false); 
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return strngs;
+
+	}
+	public static ArrayList<org.bukkit.command.Command> getCommandsNotRegisteredByMe() {
+		SimplePluginManager simplePluginManager = (SimplePluginManager) Bukkit.getServer().getPluginManager();
+		Field commandMapField;
+		ArrayList<org.bukkit.command.Command> strngs = new ArrayList<>();
+		try {
+			commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
+			commandMapField.setAccessible(true);
+			SimpleCommandMap simpleCommandMap = (SimpleCommandMap) commandMapField.get(simplePluginManager);
+			simpleCommandMap.getCommands().forEach(c -> {
+				strngs.add(c);
+				
+			});
+			commandMapField.setAccessible(false); 
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return strngs;
+		
+	}
+	public static org.bukkit.command.Command getCommandNotRegisteredByMe(String s) {
+		SimplePluginManager simplePluginManager = (SimplePluginManager) Bukkit.getServer().getPluginManager();
+		Field commandMapField;
+		ArrayList<org.bukkit.command.Command> strngs = new ArrayList<>();
+		try {
+			commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
+			commandMapField.setAccessible(true);
+			SimpleCommandMap simpleCommandMap = (SimpleCommandMap) commandMapField.get(simplePluginManager);
+			for (org.bukkit.command.Command c : simpleCommandMap.getCommands()) {
+				if (c.getName().equalsIgnoreCase(s)) {
+					return c;
+				}				
+			}
+			commandMapField.setAccessible(false); 
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
+		
+	}
 }

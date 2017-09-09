@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.module.network.points.Basepoint;
+import com.camadeusa.utility.fetcher.NameFetcher;
 import com.google.gdata.data.spreadsheet.ListEntry;
 
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
@@ -33,6 +34,8 @@ public class ArchrPlayer implements Listener {
 	private PlayerRank rank;
 	private JSONObject elostore = new JSONObject();
 	private JSONObject playersettings = new JSONObject();
+	
+	HashMap<String, Map<String, Object>> dataCache = new HashMap<>();
 	
 	Player player;
 	Map<String, Object> data = new HashMap<>();
@@ -188,10 +191,12 @@ public class ArchrPlayer implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override 
 			public void run() {
+				
 				ListEntry row;
 				try {
 					row = NetworkCore.getInstance().playersDB.getRow("uuid", event.getUniqueId());
 					Map<String, Object> result = NetworkCore.getInstance().playersDB.getRowData(row);
+					dataCache.put(event.getUniqueId().toString(), result);
 					if (Long.parseLong(result.get("banexpiredate").toString()) > System.currentTimeMillis()) {
 						if (Long.parseLong((String) result.get("banexpiredate")) == (Long.MAX_VALUE)) {
 							event.disallow(Result.KICK_BANNED,
@@ -207,6 +212,9 @@ public class ArchrPlayer implements Listener {
 					}
 					intA.set(0);
 				} catch (Exception e) {
+					Map<String, Object> datatemp = generateBaseDBData(event.getUniqueId().toString(), NameFetcher.getName(event.getUniqueId().toString()), "Player", "0", -1, -1, 0);
+					NetworkCore.getInstance().playersDB.addData(datatemp);
+					dataCache.put(event.getUniqueId().toString(), datatemp);
 					intA.set(0);					
 				}
 			}
@@ -214,9 +222,15 @@ public class ArchrPlayer implements Listener {
 
 		// Holds event from finishing while async (only to not lag main game thread) fetch finishes.
 		long start = System.currentTimeMillis();
+		long current = 0;
 		while (System.currentTimeMillis()-start < 9999999999999L) {
 			if (intA.get() == 0) {
-				break;
+				if (current == 0) {
+					current = System.currentTimeMillis();
+				}
+				if (System.currentTimeMillis() > current+2000) {
+					break;
+				}
 			}
 		}
 	}
@@ -225,28 +239,11 @@ public class ArchrPlayer implements Listener {
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		ArchrPlayer aP = new ArchrPlayer(event.getPlayer());
+		aP.setData(dataCache.get(aP.getPlayer().getUniqueId().toString()));
+		dataCache.remove(aP.getPlayer().getUniqueId().toString());
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			ListEntry row;
-
 			@Override
 			public void run() {
-
-				try {
-					row = NetworkCore.getInstance().playersDB.getRow("uuid",
-							event.getPlayer().getUniqueId().toString());
-				} catch (Exception e) {
-				}
-				if (row != null) {
-					aP.setData(NetworkCore.getInstance().playersDB.getRowData(row));
-				} else {
-					Map<String, Object> data = generateBaseDBData(aP);
-					NetworkCore.getInstance().playersDB.addData(data);
-					aP.setData(data);
-
-				}
-				aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));
-
-				aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
 
 				try {
 					if (!aP.getPlayer().getName().equalsIgnoreCase(aP.getData().get("username").toString())) {
@@ -263,19 +260,23 @@ public class ArchrPlayer implements Listener {
 						aP.getData().put("ipaddress",
 								aP.getPlayer().getAddress().getAddress().toString().replace("/", ""));
 					}
-
+					
 					ListEntry rowupdate = NetworkCore.getInstance().playersDB.getRow("uuid",
 							aP.getPlayer().getUniqueId());
 					NetworkCore.getInstance().playersDB.updateRow(rowupdate, aP.getData());
 					rowupdate.update();
 
+					aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));		
+					aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
+					event.setJoinMessage("");
+					archrPlayerList.add(aP);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		});
-		event.setJoinMessage("");
-		archrPlayerList.add(aP);
+		
+		
 	}
 	
 	public static void correctArchrPlayerList() {

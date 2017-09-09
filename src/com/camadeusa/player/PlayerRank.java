@@ -4,10 +4,13 @@ import java.util.ArrayList;
 
 import org.bukkit.ChatColor;
 
+import com.camadeusa.utility.TextUtil;
+
 public enum PlayerRank {
 	Owner,
 	Developer,
 	Director,
+	Admin,
 	SrMod,
 	Mod,
 	Helper,
@@ -29,6 +32,8 @@ public enum PlayerRank {
 			return Integer.MAX_VALUE-1;
 		case Director:
 			return 500;
+		case Admin:
+			return 450;
 		case SrMod:
 			return 400;
 		case Mod: 
@@ -64,14 +69,18 @@ public enum PlayerRank {
 		switch (a.getPlayerRank()) {
 		case Owner:
 			icon = "\u2654";
-			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD + "" + ChatColor.ITALIC;
+			colorPrefix = TextUtil.toBoldRainbow(a.getPlayer().getName());
 			break;
 		case Developer:
-			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
+			colorPrefix = TextUtil.toRainbow(a.getPlayer().getName());
 			icon = "\u2328";
 			break;
 		case Director: 
 			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.ITALIC;
+			icon = "\u2658";
+			break;
+		case Admin: 
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
 			icon = "\u2658";
 			break;
 		case SrMod: 
@@ -122,6 +131,10 @@ public enum PlayerRank {
 			break;
 		}
 		if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Player)) {
+			if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Director)) {
+				return (ChatColor.DARK_GRAY + "[" + ChatColor.RESET + icon + ChatColor.DARK_GRAY + "]" + ChatColor.RESET + " " + colorPrefix + ChatColor.RESET);			
+				
+			}
 			return (ChatColor.DARK_GRAY + "[" + ChatColor.RESET + icon + ChatColor.DARK_GRAY + "]" + ChatColor.RESET + " " + colorPrefix + a.getPlayer().getName() + ChatColor.RESET);			
 		} else {
 			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);
@@ -252,12 +265,19 @@ public enum PlayerRank {
 		case Helper:
 			ArrayList<String> commandsH = getCommandsAvailable(PlayerRank.Donator7);
 			commandsH.add("kick");
+			commandsH.add("kik");
+			commandsH.add("boot");
+			commandsH.add("gtfo");
+			commandsH.add("bye");
+			commandsH.add("slap");
 			commandsH.add("lookup");
 			return commandsH;
 		case Mod:
 			ArrayList<String> commandsM = getCommandsAvailable(PlayerRank.Helper);
 			commandsM.add("ban");
+			commandsM.add("banhammer");
 			commandsM.add("mute");
+			commandsM.add("gag");
 			return commandsM;
 		case SrMod:
 			ArrayList<String> commandsSM = getCommandsAvailable(PlayerRank.Mod);
@@ -291,12 +311,17 @@ public enum PlayerRank {
 			commandsDD.add("gamemode");
 			commandsDD.add("list");
 			commandsDD.add("stop");
+			commandsDD.add("time");
+			commandsDD.add("toggledownfall");
 			commandsDD.add("tp");
-			// Custom commands
+			commandsDD.add("teleport");
 			commandsDD.add("whitelist");
+			// Custom commands
 			commandsDD.add("checkdata");
+			commandsDD.add("changestate");
 			commandsDD.add("setstate");
 			commandsDD.add("generaterandomdata");
+			commandsDD.add("cmds");
 			return commandsDD;
 		case Owner:
 			ArrayList<String> commandsO = getCommandsAvailable(PlayerRank.Developer);

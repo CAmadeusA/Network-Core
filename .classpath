@@ -17,5 +17,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/resources/BungeeCord.jar"/>
+	<classpathentry kind="lib" path="/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/resources/ProtocolSupport.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

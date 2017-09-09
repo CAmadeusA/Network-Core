@@ -878,8 +878,8 @@ public class StaffCommands {
 					JSONArray jsonArrayMutes = new JSONArray(lookedup.getData().get("mutes").toString());
 					JSONArray jsonArrayBans = new JSONArray(lookedup.getData().get("bans").toString());
 
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+					args.getPlayer().sendMessage("");
+					args.getPlayer().sendMessage("");
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
 					if (jsonArrayKicks.length() > 0) {
 						for (int i = 0; i < jsonArrayKicks.length(); i++) {
@@ -897,8 +897,8 @@ public class StaffCommands {
 					} else {
 						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 					}
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+					args.getPlayer().sendMessage("");
+					args.getPlayer().sendMessage("");
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
 					if (jsonArrayMutes.length() > 0) {
 						for (int i = 0; i < jsonArrayMutes.length(); i++) {
@@ -921,8 +921,8 @@ public class StaffCommands {
 						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 					}
 
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+					args.getPlayer().sendMessage("");
+					args.getPlayer().sendMessage("");
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
 					if (jsonArrayBans.length() > 0) {
 						for (int i = 0; i < jsonArrayBans.length(); i++) {
@@ -960,8 +960,8 @@ public class StaffCommands {
 								JSONArray jsonArrayMutes = new JSONArray(data.get("mutes").toString());
 								JSONArray jsonArrayBans = new JSONArray(data.get("bans").toString());
 
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+								args.getPlayer().sendMessage("");
+								args.getPlayer().sendMessage("");
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
 								if (jsonArrayKicks.length() > 0) {
 									for (int i = 0; i < jsonArrayKicks.length(); i++) {
@@ -981,8 +981,8 @@ public class StaffCommands {
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 								}
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+								args.getPlayer().sendMessage("");
+								args.getPlayer().sendMessage("");
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
 								if (jsonArrayMutes.length() > 0) {
 									for (int i = 0; i < jsonArrayMutes.length(); i++) {
@@ -1009,8 +1009,8 @@ public class StaffCommands {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 								}
 
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+								args.getPlayer().sendMessage("");
+								args.getPlayer().sendMessage("");
 								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
 								if (jsonArrayBans.length() > 0) {
 									for (int i = 0; i < jsonArrayBans.length(); i++) {
@@ -1059,8 +1059,8 @@ public class StaffCommands {
 									JSONArray jsonArrayMutes = new JSONArray(data.get("mutes").toString());
 									JSONArray jsonArrayBans = new JSONArray(data.get("bans").toString());
 
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage("");
+									args.getPlayer().sendMessage("");
 									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Kicks=-");
 									if (jsonArrayKicks.length() > 0) {
 										for (int i = 0; i < jsonArrayKicks.length(); i++) {
@@ -1080,8 +1080,8 @@ public class StaffCommands {
 									} else {
 										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 									}
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage("");
+									args.getPlayer().sendMessage("");
 									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Mutes=-");
 									if (jsonArrayMutes.length() > 0) {
 										for (int i = 0; i < jsonArrayMutes.length(); i++) {
@@ -1110,8 +1110,8 @@ public class StaffCommands {
 										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
 									}
 
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "");
+									args.getPlayer().sendMessage("");
+									args.getPlayer().sendMessage("");
 									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=Bans=-");
 									if (jsonArrayBans.length() > 0) {
 										for (int i = 0; i < jsonArrayBans.length(); i++) {
@@ -1170,24 +1170,6 @@ public class StaffCommands {
 	public void checkData(CommandArgs args) {
 		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "checkdata")) {
 			args.getPlayer().sendMessage(args.getArchrPlayer().getData().toString());
-		}
-	}
-	
-	@Command(name = "goto", usage = "/goto playername") 
-	public void gotoPlayer(CommandArgs args) {
-		if (PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Helper)) {
-			if (args.getArgs().length == 1) {
-				ProxiedPlayer pp = ProxyServer.getInstance().getPlayer(args.getArgs(0));
-				if (pp != null) {
-					NetworkCommands.sendPlayerToServer(ProxyServer.getInstance().getPlayer(args.getPlayer().getName()), pp.getServer().getInfo().getName());
-				} else {
-					args.getPlayer().sendMessage(NetworkCore.prefixError + "Player is invalid or not online. Try again later.");
-				}
-			} else {
-				args.getPlayer().sendMessage(NetworkCore.prefixError + args.getCommand().getUsage());
-			}
-		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + "No.");
 		}
 	}
 }

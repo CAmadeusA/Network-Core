@@ -15,7 +15,6 @@
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/network/command/StaffCommands.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/player/PlayerState.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/menu/InventoryS.java
-/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/RawMessage.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/menu/SlotItem.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/Eloable.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/language/Translator.java
@@ -35,6 +34,7 @@
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/network/event/NetworkServerInfoEvents.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/game/GamemodeManager.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/menu/InventoryManager.java
+/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/timing/TickThreeSecondEvent.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/xoreboard/XoreBoardPackets.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/command/BukkitCommand.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/menu/hotbar/HotbarManager.java

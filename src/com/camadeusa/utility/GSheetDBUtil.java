@@ -70,6 +70,7 @@ public class GSheetDBUtil {
 
 	private  final String SPREADSHEET_SERVICE_URL = "https://spreadsheets.google.com/feeds/spreadsheets/private/full";
 	private  SpreadsheetService service;
+	public boolean connected = false;
 
 	String sheetname;
 	String worksheetname;
@@ -101,6 +102,7 @@ public class GSheetDBUtil {
 
 		   service = new SpreadsheetService("data");
 		   service.setOAuth2Credentials(credential);
+		   connected = true;
 	}
 
 	private SpreadsheetEntry getSpreadsheet(String sheetName) {
