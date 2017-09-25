@@ -10,48 +10,37 @@ import org.bukkit.event.Listener;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.GamemodeManager;
 import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.timing.TickQuarterSecondEvent;
 import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.timing.TickThreeSecondEvent;
+import com.camadeusa.utility.subservers.event.SubserversEvents;
+import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
 import com.google.gdata.data.spreadsheet.ListEntry;
+
+import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 
 public class NetworkServerInfoEvents implements Listener {
 	public static Map<String, Map<String, Object>> serverInfoCache = new HashMap<>();
+
 	@EventHandler
-	public void onTickThreeSecondEvent(TickThreeSecondEvent event) {
+	public void onTickSecondEvent(TickThreeSecondEvent event) {
 		GamemodeManager.currentplayers = ArchrPlayer.getOnlinePlayers().size();
-		
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-				try {
-					ListEntry row = NetworkCore.getInstance().serversDB.getRow("uuid",
-							NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getString("uuid"));
-					Map<String, Object> data = NetworkCore.getInstance().serversDB.getRowData(row);
-					if (Integer.parseInt(data.get("onlineplayers").toString()) != GamemodeManager.currentplayers) {
-						data.put("onlineplayers", GamemodeManager.currentplayers);
-						NetworkCore.getInstance().serversDB.updateRow(row, data);
-						row.update();
-					}
-					if (Boolean.parseBoolean(data.get("serveronline").toString()) == false) {
-						data.put("serveronline", true);
-						NetworkCore.getInstance().serversDB.updateRow(row, data);
-						row.update();
-					}
-					
-					for (Map<String, Object> dd : NetworkCore.getInstance().serversDB.queryData("serveronline == true")) {
-						serverInfoCache.put(dd.get("uuid").toString(), dd);						
-					}
-					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
 	}
-	
+
 	@EventHandler
 	public void onTickSecond(TickSecondEvent event) {
 		ArchrPlayer.correctArchrPlayerList();
+
+	}
+
+	@EventHandler
+	public void onTickQuarterSecond(TickQuarterSecondEvent event) {
+		if (SubserversEvents.connected) {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(
+					new PacketGetServerConfigInfo(SubAPI.getInstance().getSubDataNetwork().getName(), json -> {
+					}));
+		}
+
 	}
 
 }

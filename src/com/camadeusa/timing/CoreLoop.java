@@ -6,6 +6,7 @@ import com.camadeusa.NetworkCore;
 import com.camadeusa.player.ArchrPlayer;
 
 public class CoreLoop {
+	private double lastQuarterTick = 0;
 	private double lastTick = 0;
 	private double lastThreeTick = 0;
 	private double lastTenTick = 0;
@@ -15,6 +16,10 @@ public class CoreLoop {
 			@Override
 			public void run() {
 				update();
+				if (System.currentTimeMillis() > (lastQuarterTick + 250)) {
+					Bukkit.getServer().getPluginManager().callEvent(new TickQuarterSecondEvent("tick"));
+					lastQuarterTick = System.currentTimeMillis();
+				}
 				if (System.currentTimeMillis() > (lastTick + 1000)) {
 					Bukkit.getServer().getPluginManager().callEvent(new TickSecondEvent("tick"));
 					lastTick = System.currentTimeMillis();

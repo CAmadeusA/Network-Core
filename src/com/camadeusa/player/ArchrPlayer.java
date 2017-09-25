@@ -188,15 +188,11 @@ public class ArchrPlayer implements Listener {
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {
+		//Bukkit.broadcastMessage("ding");
 		ArchrPlayer aP = ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString());
-		if (archrPlayerList.contains(aP)) {
-			archrPlayerList.remove(aP);
+		if (PlayerRank.getValueByRank(aP.getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Admin)) {
+			aP.getPlayer().setOp(false);
 		}
-	}
-
-	@EventHandler
-	public void onPlayerKick(PlayerKickEvent event) {
-		ArchrPlayer aP = ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		if (archrPlayerList.contains(aP)) {
 			archrPlayerList.remove(aP);
 		}
@@ -245,48 +241,8 @@ public class ArchrPlayer implements Listener {
 				break;
 			}
 		}
-		
-		
-		if (getOnlinePlayers().size() == NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
-			ArrayList<ArchrPlayer> poolToKickFrom = new ArrayList<>();
-			ArchrPlayer playerToKick = null;
-			for (PlayerState ps : PlayerState.valuesOrderedForKickOrder()) {
-				for (PlayerRank pr : PlayerRank.valuesordered()) {
-					if (PlayerRank.getValueByRank(pr) < PlayerRank.getValueByRank(
-							PlayerRank.fromString(dataCache.get(event.getUniqueId().toString()).get("rank").toString())) && PlayerState.fromString(dataCache.get(event.getUniqueId().toString()).get("state").toString()) != PlayerState.GHOST) {
-
-						for (ArchrPlayer ap : getOnlinePlayers()) {
-							if (pr == ap.getPlayerRank() && ps == ap.getPlayerState()) {
-								poolToKickFrom.add(ap);
-							}
-						}
-
-						if (poolToKickFrom.size() > 0) {
-							playerToKick = poolToKickFrom.get(Random.instance().nextInt(poolToKickFrom.size()));
-							break;
-						}
-					} else if (PlayerState.fromString(dataCache.get(event.getUniqueId().toString()).get("state").toString()) == PlayerState.GHOST) {
-						event.allow();
-						return;
-					}
-
-				}
-				if (playerToKick != null) {
-					break;
-				}
-			}
-			if (playerToKick != null) {
-				final ArchrPlayer pp = playerToKick;
-				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						pp.getPlayer().kickPlayer(NetworkCore.prefixStandard + ChatManager.translateFor("en", pp, "You were kicked to make room for a player with a higher rank. We appologize for the inconvienence."));
-					}
-				});
-			} else {
-				event.disallow(Result.KICK_OTHER, "This server is full. Please Try again later.");
-			}
-
+		if (!kickPlayerForRoom(dataCache.get(event.getUniqueId().toString()))) {
+			event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + "This server is full, sorry for the inconvienence.");
 		}
 
 	}
@@ -330,6 +286,9 @@ public class ArchrPlayer implements Listener {
 		aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));
 		aP.setPlayerstate(PlayerState.fromString(aP.getData().get("state").toString()));
 		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
+		if (PlayerRank.getValueByRank(aP.getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Admin)) {
+			aP.getPlayer().setOp(true);
+		}
 		archrPlayerList.add(aP);
 		event.setJoinMessage("");
 
@@ -344,6 +303,52 @@ public class ArchrPlayer implements Listener {
 				}
 			}
 			archrPlayerList.removeAll(toRemove);
+		}
+	}
+	
+	public static boolean kickPlayerForRoom(Map<String, Object> dataCache) {
+		if (getOnlinePlayers().size() == NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
+			ArrayList<ArchrPlayer> poolToKickFrom = new ArrayList<>();
+			ArchrPlayer playerToKick = null;
+			for (PlayerState ps : PlayerState.valuesOrderedForKickOrder()) {
+				for (PlayerRank pr : PlayerRank.valuesordered()) {
+					if (PlayerRank.getValueByRank(pr) < PlayerRank.getValueByRank(
+							PlayerRank.fromString(dataCache.get("rank").toString())) && PlayerState.fromString(dataCache.get("state").toString()) != PlayerState.GHOST) {
+
+						for (ArchrPlayer ap : getOnlinePlayers()) {
+							if (pr == ap.getPlayerRank() && ps == ap.getPlayerState()) {
+								poolToKickFrom.add(ap);
+							}
+						}
+
+						if (poolToKickFrom.size() > 0) {
+							playerToKick = poolToKickFrom.get(Random.instance().nextInt(poolToKickFrom.size()));
+							break;
+						}
+					} else if (PlayerState.fromString(dataCache.get("state").toString()) == PlayerState.GHOST) {
+						return true;
+					}
+
+				}
+				if (playerToKick != null) {
+					break;
+				}
+			}
+			if (playerToKick != null) {
+				final ArchrPlayer pp = playerToKick;
+				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
+					@Override
+					public void run() {
+						pp.getPlayer().kickPlayer(NetworkCore.prefixStandard + ChatManager.translateFor("en", pp, "You were kicked to make room for a player with a higher rank. We appologize for the inconvienence."));
+					}
+				});
+				return true;
+			} else {
+				return false;
+			}
+
+		} else {
+			return true;			
 		}
 	}
 

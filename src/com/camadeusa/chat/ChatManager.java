@@ -50,6 +50,15 @@ public class ChatManager implements Listener {
 		}
 		return null;
 	}
+	public static String translateFor(String senderLang, String locale, String message) {
+		String language = locale.substring(0, 2);
+		try {
+			return Translator.translateText(senderLang, language, message);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	private void sendMessage(ArchrPlayer sender, ArchrPlayer reciever, String message) {
 		if (sender != null) {

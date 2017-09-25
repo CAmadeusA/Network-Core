@@ -22,6 +22,7 @@ import com.google.gdata.data.spreadsheet.ListEntry;
 
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import protocolsupport.libs.org.apache.commons.lang3.StringUtils;
 
 public class StaffCommands {
 
@@ -83,6 +84,71 @@ public class StaffCommands {
 			}
 		} else {
 			args.getPlayer().sendMessage(NetworkCore.prefixError + args.getCommand().getUsage());
+		}
+	}
+	
+	@Command(name = "pardon", aliases = {"unban", "deban", "desban"}, usage = "/pardon {name} {ban/mute} {entry} {reason}")
+	public void pardonPlayer(CommandArgs args) {
+		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "pardon")) {
+			if (args.getArgs().length < 3) {
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + args.getCommand().getUsage());
+				return;
+			}
+			Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					String uuid = UUIDFetcher.getUUID(args.getArgs(0)).toString();
+					try {
+						ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
+						Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
+						
+						String identifier = "fuck";
+						
+						if (args.getArgs(1).contains("ban")) {
+							identifier = "ban";
+						} else if (args.getArgs(1).contains("mute")) {
+							identifier = "mute";
+						} else {
+							args.getPlayer().sendMessage(NetworkCore.prefixError + "Argument 2 needs to be either ban or mute. See usage: ");
+							args.getPlayer().sendMessage(NetworkCore.prefixError + args.getCommand().getUsage());
+						}
+						
+						JSONArray puns = new JSONArray(data.get(identifier + "s").toString());
+						
+						if (StringUtils.isNumeric(args.getArgs(2))) {
+							for (int i = 0; i < puns.length(); i++) {
+								if (i + 1 == Integer.parseInt(args.getArgs(2))) {
+									JSONObject pun = new JSONObject(puns.get(i).toString());
+									puns.remove(i);
+									pun.put("pardonname", args.getPlayer().getName());
+									pun.put("pardontime", System.currentTimeMillis());
+									String reason = "";
+									for (int j = 3; j < args.getArgs().length; j++) {
+										reason = reason + " " + args.getArgs(j);
+									}
+									pun.put("pardonreason", reason);
+									data.put(identifier + "expiredate", 0);
+									puns.put(pun);
+									break;
+								}
+							}
+							
+							data.put(identifier + "s",  puns);
+							NetworkCore.getInstance().playersDB.updateRow(row, data);
+							row.update();
+						} else {
+							args.getPlayer().sendMessage(NetworkCore.prefixError + "Argument 3 needs to be an integer, specifying which entry to select.");
+						}
+						
+						
+					} catch (Exception e) {
+						args.getPlayer().sendMessage(NetworkCore.prefixError + "That player does not exist in our database... Please contact a developer to double check this result if you believe this is an error.");
+					}
+					
+					
+				}
+			});
+			
 		}
 	}
 
@@ -918,6 +984,23 @@ public class StaffCommands {
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
 									+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+							
+							if (entry.has("pardonname")) {
+								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
+										+ entry.getString("pardonname"));
+							}
+							if (entry.has("pardontime")) {
+								args.getPlayer()
+										.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
+												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+														new Date(entry.getLong("pardontime"))));
+
+							}
+							if (entry.has("pardonreason")) {
+								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
+										+ entry.getString("pardonreason"));
+							}
+							
 						}
 					} else {
 						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -942,6 +1025,23 @@ public class StaffCommands {
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
 									+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
+							
+							if (entry.has("pardonname")) {
+								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
+										+ entry.getString("pardonname"));
+							}
+							if (entry.has("pardontime")) {
+								args.getPlayer()
+										.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
+												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+														new Date(entry.getLong("pardontime"))));
+
+							}
+							if (entry.has("pardonreason")) {
+								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
+										+ entry.getString("pardonreason"));
+							}
+							
 						}
 					} else {
 						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1006,6 +1106,23 @@ public class StaffCommands {
 																.format(new Date(time + amount)));
 										args.getPlayer().sendMessage(
 												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
+										
+										if (entry.has("pardonname")) {
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
+													+ entry.getString("pardonname"));
+										}
+										if (entry.has("pardontime")) {
+											args.getPlayer()
+													.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
+															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+																	new Date(entry.getLong("pardontime"))));
+
+										}
+										if (entry.has("pardonreason")) {
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
+													+ entry.getString("pardonreason"));
+										}
+										
 									}
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1034,6 +1151,23 @@ public class StaffCommands {
 																.format(new Date(time + amount)));
 										args.getPlayer().sendMessage(
 												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
+										
+										if (entry.has("pardonname")) {
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
+													+ entry.getString("pardonname"));
+										}
+										if (entry.has("pardontime")) {
+											args.getPlayer()
+													.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
+															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+																	new Date(entry.getLong("pardontime"))));
+
+										}
+										if (entry.has("pardonreason")) {
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
+													+ entry.getString("pardonreason"));
+										}
+										
 									}
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1077,6 +1211,7 @@ public class StaffCommands {
 
 											args.getPlayer().sendMessage(
 													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
+											
 
 										}
 									} else {
@@ -1107,6 +1242,23 @@ public class StaffCommands {
 																	.format(new Date(time + amount)));
 											args.getPlayer().sendMessage(
 													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
+											
+											if (entry.has("pardonname")) {
+												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
+														+ entry.getString("pardonname"));
+											}
+											if (entry.has("pardontime")) {
+												args.getPlayer()
+														.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
+																+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+																		new Date(entry.getLong("pardontime"))));
+
+											}
+											if (entry.has("pardonreason")) {
+												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
+														+ entry.getString("pardonreason"));
+											}
+											
 										}
 									} else {
 										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1135,6 +1287,22 @@ public class StaffCommands {
 																	.format(new Date(time + amount)));
 											args.getPlayer().sendMessage(
 													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
+											
+											if (entry.has("pardonname")) {
+												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
+														+ entry.getString("pardonname"));
+											}
+											if (entry.has("pardontime")) {
+												args.getPlayer()
+														.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
+																+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
+																		new Date(entry.getLong("pardontime"))));
+
+											}
+											if (entry.has("pardonreason")) {
+												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
+														+ entry.getString("pardonreason"));
+											}
 										}
 									} else {
 										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
@@ -1162,6 +1330,12 @@ public class StaffCommands {
 		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "setstate")) {
 			ArchrPlayer player = ArchrPlayer.getArchrPlayerByUUID(args.getPlayer().getUniqueId().toString());
 			PlayerState state = PlayerState.fromString(args.getArgs(0));
+			if (state != PlayerState.GHOST) {
+				if (!ArchrPlayer.kickPlayerForRoom(args.getArchrPlayer().getData())) {
+					player.getPlayer().kickPlayer(NetworkCore.prefixError
+							+ "There is no room for you to switch your state at this time. Please try again later.");
+				}
+			}
 			if (state != null) {
 				player.setPlayerstate(state);
 			}
@@ -1176,10 +1350,12 @@ public class StaffCommands {
 						data.put("state", state.toString());
 						NetworkCore.getInstance().playersDB.updateRow(row, data);
 						row.update();
-					} catch (Exception e) {}
+						
+						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "State set...");
+					} catch (Exception e) {
+					}
 				}
 			});
-			
 		}
 	}
 

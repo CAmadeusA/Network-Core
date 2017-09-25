@@ -11,6 +11,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.TabCompleteEvent;
 
 import com.camadeusa.NetworkCore;
+import com.camadeusa.chat.ChatManager;
 import com.camadeusa.player.ArchrPlayer;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.player.PlayerState;
@@ -56,9 +57,8 @@ public class NetworkCommandEvents implements Listener {
 		ArchrPlayer aP = ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		if (!PlayerRank.canUseCommand(aP.getPlayerRank(), command)) {
 			event.setCancelled(true);
-			event.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have permission to use this command. If you believe this to be an error, please contact the administration");
-		}
-		
+			aP.getPlayer().sendMessage(ChatManager.translateFor("en", aP, NetworkCore.prefixError + "You do not have permission to use this command. If you believe this to be an error, please contact the administration"));
+		}		
 	}
 
 }

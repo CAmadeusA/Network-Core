@@ -256,6 +256,8 @@ public enum PlayerRank {
 			ArrayList<String> commandsp = getCommandsAvailable(PlayerRank.Banned);
 			commandsp.add("help");
 			commandsp.add("?");
+			commandsp.add("join");
+			commandsp.add("hub");
 			return commandsp;
 		case Donator1:
 			ArrayList<String> commandsd1 = getCommandsAvailable(PlayerRank.Player);
@@ -304,7 +306,7 @@ public enum PlayerRank {
 			return commandsM;
 		case SrMod:
 			ArrayList<String> commandsSM = getCommandsAvailable(PlayerRank.Mod);
-			// commands.add("foobar");
+			commandsSM.add("pardon");
 			return commandsSM;
 		case Admin:
 			ArrayList<String> commandsA = getCommandsAvailable(PlayerRank.SrMod);
@@ -332,8 +334,6 @@ public enum PlayerRank {
 			commandsDD.add("ver");
 			commandsDD.add("version");
 			// Bukkit Commands
-			commandsDD.add("deop");
-			commandsDD.add("op");
 			commandsDD.add("gamemode");
 			commandsDD.add("list");
 			commandsDD.add("stop");
@@ -348,6 +348,7 @@ public enum PlayerRank {
 			commandsDD.add("setstate");
 			commandsDD.add("generaterandomdata");
 			commandsDD.add("cmds");
+			commandsDD.add("sub");
 			return commandsDD;
 		case Owner:
 			ArrayList<String> commandsO = getCommandsAvailable(PlayerRank.Developer);

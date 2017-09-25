@@ -51,55 +51,6 @@ public class GamemodeManager {
 				e.printStackTrace();
 			}
 		}
-
-		// Logging servers to DB.
-		Bukkit.getScheduler().scheduleAsyncDelayedTask(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-				try {
-					ListEntry row = NetworkCore.getInstance().serversDB.getRow("uuid", serveruuid);
-					Map<String, Object> data = NetworkCore.getInstance().serversDB.getRowData(row);
-					boolean changed = false;
-					if (!data.get("uuid").toString().equals(serveruuid)) {
-						data.put("uuid", serveruuid);
-						changed = true;
-					}
-					if (!data.get("server").toString().equals(server)) {
-						data.put("server", server);
-						changed = true;
-					}
-					if (!data.get("gamemode").toString().equals(gamemode.getValue())) {
-						data.put("gamemode", gamemode.getValue());
-						changed = true;
-					}
-					if (Integer.parseInt(data.get("maxplayers").toString()) != maxplayers) {
-						data.put("maxplayers", maxplayers);
-					}
-					if (Integer.parseInt(data.get("onlineplayers").toString()) != currentplayers) {
-						data.put("onlineplayers", currentplayers);
-					}
-					if (Boolean.parseBoolean(data.get("serveronline").toString()) != true) {
-						data.put("serveronline", true);
-					}
-					
-					NetworkCore.getInstance().serversDB.updateRow(row, data);
-					row.update();
-					
-				} catch (Exception e) {
-					Map<String, Object> data = new HashMap<>();
-					data.put("uuid", serveruuid);
-					data.put("server", server);
-					data.put("gamemode", gamemode.getValue());
-					data.put("maxplayers", maxplayers);
-					data.put("onlineplayers", currentplayers);
-					data.put("serveronline", true);
-					
-					NetworkCore.getInstance().serversDB.addData(data);
-				}
-			}
-		}, 20);
-		
-		
 	}
 
 	public void activateGametype() {

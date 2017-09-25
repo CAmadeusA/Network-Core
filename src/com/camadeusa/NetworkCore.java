@@ -1,7 +1,5 @@
 package com.camadeusa;
 
-import java.util.Map;
-
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,8 +15,10 @@ import com.camadeusa.utility.ConfigUtil;
 import com.camadeusa.utility.GSheetDBUtil;
 import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.menu.InventoryManager;
-import com.google.gdata.data.spreadsheet.ListEntry;
-
+import com.camadeusa.utility.subservers.event.SubserversEvents;
+import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
+import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
+import net.ME1312.SubServers.Client.Bukkit.Network.SubDataClient;
 import protocolsupport.api.ProtocolSupportAPI;
 import protocolsupport.api.ProtocolVersion;
 
@@ -26,10 +26,9 @@ public class NetworkCore extends JavaPlugin {
 	static NetworkCore instance;
 	static ConfigUtil configManager;
 	static GamemodeManager gamemodeManager;
-	public static String prefixStandard = ChatColor.BOLD + "" + ChatColor.DARK_GRAY + "[" + ChatColor.BLUE + "AR" + ChatColor.GOLD + "CHR" + ChatColor.DARK_GRAY + "]" + ChatColor.WHITE + ": " + ChatColor.RESET;
-	public static String prefixError = ChatColor.BOLD + "" + ChatColor.DARK_GRAY + "[" + ChatColor.DARK_RED + "AR" + ChatColor.GOLD + "CHR" + ChatColor.DARK_GRAY + "]" + ChatColor.WHITE + ": " + ChatColor.RESET;
+	public static String prefixStandard = ChatColor.BOLD + "" + ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "Volt" + ChatColor.BLUE + "Cube" + ChatColor.DARK_GRAY + "]" + ChatColor.WHITE + ": " + ChatColor.RESET;
+	public static String prefixError = ChatColor.BOLD + "" + ChatColor.DARK_GRAY + "[" + ChatColor.DARK_RED + "Volt" + ChatColor.RED + "Cube" + ChatColor.DARK_GRAY + "]" + ChatColor.WHITE + ": " + ChatColor.RESET;
 	public GSheetDBUtil playersDB;
-	public GSheetDBUtil serversDB;
 	
 	@Override
 	public void onEnable() {
@@ -45,7 +44,6 @@ public class NetworkCore extends JavaPlugin {
 		CoreLoop coreloop = new CoreLoop();
 		coreloop.init();
 		playersDB = new GSheetDBUtil("archrplayers", "players");
-		serversDB = new GSheetDBUtil("archrservers", "servers");
 		CommandFramework frameWork = new CommandFramework(this);
 		frameWork.registerCommands(new StaffCommands());
 		frameWork.registerCommands(new NetworkCommands());
@@ -57,6 +55,11 @@ public class NetworkCore extends JavaPlugin {
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_6_2);
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_6_4);
 		
+		SubDataClient.registerPacket(new PacketGetServerConfigInfo(), "PacketGetServerConfigInfo");
+		SubDataClient.registerPacket(PacketGetServerConfigInfo.class, "PacketGetServerConfigInfo");
+		SubDataClient.registerPacket(new PacketDownloadServerConfigInfo(), "PacketDownloadServerConfigInfo");
+		SubDataClient.registerPacket(PacketDownloadServerConfigInfo.class, "PacketDownloadServerConfigInfo");
+		
 	}
 	
 	public void registerEvents() {
@@ -65,35 +68,12 @@ public class NetworkCore extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new NetworkCommandEvents(), this);
 		getServer().getPluginManager().registerEvents(new InventoryManager(), this);
 		getServer().getPluginManager().registerEvents(new NetworkServerInfoEvents(), this);
+		getServer().getPluginManager().registerEvents(new SubserversEvents(), this);
 		}
 	
 	
 	@Override
 	public void onDisable() {
-		ListEntry row;
-		try {
-			row = NetworkCore.getInstance().serversDB.getRow("uuid",
-					NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getString("uuid"));
-			Map<String, Object> data = NetworkCore.getInstance().serversDB.getRowData(row);
-			boolean changed = false;
-			if (Integer.parseInt(data.get("onlineplayers").toString()) > 0) {
-				data.put("onlineplayers", 0);
-				changed = true;
-			}
-			if (Boolean.parseBoolean(data.get("serveronline").toString()) == true) {
-				data.put("serveronline", false);
-				changed = true;
-			}
-			
-			if (changed) {
-				NetworkCore.getInstance().serversDB.updateRow(row, data);
-				row.update();
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 		super.onDisable();
 	}
 	
