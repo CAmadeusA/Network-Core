@@ -3,6 +3,7 @@ package com.camadeusa.module.network.event;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -57,8 +58,14 @@ public class NetworkCommandEvents implements Listener {
 		ArchrPlayer aP = ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		if (!PlayerRank.canUseCommand(aP.getPlayerRank(), command)) {
 			event.setCancelled(true);
-			aP.getPlayer().sendMessage(ChatManager.translateFor("en", aP, NetworkCore.prefixError + "You do not have permission to use this command. If you believe this to be an error, please contact the administration"));
-		}		
+			aP.getPlayer().sendMessage(ChatManager.translateFor("en", aP, NetworkCore.prefixError + "You do not have permission to use this command. If you believe this to be an error, please contact the administration."));
+		}
+		if (!aP.getData().getString("authenticated").equalsIgnoreCase("true")) {
+			if (!command.equalsIgnoreCase("authenticate")) {
+				event.setCancelled(true);
+				aP.getPlayer().sendMessage(ChatManager.translateFor("en", aP, NetworkCore.prefixError + "You are not authenticated to use this command. "));
+			}
+		}
 	}
 
 }

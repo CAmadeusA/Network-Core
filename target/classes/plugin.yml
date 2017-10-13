@@ -1,6 +1,6 @@
-name: Archr
+name: VoltCore
 version: 0.01
-description: Network
+description: Voltcore-Network
 author: CAmadeusA
 # All rights reserved
 main: com.camadeusa.NetworkCore

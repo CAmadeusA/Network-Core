@@ -17,6 +17,7 @@ import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
 import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
+import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 
 import mkremins.fanciful.FancyMessage;
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
@@ -48,7 +49,10 @@ public class NetworkCommands {
 			return;
 		}
 		page = page - 1;
-		for (int i = (page * lineHeight); i < ((page + 1) * lineHeight); i++) {
+		if (page < 0) {
+			page = 0;
+		}
+		for (int i = (page * lineHeight); i < ((page + 1) * lineHeight) + 1; i++) {
 			if (CommandFramework.getCommandsByString().contains(commands.get(i))) {
 				String text = (Object) ChatColor.BOLD + "" + (Object) ChatColor.GOLD + "/" + commands.get(i);
 				new FancyMessage(text).tooltip(CommandFramework.getCommand(commands.get(i)).usage())
@@ -83,7 +87,7 @@ public class NetworkCommands {
 				break;
 			}
 		}
-
+		
 		if (selected != null) {
 			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getArchrPlayer(),
 					NetworkCore.prefixStandard + "Searching for servers of type: " + selected.getValue()));
@@ -169,11 +173,100 @@ public class NetworkCommands {
 				}
 			}, 20);
 
+		} else {
+			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getArchrPlayer(), "That is not a kind of server we support. Please try again."));
 		}
 	}
 	
 	@Command(name = "hub", aliases = { "lobby" }, usage = "/hub")
 	public void hub(CommandArgs args) {
 		Bukkit.getServer().dispatchCommand(args.getSender(), "join hub");
+	}
+	
+	@Command(name = "changePassword", usage = "/changePassword {Current Password} {New Password}")
+	public void changePassword(CommandArgs args) {
+		if (args.getArgs().length < 1) {
+			args.getPlayer().chat("/changePassword <Enter your previous password: > <Enter your NEW password>");
+		} else {
+			if (!args.getArchrPlayer().getData().getString("password").equals(args.getArgs(0))) {
+				args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect password.");
+				return;
+			} 
+			args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + args.getArchrPlayer().getData().getString("password") + ", and is now: " + args.getArgs(1));
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", args.getArgs(1)));
+			
+		}
+	}
+	
+	@Command(name = "setPasswordPromptOnLogin", usage = "/setPasswordPromptOnLogin {true/false}")
+	public void setpwpol(CommandArgs args) {
+		if (args.getArgs().length < 1) {
+			args.getPlayer().chat("/setPasswordPromptOnLogin <Enter Value: (true/false)>");
+		} else {
+			if (args.getArgs(0).equalsIgnoreCase("true") || args.getArgs(0).equalsIgnoreCase("false")) {
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "requirepwonlogin", args.getArgs(0)));
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Changed Value. Thank you!");
+			} else {
+				args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect input, please try again.");
+				args.getPlayer().chat("/setPasswordPromptOnLogin <Enter Value: (true/false)>");
+			}
+				
+		}
+	}
+	
+	@Command(name = "authenticate", usage = "/authenticate")
+	public void auth(CommandArgs args) {
+		if (args.getArchrPlayer().getData().has("password")) {
+			if (args.getArgs().length < 1) {
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getArchrPlayer().getPlayer().getUniqueId().toString(), "authenticated", "false"));
+				args.getPlayer().chat("/authenticate <Input Your Password: >");
+			} else {
+				if (args.getArgs(0).equals(args.getArchrPlayer().getData().getString("password"))) {
+					
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getArchrPlayer().getPlayer().getUniqueId().toString(), "authenticated", "true"));
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Authenticated.");
+				} else {
+					args.getPlayer().sendMessage(NetworkCore.prefixError + "Password incorrect. Please Try again.");
+					args.getPlayer().chat("/authenticate <Input Your Password: >");
+					return;
+				}
+			}
+
+		} else {
+			args.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have a password.");
+			return;
+		}
+	}
+	
+	@Command(name = "setuppassword", usage = "/setuppassword")
+	public void setupPassword(CommandArgs args) {
+			if (!args.getArchrPlayer().getData().has("password")) {
+				if (args.getArgs().length < 1) {
+					args.getPlayer().chat("/setupPassword <This password is unique to this network, and is case sensitive. Do you understand? (Y/N)?> <Do you want the server to require your password on login? (Y/N)?> <Input Your Password: >");
+				} else {
+					if (args.getArgs(0).equalsIgnoreCase("y")) {
+						if (args.getArgs(1).equalsIgnoreCase("y")) {
+							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "requirepwonlogin", "TRUE"));
+						} else if (args.getArgs(1).equalsIgnoreCase("n")) {
+							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "requirepwonlogin", "FALSE"));							
+						} else {
+							args.getPlayer().sendMessage(NetworkCore.prefixError + "Password setup failed. You are dumb.");
+							return;
+						}
+						
+						SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", args.getArgs(2)));
+						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Password setup succeeded. Your password is: " + args.getArgs(2));
+						args.getArchrPlayer().reloadPlayerData();
+					} else {
+						args.getPlayer().sendMessage(NetworkCore.prefixError + "Password setup failed. You are dumb.");
+						return;
+					}
+				}
+
+			} else {
+				args.getPlayer().sendMessage(NetworkCore.prefixError + "You already have a password.");
+				return;
+			}
+		
 	}
 }

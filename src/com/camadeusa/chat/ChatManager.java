@@ -22,23 +22,35 @@ import protocolsupport.api.ProtocolSupportAPI;
 public class ChatManager implements Listener {
 	@EventHandler
 	public void onChat(AsyncPlayerChatEvent event) {
-		String senderLang = event.getPlayer().spigot().getLocale().substring(0, 2);
-		long l = Long.parseLong(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()).getData().get("muteexpiredate").toString());
+		if (!event.isCancelled()) {
+			String senderLang = event.getPlayer().spigot().getLocale().substring(0, 2);
+			long l = Long.parseLong(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString())
+					.getData().get("muteexpiredate").toString());
 			Date date = new Date(l);
 			String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-		if (l > System.currentTimeMillis()) {
-			event.getPlayer().sendMessage(NetworkCore.prefixStandard + translateFor("en", ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()), "You are muted until:") + " " + myDateStr);
-		} else {
-			ArchrPlayer.getArchrPlayerList().forEach(aP -> {
-				if (!event.getPlayer().spigot().getLocale().equalsIgnoreCase(aP.getPlayer().spigot().getLocale())) {
-					sendMessage(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()), aP, event.getMessage()
-							+ ChatColor.DARK_GRAY + " (" + translateFor(senderLang, aP, event.getMessage()) + ") ");
-				} else {
-					sendMessage(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()), aP, event.getMessage());
-				}
-			});
+			if (l > System.currentTimeMillis()) {
+				event.getPlayer()
+						.sendMessage(NetworkCore.prefixStandard + translateFor("en",
+								ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()),
+								"You are muted until:") + " " + myDateStr);
+			} else {
+				ArchrPlayer.getArchrPlayerList().forEach(aP -> {
+					if (PlayerState.canSee(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString())
+							.getPlayerState(), aP.getPlayerState())) {
+
+						if (!event.getPlayer().spigot().getLocale()
+								.equalsIgnoreCase(aP.getPlayer().spigot().getLocale())) {
+							sendMessage(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()),
+									aP, event.getMessage(), true);
+						} else {
+							sendMessage(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()),
+									aP, event.getMessage(), false);
+						}
+					}
+				});
+			}
+			event.setCancelled(true);
 		}
-		event.setCancelled(true);
 	}
 
 	public static String translateFor(String senderLang, ArchrPlayer aP, String message) {
@@ -60,7 +72,7 @@ public class ChatManager implements Listener {
 		return null;
 	}
 
-	private void sendMessage(ArchrPlayer sender, ArchrPlayer reciever, String message) {
+	private void sendMessage(ArchrPlayer sender, ArchrPlayer reciever, String message, boolean translate) {
 		if (sender != null) {
 			if (PlayerState.canSee(sender.getPlayerState(), reciever.getPlayerState())) {
 				ArrayList<FancyMessage> info = new ArrayList<>();
@@ -74,9 +86,25 @@ public class ChatManager implements Listener {
 				if (PlayerRank.getValueByRank(reciever.getPlayerRank()) >= PlayerRank
 						.getValueByRank(PlayerRank.Helper)) {
 					info.add(new FancyMessage().text("You can click this name to lookup our records on this player.").color(ChatColor.GRAY));
-					info.add(new FancyMessage().text("# Bans: ").color(ChatColor.GOLD).then(new JSONArray(sender.getData().get("bans").toString()).length() + ""));
-					info.add(new FancyMessage().text("# Kicks: ").color(ChatColor.GOLD).then(new JSONArray(sender.getData().get("kicks").toString()).length() + ""));
-					info.add(new FancyMessage().text("# Mutes: ").color(ChatColor.GOLD).then(new JSONArray(sender.getData().get("mutes").toString()).length() + ""));
+					
+					if (sender.getData().has("bans")) {
+						info.add(new FancyMessage().text("# Bans: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("bans").length() + ""));						
+					} else {
+						info.add(new FancyMessage().text("# Bans: ").color(ChatColor.GOLD).then("0"));												
+					}
+					
+					if (sender.getData().has("kicks")) {
+						info.add(new FancyMessage().text("# Kicks: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("kicks").length() + ""));
+					} else {						
+						info.add(new FancyMessage().text("# Kicks: ").color(ChatColor.GOLD).then("0"));
+					}
+
+					if (sender.getData().has("mutes")) {
+						info.add(new FancyMessage().text("# Mutes: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("mutes").length() + ""));
+					} else {						
+						info.add(new FancyMessage().text("# Mutes: ").color(ChatColor.GOLD).then("0"));
+					}
+					
 					fm.suggest("/lookup " + sender.getPlayer().getName());
 					
 					if (PlayerRank.getValueByRank(reciever.getPlayerRank()) >= PlayerRank
@@ -84,7 +112,16 @@ public class ChatManager implements Listener {
 						info.add(new FancyMessage().text("IP Address: ").color(ChatColor.GOLD).then(sender.getData().get("ipaddress").toString()));
 					}
 				}
-					fm.formattedTooltip(info).then(message).send(reciever.getPlayer());
+				
+				if (translate) {
+					
+				ArrayList<FancyMessage> translation = new ArrayList<>();
+				translation.add(new FancyMessage().text(NetworkCore.prefixStandard + translateFor("en", reciever, "Attempting Translation on this text. This may not be 100% accurate.")));
+				translation.add(new FancyMessage().text(ChatColor.GOLD + translateFor(sender.getPlayer().spigot().getLocale().substring(0,2), reciever, message)));
+				fm.formattedTooltip(info).then(message).formattedTooltip(translation).send(reciever.getPlayer());				
+				} else {
+					fm.formattedTooltip(info).then(message).send(reciever.getPlayer());									
+				}
 			}
 		} else {
 			reciever.getPlayer().sendMessage(NetworkCore.prefixError + "" + ChatColor.DARK_RED + "BROADCAST: CONSOLE" + ChatColor.RESET + "> " + message);

@@ -7,6 +7,7 @@ import org.bukkit.event.Listener;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.Module;
+import com.camadeusa.module.game.mcow.MCOWModule;
 import com.camadeusa.module.hub.HubModule;
 
 public class ModuleManager {
@@ -14,11 +15,11 @@ public class ModuleManager {
 	public ArrayList<? super Module> modulesToRegister = new ArrayList<>();
 
 	public ModuleManager() {
-		gatherModules();	
 	}
 	
-	public HashMap<String, ? super Module> gatherModules() {
+	public HashMap<String, ? super  Module> gatherModules() {
 		modules.put("hubmodule", new HubModule());
+		modules.put("mcowmodule", new MCOWModule());
 		return modules;
 	}
 	

@@ -156,6 +156,75 @@ public enum PlayerRank {
 		}
 		
 	}
+	public static String formatNameByRankWOIcon(ArchrPlayer a) {
+		String colorPrefix = ChatColor.RESET + "";
+		switch (a.getPlayerRank()) {
+		case Owner:
+			colorPrefix = TextUtil.toBoldRainbow(a.getPlayer().getName());
+			break;
+		case Developer:
+			colorPrefix = TextUtil.toRainbow(a.getPlayer().getName());
+			break;
+		case Director: 
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.ITALIC;
+			break;
+		case Admin: 
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
+			break;
+		case SrMod: 
+			colorPrefix = ChatColor.RED + "" + ChatColor.BOLD + "" + ChatColor.ITALIC;
+			break;
+		case Mod:
+			colorPrefix = ChatColor.RED + "" + ChatColor.ITALIC;
+			break;
+		case Helper:
+			colorPrefix = ChatColor.RED + "";
+			break;
+		case Vip:
+			colorPrefix = ChatColor.DARK_PURPLE + "";
+			break;
+		case Friend:
+			colorPrefix = ChatColor.LIGHT_PURPLE + "";
+			break;
+		case Donator7:
+			colorPrefix = ChatColor.AQUA + "";
+			break;
+		case Donator6:
+			colorPrefix = ChatColor.AQUA + "";
+			break;
+		case Donator5:
+			colorPrefix = ChatColor.AQUA + "";
+			break;
+		case Donator4:
+			colorPrefix = ChatColor.GOLD + "";
+			break;
+		case Donator3:
+			colorPrefix = ChatColor.GOLD + "";
+			break;
+		case Donator2:
+			colorPrefix = ChatColor.GOLD + "";
+		case Donator1:
+			colorPrefix = ChatColor.GOLD + "";
+		case Player:
+			colorPrefix = ChatColor.BLUE + "";
+			break;
+		case Banned:
+			colorPrefix = ChatColor.BLACK + "";
+			break;
+		default:
+			break;
+		}
+		if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Player)) {
+			if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Director)) {
+				return (colorPrefix + ChatColor.RESET);			
+				
+			}
+			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);			
+		} else {
+			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);
+		}
+		
+	}
 	
 	public String toString() {
 		switch (this) {
@@ -258,6 +327,10 @@ public enum PlayerRank {
 			commandsp.add("?");
 			commandsp.add("join");
 			commandsp.add("hub");
+			commandsp.add("setuppassword");
+			commandsp.add("authenticate");
+			commandsp.add("setpasswordpromptonlogin");
+			commandsp.add("changepassword");
 			return commandsp;
 		case Donator1:
 			ArrayList<String> commandsd1 = getCommandsAvailable(PlayerRank.Player);
@@ -296,6 +369,8 @@ public enum PlayerRank {
 			commandsH.add("bye");
 			commandsH.add("slap");
 			commandsH.add("lookup");
+			commandsH.add("punish");
+			commandsH.add("openplayermanagmentmenu");
 			return commandsH;
 		case Mod:
 			ArrayList<String> commandsM = getCommandsAvailable(PlayerRank.Helper);

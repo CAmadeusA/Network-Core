@@ -3,7 +3,8 @@ package com.camadeusa.module.game;
 public enum Gamemode {
 	Hub("HUB"),
 	ArenaPVP("ARENAPVP"),
-	OITQ("OITQ");
+	OITQ("OITQ"),
+	MCOW("MCOW");
 	
 	private final String value;
 	
@@ -23,8 +24,10 @@ public enum Gamemode {
 			return ArenaPVP;
 		case "OITQ":
 			return OITQ;
+		case "MCOW":
+			return MCOW;
 		default:
-			return Hub;
+			return null;
 		}
 	}
 }

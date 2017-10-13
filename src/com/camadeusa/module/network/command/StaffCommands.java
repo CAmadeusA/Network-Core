@@ -1,1368 +1,188 @@
 package com.camadeusa.module.network.command;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.bukkit.Material;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.chat.ChatManager;
 import com.camadeusa.player.PlayerRank;
-import com.camadeusa.player.PlayerState;
 import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
 import com.camadeusa.utility.fetcher.UUIDFetcher;
-import com.google.gdata.data.spreadsheet.ListEntry;
+import com.camadeusa.utility.menu.Inventory;
+import com.camadeusa.utility.menu.InventoryRunnable;
+import com.camadeusa.utility.menu.InventoryS;
+import com.camadeusa.utility.menu.SlotItem;
+import com.camadeusa.utility.subservers.packet.PacketPunishPlayer;
+import com.camadeusa.utility.subservers.packet.PacketPunishPlayer.PunishType;
 
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 import protocolsupport.libs.org.apache.commons.lang3.StringUtils;
 
 public class StaffCommands {
 
-	@Command(name = "kick", aliases = { "kik", "boot", "gtfo", "bye", "slap" }, usage = "/kick {playername} {reason}")
-	public void kickPlayer(CommandArgs args) throws Exception {
-		if (args.getArgs().length > 1) {
-			ArchrPlayer kicker = ArchrPlayer.getArchrPlayerByUUID(args.getPlayer().getUniqueId().toString());
-			if (PlayerRank.canUseCommand(kicker.getPlayerRank(), "kick")) {
-				if (Bukkit.getPlayer(args.getArgs(0)).isOnline()) {
+	/*
+	 * StaffCommands#kickPlayer()
+	 * ---
+	 * Makes sure has correct arguments
+	 * makes sure commandsender has permission to use command
+	 * makes sure sender knows password set for this user.
+	 * assembles data necessary to make punishment
+	 * sends punishment packet to be handled by bungee.
+	 * 
+	 */
+	
+	@Command(name = "punish", usage = "/punish")
+	public void punishPlayer(CommandArgs args) {
+		if (PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank()) >= PlayerRank
+				.getValueByRank(PlayerRank.Helper)) {
 
-					ArchrPlayer kicked = ArchrPlayer
-							.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
-					// if they are at least a helper, and the person they are kicking has a lower
-					// rank than them.
-					if (PlayerRank.getValueByRank(kicker.getPlayerRank()) > PlayerRank
-							.getValueByRank(kicked.getPlayerRank())) {
-						if (kicked != null) {
-							String reason = "";
-							for (int i = 1; i < args.getArgs().length; i++) {
-								reason = reason + args.getArgs(i) + " ";
+			if (args.getArgs().length < 1) {
+				args.getPlayer().chat("/punish <What is your password?: (This is secure and will not be shared) > <Who would you like to punish?: (Player Name) > <For what type of punishment?: (kick/ban/mute) > <How Long?: (1-permanent) > <Units of time? (minutes/hours/days/weeks/months/permanent): > <For what reason?: >");
+			} else if (args.getArgs().length > 1) {
+				if (args.getArgs(0).equals(args.getArchrPlayer().getData().getString("password"))) {
+					String uuid = "";
+					if (Bukkit.getPlayer(args.getArgs(1)).isOnline()) {
+						uuid = Bukkit.getPlayer(args.getArgs(1)).getUniqueId().toString();
+					} else if (Bukkit.getOfflinePlayer(args.getArgs(1)).hasPlayedBefore()) {
+						uuid = Bukkit.getOfflinePlayer(args.getArgs(1)).getUniqueId().toString();
+					} else {
+						uuid = UUIDFetcher.getUUID(args.getArgs(1)).toString();
+					}
+					
+					if (!uuid.isEmpty()) {
+						PunishType modifier;
+						if (args.getArgs(2).equalsIgnoreCase("kick") || args.getArgs(2).equalsIgnoreCase("ban") || args.getArgs(2).equalsIgnoreCase("mute")) {
+							switch (args.getArgs(2).toLowerCase()) {
+							case "kick":
+								modifier = PunishType.KICK;
+								break;
+							case "ban":
+								modifier = PunishType.BAN;
+								break;
+							case "mute":
+								modifier = PunishType.MUTE;
+								break;
+								default:
+									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Incorrect punishment type input. "));
+									return;
 							}
-							Map<String, Object> data = ArchrPlayer
-									.getArchrPlayerByUUID(kicked.getPlayer().getUniqueId().toString()).getData();
-							kicked.getPlayer().kickPlayer(reason);
-							JSONArray kicks = new JSONArray((String) data.get("kicks").toString());
-							JSONObject kick = new JSONObject();
-							kick.put("name", kicker.getPlayer().getName());
-							kick.put("kicker", args.getPlayer().getUniqueId().toString());
-							kick.put("reason", reason);
-							kick.put("time", System.currentTimeMillis());
-
-							kicks.put(kick);
-
-							data.put("kicks", kicks);
-
-							Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-								@Override
-								public void run() {
-									try {
-										ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid",
-												kicked.getPlayer().getUniqueId());
-										NetworkCore.getInstance().playersDB.updateRow(row, data);
-										row.update();
-									} catch (Exception e) {
-										e.printStackTrace();
-									}
+							boolean perm = false;
+							int amount = 0;
+							if (StringUtils.isNumeric(args.getArgs(3)) ||  args.getArgs(3).equalsIgnoreCase("permanent")) {
+								if (args.getArgs(3).equalsIgnoreCase("permanent")) {
+									perm = true;
+									amount = 999;
+								} else {
+									amount = Integer.parseInt(args.getArgs(3));
 								}
-							});
+								
+								double mult = 0;
+								
+								switch (args.getArgs(4).toLowerCase()) {
+								case "minutes":
+									mult = (1000 * 60);
+									break;
+								case "hours":
+									mult = (1000 * 60 * 60);
+									break;
+								case "days":
+									mult = (1000 * 60 * 60 * 24);
+									break;
+								case "weeks":
+									mult = (1000 * 60 * 60 * 24 * 7);
+									break;
+								case "months":
+									mult = (1000 * 60 * 60 * 24 * 30);
+									break;							
+								case "permanent":
+									mult = -1;
+									break;
+								default:
+									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Incorrect time units input. "));
+									return;
+										
+								}
+								
+								String reason = "";
+								for (int i = 5; i < args.getArgs().length; i++) {
+									reason = reason + args.getArgs(i) + " ";
+								}
+								
+								if (!reason.isEmpty()) {
+																	
+									if (perm || amount * mult < 0) {
+										SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketPunishPlayer(uuid, modifier, Long.MAX_VALUE, reason, args.getPlayer().getUniqueId().toString()));																				
+									} else {
+										SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketPunishPlayer(uuid, modifier, (long) (System.currentTimeMillis() + (amount * mult)), reason, args.getPlayer().getUniqueId().toString()));										
+									}
+									
+									args.getPlayer().sendMessage("Player " + args.getArgs(1) + " has been given action " + modifier + " until " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(Long.MAX_VALUE));
+									
+								} else {
+									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You must supply a reason."));																								
+								}
+								
+							} else {
+								args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You inputted an amount that was neither numeric or \"permanent\". "));															
+							}
+							
+						} else {
+							args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Invalid Punishment Type Input."));							
 						}
 					} else {
-						args.getPlayer().sendMessage("No.");
+						args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Player could not be found."));
+						
 					}
+					
 				} else {
-					args.getPlayer().sendMessage(NetworkCore.prefixError + "Player is not online. ");
+					args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Invalid Password."));
 				}
-			} else {
-				args.getPlayer()
-						.sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
 			}
+
 		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + args.getCommand().getUsage());
+			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You do not have permission to use this command."));			
 		}
 	}
 	
-	@Command(name = "pardon", aliases = {"unban", "deban", "desban"}, usage = "/pardon {name} {ban/mute} {entry} {reason}")
-	public void pardonPlayer(CommandArgs args) {
-		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "pardon")) {
-			if (args.getArgs().length < 3) {
-				args.getPlayer().sendMessage(NetworkCore.prefixStandard + args.getCommand().getUsage());
-				return;
-			}
-			Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+	@Command(name = "openPlayerManagmentMenu", usage = "/openPlayerManagmentMenu {Player Name}")
+	public void oPMM(CommandArgs args) {
+		if (PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Helper)) {
+			Inventory inv = new Inventory(args.getArgs(0) + "'s Player info:", 3);
+			SlotItem item = new SlotItem("Player Information", args.getArgs(0), 0, Material.HOPPER);
+			inv.addSlotItem(0, item);
+			
+			item.setOnClick(new InventoryRunnable() {
 				@Override
-				public void run() {
-					String uuid = UUIDFetcher.getUUID(args.getArgs(0)).toString();
-					try {
-						ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
-						Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
-						
-						String identifier = "fuck";
-						
-						if (args.getArgs(1).contains("ban")) {
-							identifier = "ban";
-						} else if (args.getArgs(1).contains("mute")) {
-							identifier = "mute";
-						} else {
-							args.getPlayer().sendMessage(NetworkCore.prefixError + "Argument 2 needs to be either ban or mute. See usage: ");
-							args.getPlayer().sendMessage(NetworkCore.prefixError + args.getCommand().getUsage());
-						}
-						
-						JSONArray puns = new JSONArray(data.get(identifier + "s").toString());
-						
-						if (StringUtils.isNumeric(args.getArgs(2))) {
-							for (int i = 0; i < puns.length(); i++) {
-								if (i + 1 == Integer.parseInt(args.getArgs(2))) {
-									JSONObject pun = new JSONObject(puns.get(i).toString());
-									puns.remove(i);
-									pun.put("pardonname", args.getPlayer().getName());
-									pun.put("pardontime", System.currentTimeMillis());
-									String reason = "";
-									for (int j = 3; j < args.getArgs().length; j++) {
-										reason = reason + " " + args.getArgs(j);
-									}
-									pun.put("pardonreason", reason);
-									data.put(identifier + "expiredate", 0);
-									puns.put(pun);
-									break;
-								}
-							}
-							
-							data.put(identifier + "s",  puns);
-							NetworkCore.getInstance().playersDB.updateRow(row, data);
-							row.update();
-						} else {
-							args.getPlayer().sendMessage(NetworkCore.prefixError + "Argument 3 needs to be an integer, specifying which entry to select.");
-						}
-						
-						
-					} catch (Exception e) {
-						args.getPlayer().sendMessage(NetworkCore.prefixError + "That player does not exist in our database... Please contact a developer to double check this result if you believe this is an error.");
-					}
-					
-					
+				public void runOnClick(InventoryClickEvent e) {
+					Bukkit.broadcastMessage("Test");
 				}
+				
 			});
 			
-		}
-	}
-
-	@Command(name = "mute", aliases = {
-			"gag" }, usage = "/mute {playername} {integer/permanent} {units for integer} {reason}")
-	public void mutePlayer(CommandArgs args) throws Exception {
-		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "mute")) {
-
-			if (args.getArgs().length > 3) {
-				ArchrPlayer muter = args.getArchrPlayer();
-				// if they are at least a helper, and the person they are kicking has a lower
-				// rank than them.
-				if (Bukkit.getPlayer(args.getArgs(0)) != null) {
-					ArchrPlayer muted = ArchrPlayer
-							.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
-					if (PlayerRank.getValueByRank(muter.getPlayerRank()) > PlayerRank
-							.getValueByRank(muted.getPlayerRank())) {
-						Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-							@Override
-							public void run() {
-								String reason = "";
-								Long muteLength = 0L;
-								if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-									for (int i = 2; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									muteLength = 9999999999999L;
-								} else {
-									for (int i = 3; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									if (args.getArgs(1).matches("\\d+")) {
-										int num = Integer.parseInt(args.getArgs(1));
-										switch (args.getArgs(2)) {
-										case "minute":
-											muteLength = (long) ((num * 1000) * 60);
-											break;
-										case "minutes":
-											muteLength = (long) ((num * 1000) * 60);
-											break;
-										case "hour":
-											muteLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "hours":
-											muteLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "day":
-											muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										case "days":
-											muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										default:
-											args.getPlayer()
-													.sendMessage("You must supply minute(s), hour(s), or day(s)");
-											break;
-										}
-									} else {
-										args.getPlayer()
-												.sendMessage("You must supply either \"permanent\" or a number.");
-									}
-								}
-
-								muted.getData().put("muteexpiredate", muteLength + System.currentTimeMillis());
-
-								JSONArray mutes = new JSONArray(muted.getData().get("mutes").toString());
-
-								JSONObject mute = new JSONObject();
-								mute.put("muter", args.getPlayer().getUniqueId().toString());
-								mute.put("reason", reason);
-								mute.put("time", System.currentTimeMillis());
-								mute.put("amount", muteLength);
-								mute.put("name", args.getPlayer().getName());
-
-								mutes.put(mute);
-								Date date = new Date(System.currentTimeMillis() + muteLength);
-								String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-								muted.getData().put("mutes", mutes);
-
-								try {
-									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid",
-											muted.getPlayer().getUniqueId().toString());
-									NetworkCore.getInstance().playersDB.updateRow(row, muted.getData());
-									row.update();
-
-									muter.getPlayer().sendMessage(
-											NetworkCore.prefixStandard + "Player " + muted.getPlayer().getName()
-													+ " for " + reason + " until " + myDateStr + ". ");
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-
-							}
-						});
-
-					}
-				} else {
-					OfflinePlayer oP = Bukkit.getOfflinePlayer(args.getArgs(0));
-					if (oP.hasPlayedBefore()) {
-						try {
-							Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-								@Override
-								public void run() {
-
-									String reason = "";
-									Long muteLength = 0L;
-									if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-										for (int i = 2; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										muteLength = 9999999999999L;
-									} else {
-										for (int i = 3; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										if (args.getArgs(1).matches("\\d+")) {
-											int num = Integer.parseInt(args.getArgs(1));
-											switch (args.getArgs(2)) {
-											case "minute":
-												muteLength = (long) ((num * 1000) * 60);
-												break;
-											case "minutes":
-												muteLength = (long) ((num * 1000) * 60);
-												break;
-											case "hour":
-												muteLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "hours":
-												muteLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "day":
-												muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											case "days":
-												muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											default:
-												args.getPlayer()
-														.sendMessage("You must supply minute(s), hour(s), or day(s)");
-												break;
-											}
-										} else {
-											args.getPlayer()
-													.sendMessage("You must supply either \"permanent\" or a number.");
-										}
-									}
-
-									ListEntry row = null;
-									try {
-										row = NetworkCore.getInstance().playersDB.getRow("uuid", oP.getUniqueId());
-									} catch (Exception e1) {
-										// TODO Auto-generated catch block
-										e1.printStackTrace();
-									}
-									Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
-									data.put("muteexpiredate", muteLength + System.currentTimeMillis());
-									JSONArray mutes = new JSONArray((String) data.get("mutes"));
-
-									JSONObject mute = new JSONObject();
-									mute.put("muter", args.getPlayer().getUniqueId().toString());
-									mute.put("reason", reason);
-									mute.put("time", System.currentTimeMillis());
-									mute.put("amount", muteLength);
-									mute.put("name", args.getPlayer().getName());
-
-									mutes.put(mute);
-									Date date = new Date(System.currentTimeMillis() + muteLength);
-									String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-									data.put("mutes", mutes);
-
-									try {
-										NetworkCore.getInstance().playersDB.updateRow(row, data);
-										row.update();
-
-										muter.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Player " + data.get("username") + " for "
-														+ reason + " until " + myDateStr + ". ");
-									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-								}
-							});
-
-						} catch (Exception e) {
-
-							Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-								@Override
-								public void run() {
-
-									UUID uuid = UUIDFetcher.getUUID(args.getArgs(0));
-									if (uuid == null) {
-										muter.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "That is not a player. Try again.");
-										return;
-									}
-
-									Map<String, Object> data = ArchrPlayer.generateBaseDBData(uuid.toString(),
-											args.getArgs(0), PlayerRank.Player.toString(), "0", -1, -1, 0L);
-									NetworkCore.getInstance().playersDB.addData(data);
-
-									String reason = "";
-									Long muteLength = 0L;
-									if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-										for (int i = 2; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										muteLength = 9999999999999L;
-									} else {
-										for (int i = 3; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										if (args.getArgs(1).matches("\\d+")) {
-											int num = Integer.parseInt(args.getArgs(1));
-											switch (args.getArgs(2)) {
-											case "minute":
-												muteLength = (long) ((num * 1000) * 60);
-												break;
-											case "minutes":
-												muteLength = (long) ((num * 1000) * 60);
-												break;
-											case "hour":
-												muteLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "hours":
-												muteLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "day":
-												muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											case "days":
-												muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											default:
-												args.getPlayer()
-														.sendMessage("You must supply minute(s), hour(s), or day(s)");
-												break;
-											}
-										} else {
-											args.getPlayer()
-													.sendMessage("You must supply either \"permanent\" or a number.");
-										}
-									}
-
-									data.put("muteexpiredate", muteLength + System.currentTimeMillis());
-									JSONArray mutes = new JSONArray((String) data.get("mutes"));
-
-									JSONObject mute = new JSONObject();
-									mute.put("muter", args.getPlayer().getUniqueId().toString());
-									mute.put("reason", reason);
-									mute.put("time", System.currentTimeMillis());
-									mute.put("amount", muteLength);
-									mute.put("name", args.getPlayer().getName());
-
-									mutes.put(mute);
-									Date date = new Date(System.currentTimeMillis() + muteLength);
-									String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-									data.put("mutes", mutes);
-
-									try {
-										ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
-										NetworkCore.getInstance().playersDB.updateRow(row, data);
-										row.update();
-
-										muter.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Player " + data.get("username") + " for "
-														+ reason + " until " + myDateStr + ". ");
-									} catch (Exception ex) {
-										// TODO Auto-generated catch block
-										ex.printStackTrace();
-									}
-								}
-							});
-						}
-
-					} else {
-						Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-							@Override
-							public void run() {
-
-								UUID uuid = UUIDFetcher.getUUID(args.getArgs(0));
-								if (uuid == null) {
-									muter.getPlayer().sendMessage(
-											NetworkCore.prefixStandard + "That is not a player. Try again.");
-									return;
-								}
-
-								Map<String, Object> data;
-								try {
-									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
-									if (row == null) {
-										data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-												PlayerRank.Player.toString(), "0", -1, -1, 0L);
-										NetworkCore.getInstance().playersDB.addData(data);
-									} else {
-										data = NetworkCore.getInstance().playersDB.getRowData(row);
-									}
-								} catch (Exception e) {
-									data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-											PlayerRank.Player.toString(), "0", -1, -1, 0L);
-									NetworkCore.getInstance().playersDB.addData(data);
-									e.printStackTrace();
-								}
-
-								String reason = "";
-								Long muteLength = 0L;
-								if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-									for (int i = 2; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									muteLength = 9999999999999L;
-								} else {
-									for (int i = 3; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									if (args.getArgs(1).matches("\\d+")) {
-										int num = Integer.parseInt(args.getArgs(1));
-										switch (args.getArgs(2)) {
-										case "minute":
-											muteLength = (long) ((num * 1000) * 60);
-											break;
-										case "minutes":
-											muteLength = (long) ((num * 1000) * 60);
-											break;
-										case "hour":
-											muteLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "hours":
-											muteLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "day":
-											muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										case "days":
-											muteLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										default:
-											args.getPlayer()
-													.sendMessage("You must supply minute(s), hour(s), or day(s)");
-											break;
-										}
-									} else {
-										args.getPlayer()
-												.sendMessage("You must supply either \"permanent\" or a number.");
-									}
-								}
-
-								data.put("muteexpiredate", muteLength + System.currentTimeMillis());
-								JSONArray mutes = new JSONArray((String) data.get("mutes"));
-
-								JSONObject mute = new JSONObject();
-								mute.put("muter", args.getPlayer().getUniqueId().toString());
-								mute.put("reason", reason);
-								mute.put("time", System.currentTimeMillis());
-								mute.put("amount", muteLength);
-								mute.put("name", args.getPlayer().getName());
-
-								mutes.put(mute);
-								Date date = new Date(System.currentTimeMillis() + muteLength);
-								String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-								data.put("mutes", mutes);
-
-								try {
-									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
-									NetworkCore.getInstance().playersDB.updateRow(row, data);
-									row.update();
-
-									muter.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muted Player "
-											+ args.getArgs(0) + " for " + reason + " until " + myDateStr + ". ");
-
-								} catch (Exception ex) {
-									// TODO Auto-generated catch block
-									ex.printStackTrace();
-								}
-							}
-						});
-					}
-				}
-
-			} else {
-				args.getPlayer().sendMessage(args.getCommand().getUsage());
-			}
+			InventoryS.registerInventory(NetworkCore.getInstance(), inv);
+			InventoryS.openInventory(args.getPlayer(), args.getArgs(0) + "'s Player info:");
 		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
+			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You do not have permission to use this command."));			
 		}
 	}
 
-	@Command(name = "ban", aliases = {
-			"banhammer" }, usage = "/ban {playername} {integer/permanent} {units for integer} {reason}")
-	public void banPlayer(CommandArgs args) throws Exception {
-		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "ban")) {
-			if (args.getArgs().length > 3) {
-				ArchrPlayer banner = args.getArchrPlayer();
-				// if they are at least a helper, and the person they are kicking has a lower
-				// rank than them.
-				if (Bukkit.getPlayer(args.getArgs(0)) != null) {
-					ArchrPlayer banned = ArchrPlayer
-							.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
-					if (PlayerRank.getValueByRank(banner.getPlayerRank()) > PlayerRank
-							.getValueByRank(banned.getPlayerRank())) {
-						Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-							@Override
-							public void run() {
-								String reason = "";
-								Long banLength = 0L;
-								if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-									for (int i = 2; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									banLength = 9999999999999L;
-								} else {
-									for (int i = 3; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									if (args.getArgs(1).matches("\\d+")) {
-										int num = Integer.parseInt(args.getArgs(1));
-										switch (args.getArgs(2)) {
-										case "minute":
-											banLength = (long) ((num * 1000) * 60);
-											break;
-										case "minutes":
-											banLength = (long) ((num * 1000) * 60);
-											break;
-										case "hour":
-											banLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "hours":
-											banLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "day":
-											banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										case "days":
-											banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										default:
-											args.getPlayer()
-													.sendMessage("You must supply minute(s), hour(s), or day(s)");
-											break;
-										}
-									} else {
-										args.getPlayer()
-												.sendMessage("You must supply either \"permanent\" or a number.");
-									}
-								}
+	/*
+	 * update /lookup player
+	 * 
+	 * add gui for in game staff managment.
+	 *   
+	 * add commands for setting language type, defaulting to their minecraft locale. 
+	 * 
+	 * 
+	 */
 
-								banned.getData().put("banexpiredate", banLength + System.currentTimeMillis());
-
-								JSONArray bans = new JSONArray((String) banned.getData().get("bans"));
-
-								JSONObject ban = new JSONObject();
-								ban.put("banner", args.getPlayer().getUniqueId().toString());
-								ban.put("reason", reason);
-								ban.put("time", System.currentTimeMillis());
-								ban.put("amount", banLength);
-								ban.put("name", args.getPlayer().getName());
-
-								bans.put(ban);
-								Date date = new Date(System.currentTimeMillis() + banLength);
-								String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-								banned.getData().put("bans", bans);
-
-								try {
-									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid",
-											banned.getPlayer().getUniqueId().toString());
-									NetworkCore.getInstance().playersDB.updateRow(row, banned.getData());
-									row.update();
-
-									banner.getPlayer()
-											.sendMessage(NetworkCore.prefixStandard + "Player "
-													+ banned.getPlayer().getName() + " for " + reason + " until "
-													+ myDateStr + ". ");
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-
-							}
-						});
-
-					}
-				} else {
-					OfflinePlayer oP = Bukkit.getOfflinePlayer(args.getArgs(0));
-					if (oP.hasPlayedBefore()) {
-						try {
-							Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-								@Override
-								public void run() {
-
-									String reason = "";
-									Long banLength = 0L;
-									if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-										for (int i = 2; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										banLength = 9999999999999L;
-									} else {
-										for (int i = 3; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										if (args.getArgs(1).matches("\\d+")) {
-											int num = Integer.parseInt(args.getArgs(1));
-											switch (args.getArgs(2)) {
-											case "minute":
-												banLength = (long) ((num * 1000) * 60);
-												break;
-											case "minutes":
-												banLength = (long) ((num * 1000) * 60);
-												break;
-											case "hour":
-												banLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "hours":
-												banLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "day":
-												banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											case "days":
-												banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											default:
-												args.getPlayer()
-														.sendMessage("You must supply minute(s), hour(s), or day(s)");
-												break;
-											}
-										} else {
-											args.getPlayer()
-													.sendMessage("You must supply either \"permanent\" or a number.");
-										}
-									}
-
-									ListEntry row = null;
-									try {
-										row = NetworkCore.getInstance().playersDB.getRow("uuid", oP.getUniqueId());
-									} catch (Exception e1) {
-										// TODO Auto-generated catch block
-										e1.printStackTrace();
-									}
-									Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
-									data.put("banexpiredate", banLength + System.currentTimeMillis());
-									JSONArray bans = new JSONArray((String) data.get("bans"));
-
-									JSONObject ban = new JSONObject();
-									ban.put("banner", args.getPlayer().getUniqueId().toString());
-									ban.put("reason", reason);
-									ban.put("time", System.currentTimeMillis());
-									ban.put("amount", banLength);
-									ban.put("name", args.getPlayer().getName());
-
-									bans.put(ban);
-									Date date = new Date(System.currentTimeMillis() + banLength);
-									String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-									data.put("bans", bans);
-
-									try {
-										NetworkCore.getInstance().playersDB.updateRow(row, data);
-										row.update();
-
-										banner.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Player " + data.get("username") + " for "
-														+ reason + " until " + myDateStr + ". ");
-									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-								}
-							});
-
-						} catch (Exception e) {
-
-							Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-								@Override
-								public void run() {
-
-									UUID uuid = UUIDFetcher.getUUID(args.getArgs(0));
-									if (uuid == null) {
-										banner.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "That is not a player. Try again.");
-										return;
-									}
-
-									Map<String, Object> data = ArchrPlayer.generateBaseDBData(uuid.toString(),
-											args.getArgs(0), PlayerRank.Player.toString(), "0", -1, -1, 0L);
-									NetworkCore.getInstance().playersDB.addData(data);
-
-									String reason = "";
-									Long banLength = 0L;
-									if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-										for (int i = 2; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										banLength = 9999999999999L;
-									} else {
-										for (int i = 3; i < args.getArgs().length; i++) {
-											reason = reason + args.getArgs(i) + " ";
-										}
-										if (args.getArgs(1).matches("\\d+")) {
-											int num = Integer.parseInt(args.getArgs(1));
-											switch (args.getArgs(2)) {
-											case "minute":
-												banLength = (long) ((num * 1000) * 60);
-												break;
-											case "minutes":
-												banLength = (long) ((num * 1000) * 60);
-												break;
-											case "hour":
-												banLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "hours":
-												banLength = (long) (((num * 1000) * 60) * 60);
-												break;
-											case "day":
-												banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											case "days":
-												banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-												break;
-											default:
-												args.getPlayer()
-														.sendMessage("You must supply minute(s), hour(s), or day(s)");
-												break;
-											}
-										} else {
-											args.getPlayer()
-													.sendMessage("You must supply either \"permanent\" or a number.");
-										}
-									}
-
-									data.put("banexpiredate", banLength + System.currentTimeMillis());
-									JSONArray bans = new JSONArray((String) data.get("bans"));
-
-									JSONObject ban = new JSONObject();
-									ban.put("banner", args.getPlayer().getUniqueId().toString());
-									ban.put("reason", reason);
-									ban.put("time", System.currentTimeMillis());
-									ban.put("amount", banLength);
-									ban.put("name", args.getPlayer().getName());
-
-									bans.put(ban);
-									Date date = new Date(System.currentTimeMillis() + banLength);
-									String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-									data.put("bans", bans);
-
-									try {
-										ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
-										NetworkCore.getInstance().playersDB.updateRow(row, data);
-										row.update();
-
-										banner.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "Player " + data.get("username") + " for "
-														+ reason + " until " + myDateStr + ". ");
-									} catch (Exception ex) {
-										// TODO Auto-generated catch block
-										ex.printStackTrace();
-									}
-								}
-							});
-						}
-
-					} else {
-						Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-							@Override
-							public void run() {
-
-								UUID uuid = UUIDFetcher.getUUID(args.getArgs(0));
-								if (uuid == null) {
-									banner.getPlayer().sendMessage(
-											NetworkCore.prefixStandard + "That is not a player. Try again.");
-									return;
-								}
-
-								Map<String, Object> data;
-								try {
-									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
-									if (row == null) {
-										data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-												PlayerRank.Player.toString(), "0", -1, -1, 0L);
-										NetworkCore.getInstance().playersDB.addData(data);
-									} else {
-										data = NetworkCore.getInstance().playersDB.getRowData(row);
-									}
-								} catch (Exception e) {
-									data = ArchrPlayer.generateBaseDBData(uuid.toString(), args.getArgs(0),
-											PlayerRank.Player.toString(), "0", -1, -1, 0L);
-									NetworkCore.getInstance().playersDB.addData(data);
-									e.printStackTrace();
-								}
-
-								String reason = "";
-								Long banLength = 0L;
-								if (args.getArgs(1).equalsIgnoreCase("permanent")) {
-									for (int i = 2; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									banLength = 9999999999999L;
-								} else {
-									for (int i = 3; i < args.getArgs().length; i++) {
-										reason = reason + args.getArgs(i) + " ";
-									}
-									if (args.getArgs(1).matches("\\d+")) {
-										int num = Integer.parseInt(args.getArgs(1));
-										switch (args.getArgs(2)) {
-										case "minute":
-											banLength = (long) ((num * 1000) * 60);
-											break;
-										case "minutes":
-											banLength = (long) ((num * 1000) * 60);
-											break;
-										case "hour":
-											banLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "hours":
-											banLength = (long) (((num * 1000) * 60) * 60);
-											break;
-										case "day":
-											banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										case "days":
-											banLength = (long) ((((num * 1000) * 60) * 60) * 24);
-											break;
-										default:
-											args.getPlayer()
-													.sendMessage("You must supply minute(s), hour(s), or day(s)");
-											break;
-										}
-									} else {
-										args.getPlayer()
-												.sendMessage("You must supply either \"permanent\" or a number.");
-									}
-								}
-
-								data.put("banexpiredate", banLength + System.currentTimeMillis());
-								JSONArray bans = new JSONArray((String) data.get("bans"));
-
-								JSONObject ban = new JSONObject();
-								ban.put("banner", args.getPlayer().getUniqueId().toString());
-								ban.put("reason", reason);
-								ban.put("time", System.currentTimeMillis());
-								ban.put("amount", banLength);
-								ban.put("name", args.getPlayer().getName());
-
-								bans.put(ban);
-								Date date = new Date(System.currentTimeMillis() + banLength);
-								String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-
-								data.put("bans", bans);
-
-								try {
-									ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid);
-									NetworkCore.getInstance().playersDB.updateRow(row, data);
-									row.update();
-
-									banner.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banned Player "
-											+ args.getArgs(0) + " for " + reason + " until " + myDateStr + ". ");
-
-								} catch (Exception ex) {
-									// TODO Auto-generated catch block
-									ex.printStackTrace();
-								}
-							}
-						});
-					}
-				}
-			} else {
-				args.getPlayer().sendMessage(args.getCommand().getUsage());
-			}
-
-		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
-		}
-
-	}
-
-	@Command(name = "lookup", usage = "/lookup {playername}")
-	public void lookupPlayer(CommandArgs args) throws Exception {
-		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "lookup")) {
-			if (Bukkit.getOnlinePlayers().contains(args.getArgs(0))) {
-
-				ArchrPlayer lookedup = ArchrPlayer
-						.getArchrPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
-				if (PlayerRank
-						.getValueByRank(ArchrPlayer.getArchrPlayerByUUID(lookedup.getPlayer().getUniqueId().toString())
-								.getPlayerRank()) < PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank())) {
-
-					JSONArray jsonArrayKicks = new JSONArray(lookedup.getData().get("kicks").toString());
-					JSONArray jsonArrayMutes = new JSONArray(lookedup.getData().get("mutes").toString());
-					JSONArray jsonArrayBans = new JSONArray(lookedup.getData().get("bans").toString());
-
-					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Kicks" + ChatColor.RESET + "=-");
-					if (jsonArrayKicks.length() > 0) {
-						for (int i = 0; i < jsonArrayKicks.length(); i++) {
-							JSONObject entry = jsonArrayKicks.getJSONObject(i);
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Kicker: " + entry.get("name")
-									+ " with uuid: " + entry.get("kicker"));
-							args.getPlayer().sendMessage(
-									NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-											.format(new Date(Long.parseLong(entry.get("time").toString()))));
-
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-
-						}
-					} else {
-						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-					}
-					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Mutes" + ChatColor.RESET + "=-");
-					if (jsonArrayMutes.length() > 0) {
-						for (int i = 0; i < jsonArrayMutes.length(); i++) {
-							JSONObject entry = jsonArrayMutes.getJSONObject(i);
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Muter: "
-									+ entry.getString("name") + " with uuid: " + entry.getString("muter"));
-							args.getPlayer().sendMessage(
-									NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-											.format(new Date(Long.parseLong(entry.get("time").toString()))));
-
-							long time = Long.parseLong(entry.get("time").toString());
-							long amount = Long.parseLong(entry.get("amount").toString());
-
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
-									+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-							
-							if (entry.has("pardonname")) {
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
-										+ entry.getString("pardonname"));
-							}
-							if (entry.has("pardontime")) {
-								args.getPlayer()
-										.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
-												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-														new Date(entry.getLong("pardontime"))));
-
-							}
-							if (entry.has("pardonreason")) {
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
-										+ entry.getString("pardonreason"));
-							}
-							
-						}
-					} else {
-						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-					}
-
-					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage("");
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Bans" + ChatColor.RESET + "=-");
-					if (jsonArrayBans.length() > 0) {
-						for (int i = 0; i < jsonArrayBans.length(); i++) {
-							JSONObject entry = jsonArrayBans.getJSONObject(i);
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Banner: " + entry.get("name")
-									+ " with uuid: " + entry.get("banner"));
-							args.getPlayer().sendMessage(
-									NetworkCore.prefixStandard + "Time: " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-											.format(new Date(Long.parseLong(entry.get("time").toString()))));
-
-							long time = Long.parseLong(entry.get("time").toString());
-							long amount = Long.parseLong(entry.get("amount").toString());
-
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Lifted Time: "
-									+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(time + amount)));
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Reason: " + entry.get("reason"));
-							
-							if (entry.has("pardonname")) {
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
-										+ entry.getString("pardonname"));
-							}
-							if (entry.has("pardontime")) {
-								args.getPlayer()
-										.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
-												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-														new Date(entry.getLong("pardontime"))));
-
-							}
-							if (entry.has("pardonreason")) {
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
-										+ entry.getString("pardonreason"));
-							}
-							
-						}
-					} else {
-						args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-					}
-				}
-
-			} else {
-				OfflinePlayer op = Bukkit.getOfflinePlayer(args.getArgs(0));
-				if (op.hasPlayedBefore()) {
-					Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-						@Override
-						public void run() {
-							try {
-								ListEntry row = NetworkCore.getInstance().playersDB.getRow("uuid",
-										op.getUniqueId().toString());
-								Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
-								JSONArray jsonArrayKicks = new JSONArray(data.get("kicks").toString());
-								JSONArray jsonArrayMutes = new JSONArray(data.get("mutes").toString());
-								JSONArray jsonArrayBans = new JSONArray(data.get("bans").toString());
-
-								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Kicks" + ChatColor.RESET + "=-");
-								if (jsonArrayKicks.length() > 0) {
-									for (int i = 0; i < jsonArrayKicks.length(); i++) {
-										JSONObject entry = jsonArrayKicks.getJSONObject(i);
-										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Kicker: " + ChatColor.RESET
-												+ entry.get("name") + " with uuid: " + entry.get("kicker"));
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
-												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-														new Date(Long.parseLong(entry.get("time").toString()))));
-
-										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
-
-									}
-								} else {
-									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-								}
-								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Mutes" + ChatColor.RESET + "=-");
-								if (jsonArrayMutes.length() > 0) {
-									for (int i = 0; i < jsonArrayMutes.length(); i++) {
-										JSONObject entry = jsonArrayMutes.getJSONObject(i);
-										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Muter: " + ChatColor.RESET
-												+ entry.getString("name") + " with uuid: " + entry.getString("muter"));
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
-												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-														new Date(Long.parseLong(entry.get("time").toString()))));
-
-										long time = Long.parseLong(entry.get("time").toString());
-										long amount = Long.parseLong(entry.get("amount").toString());
-
-										args.getPlayer()
-												.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
-														+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-																.format(new Date(time + amount)));
-										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
-										
-										if (entry.has("pardonname")) {
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
-													+ entry.getString("pardonname"));
-										}
-										if (entry.has("pardontime")) {
-											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
-															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-																	new Date(entry.getLong("pardontime"))));
-
-										}
-										if (entry.has("pardonreason")) {
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
-													+ entry.getString("pardonreason"));
-										}
-										
-									}
-								} else {
-									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-								}
-
-								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage("");
-								args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Bans" + ChatColor.RESET + "=-");
-								if (jsonArrayBans.length() > 0) {
-									for (int i = 0; i < jsonArrayBans.length(); i++) {
-										JSONObject entry = jsonArrayBans.getJSONObject(i);
-										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Banner: " + ChatColor.RESET
-												+ entry.get("name") + " with uuid: " + entry.get("banner"));
-										args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
-												+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-														new Date(Long.parseLong(entry.get("time").toString()))));
-
-										long time = Long.parseLong(entry.get("time").toString());
-										long amount = Long.parseLong(entry.get("amount").toString());
-
-										args.getPlayer()
-												.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
-														+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-																.format(new Date(time + amount)));
-										args.getPlayer().sendMessage(
-												NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
-										
-										if (entry.has("pardonname")) {
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
-													+ entry.getString("pardonname"));
-										}
-										if (entry.has("pardontime")) {
-											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
-															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-																	new Date(entry.getLong("pardontime"))));
-
-										}
-										if (entry.has("pardonreason")) {
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
-													+ entry.getString("pardonreason"));
-										}
-										
-									}
-								} else {
-									args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-								}
-
-							} catch (Exception e) {
-								e.printStackTrace();
-								args.getPlayer()
-										.sendMessage(NetworkCore.prefixError + "Player has no data in the database.");
-							}
-
-						}
-					});
-				} else {
-					Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-						@Override
-						public void run() {
-							UUID uuid = UUIDFetcher.getUUID(args.getArgs(0));
-							if (uuid != null) {
-								ListEntry row;
-								try {
-									row = NetworkCore.getInstance().playersDB.getRow("uuid", uuid.toString());
-									Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
-									JSONArray jsonArrayKicks = new JSONArray(data.get("kicks").toString());
-									JSONArray jsonArrayMutes = new JSONArray(data.get("mutes").toString());
-									JSONArray jsonArrayBans = new JSONArray(data.get("bans").toString());
-
-									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Kicks" + ChatColor.RESET + "=-");
-									if (jsonArrayKicks.length() > 0) {
-										for (int i = 0; i < jsonArrayKicks.length(); i++) {
-											JSONObject entry = jsonArrayKicks.getJSONObject(i);
-											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Kicker: " + ChatColor.RESET
-													+ entry.get("name") + " with uuid: " + entry.get("kicker"));
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
-													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-															new Date(Long.parseLong(entry.get("time").toString()))));
-
-											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
-											
-
-										}
-									} else {
-										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-									}
-									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Mutes" + ChatColor.RESET + "=-");
-									if (jsonArrayMutes.length() > 0) {
-										for (int i = 0; i < jsonArrayMutes.length(); i++) {
-											JSONObject entry = jsonArrayMutes.getJSONObject(i);
-											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Muter: " + ChatColor.RESET
-															+ entry.getString("name") + " with uuid: "
-															+ entry.getString("muter"));
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
-													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-															new Date(Long.parseLong(entry.get("time").toString()))));
-
-											long time = Long.parseLong(entry.get("time").toString());
-											long amount = Long.parseLong(entry.get("amount").toString());
-
-											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
-															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-																	.format(new Date(time + amount)));
-											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
-											
-											if (entry.has("pardonname")) {
-												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
-														+ entry.getString("pardonname"));
-											}
-											if (entry.has("pardontime")) {
-												args.getPlayer()
-														.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
-																+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-																		new Date(entry.getLong("pardontime"))));
-
-											}
-											if (entry.has("pardonreason")) {
-												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
-														+ entry.getString("pardonreason"));
-											}
-											
-										}
-									} else {
-										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-									}
-
-									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage("");
-									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "-=" + ChatColor.GOLD + "Bans" + ChatColor.RESET + "=-");
-									if (jsonArrayBans.length() > 0) {
-										for (int i = 0; i < jsonArrayBans.length(); i++) {
-											JSONObject entry = jsonArrayBans.getJSONObject(i);
-											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + "--- Entry: " + (i + 1) + " ---");
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Banner: " + ChatColor.RESET
-													+ entry.get("name") + " with uuid: " + entry.get("banner"));
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Time: " + ChatColor.RESET
-													+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-															new Date(Long.parseLong(entry.get("time").toString()))));
-
-											long time = Long.parseLong(entry.get("time").toString());
-											long amount = Long.parseLong(entry.get("amount").toString());
-
-											args.getPlayer()
-													.sendMessage(NetworkCore.prefixStandard + ChatColor.GOLD + "Lifted Time: " + ChatColor.RESET
-															+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
-																	.format(new Date(time + amount)));
-											args.getPlayer().sendMessage(
-													NetworkCore.prefixStandard + ChatColor.GOLD + "Reason: " + ChatColor.RESET + entry.get("reason"));
-											
-											if (entry.has("pardonname")) {
-												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned By: " + ChatColor.RESET
-														+ entry.getString("pardonname"));
-											}
-											if (entry.has("pardontime")) {
-												args.getPlayer()
-														.sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardoned At: " + ChatColor.RESET
-																+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(
-																		new Date(entry.getLong("pardontime"))));
-
-											}
-											if (entry.has("pardonreason")) {
-												args.getPlayer().sendMessage(NetworkCore.prefixStandard + "" + ChatColor.RED + "Pardon Reason: " + ChatColor.RESET 
-														+ entry.getString("pardonreason"));
-											}
-										}
-									} else {
-										args.getPlayer().sendMessage(NetworkCore.prefixError + "No Data Found.");
-									}
-
-								} catch (Exception e) {
-									args.getPlayer().sendMessage(
-											NetworkCore.prefixError + "Player has no data in the database.");
-								}
-							} else {
-								args.getPlayer().sendMessage(
-										NetworkCore.prefixError + "User entered is not a player... Try again later.");
-							}
-						}
-					});
-				}
-			}
-		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + "You do not have permission to use this command.");
-		}
-	}
-
-	@Command(name = "setstate", aliases = { "changestate" }, usage = "/setstate {player/spectator/ghost}")
-	public void setState(CommandArgs args) {
-		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "setstate")) {
-			ArchrPlayer player = ArchrPlayer.getArchrPlayerByUUID(args.getPlayer().getUniqueId().toString());
-			PlayerState state = PlayerState.fromString(args.getArgs(0));
-			if (state != PlayerState.GHOST) {
-				if (!ArchrPlayer.kickPlayerForRoom(args.getArchrPlayer().getData())) {
-					player.getPlayer().kickPlayer(NetworkCore.prefixError
-							+ "There is no room for you to switch your state at this time. Please try again later.");
-				}
-			}
-			if (state != null) {
-				player.setPlayerstate(state);
-			}
-			
-			Bukkit.getServer().getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-				@Override
-				public void run() {
-					ListEntry row;
-					try {
-						row = NetworkCore.getInstance().playersDB.getRow("uuid", args.getPlayer().getUniqueId().toString());
-						Map<String, Object> data = NetworkCore.getInstance().playersDB.getRowData(row);
-						data.put("state", state.toString());
-						NetworkCore.getInstance().playersDB.updateRow(row, data);
-						row.update();
-						
-						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "State set...");
-					} catch (Exception e) {
-					}
-				}
-			});
-		}
-	}
 
 	@Command(name = "checkdata", usage = "/checkdata")
 	public void checkData(CommandArgs args) {
-		if (PlayerRank.canUseCommand(args.getArchrPlayer().getPlayerRank(), "checkdata")) {
-			args.getPlayer().sendMessage(args.getArchrPlayer().getData().toString());
-		}
+		
 	}
 }

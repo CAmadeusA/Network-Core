@@ -10,9 +10,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.Module;
 import com.camadeusa.module.network.ModuleManager;
-import com.google.gdata.data.spreadsheet.ListEntry;
-
-import net.md_5.bungee.api.ProxyServer;
 
 public class GamemodeManager {
 	ModuleManager modulemanager;
@@ -54,15 +51,17 @@ public class GamemodeManager {
 	}
 
 	public void activateGametype() {
+		HashMap<String, ? super Module> modules = modulemanager.gatherModules();
 		switch (gamemode) {
 		case Hub:
-			HashMap<String, ? extends Module> modules = new HashMap<>();
-			modulemanager.modulesToRegister.add(modules.get("hubmodule"));
+			modulemanager.modulesToRegister.add((Module) modules.get("hubmodule"));
 			break;
 		case ArenaPVP:
 
 			break;
 
+		case MCOW:
+			modulemanager.modulesToRegister.add((Module) modules.get("mcowmodule"));
 		default:
 			break;
 		}

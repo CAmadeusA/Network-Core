@@ -11,6 +11,8 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import com.camadeusa.utility.Random;
+
 /**
  * @author haelexuis
  * @version 1.0
@@ -28,7 +30,8 @@ public class XoreBoardUtil {
 
     
     public void init() {
-        bukkitScoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+        bukkitScoreboard = Bukkit.getServer().getScoreboardManager().getNewScoreboard();
+        serverStart = Random.instance().nextInt(100);
     }
 
     public static XoreBoard getXoreBoard(String name) {

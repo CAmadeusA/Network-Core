@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
@@ -15,33 +14,30 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
-import com.camadeusa.module.game.Gamemode;
-import com.camadeusa.module.network.event.NetworkServerInfoEvents;
-import com.camadeusa.module.network.points.Basepoint;
 import com.camadeusa.utility.Random;
-import com.camadeusa.utility.fetcher.NameFetcher;
-import com.google.gdata.data.spreadsheet.ListEntry;
+import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
+import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 
-import net.md_5.bungee.api.event.PlayerDisconnectEvent;
+import net.ME1312.SubServers.Client.Bukkit.SubAPI;
+import net.wesjd.anvilgui.AnvilGUI;
 
 public class ArchrPlayer implements Listener {
 	private static List<ArchrPlayer> archrPlayerList = new ArrayList<ArchrPlayer>();
 	private PlayerState playerstate;
 	private PlayerRank rank;
-	private JSONObject elostore = new JSONObject();
-	private JSONObject playersettings = new JSONObject();
-
-	HashMap<String, Map<String, Object>> dataCache = new HashMap<>();
+	
+	private HashMap<String, JSONObject> datacache = new HashMap<>();
 
 	Player player;
-	Map<String, Object> data = new HashMap<>();
+	JSONObject data;
 
 	public ArchrPlayer() {
 		playerstate = PlayerState.NORMAL;
@@ -52,6 +48,25 @@ public class ArchrPlayer implements Listener {
 		player = p;
 		playerstate = PlayerState.NORMAL;
 		rank = PlayerRank.Player;
+		
+		// Any time the data in the database changes, it updates this NetworkPlayer's referenced data on their object. 
+		NetworkCore.getInstance().getDatabase().child("game").child("players").child("data").child(p.getUniqueId().toString()).addChildEventListener(new ChildEventListener() {
+			@Override
+			public void onChildChanged(DataSnapshot arg0, String arg1) {
+				if (player.isOnline()) {
+					reloadPlayerData();
+				}
+			}
+			@Override
+			public void onCancelled(DatabaseError arg0) {}
+			@Override
+			public void onChildAdded(DataSnapshot arg0, String arg1) {}
+			@Override
+			public void onChildMoved(DataSnapshot arg0, String arg1) {}
+			@Override
+			public void onChildRemoved(DataSnapshot arg0) {}
+			
+		});
 	}
 
 	public Player getPlayer() {
@@ -83,11 +98,11 @@ public class ArchrPlayer implements Listener {
 		return null;
 	}
 
-	public Map<String, Object> getData() {
+	public JSONObject getData() {
 		return data;
 	}
 
-	public void setData(Map<String, Object> data) {
+	public void setData(JSONObject data) {
 		this.data = data;
 	}
 
@@ -97,65 +112,6 @@ public class ArchrPlayer implements Listener {
 
 	public void setRank(PlayerRank rank) {
 		this.rank = rank;
-	}
-
-	public <T extends Basepoint> T getElo(Gamemode eloid) {
-		return (T) elostore.get(eloid.getValue());
-	}
-
-	public void setElo(Gamemode eloid, int value) {
-		elostore.put(eloid.getValue(), value);
-	}
-
-	public Object getPlayerSettings(String tag) {
-		return playersettings.get(tag);
-	}
-
-	public void setPlayerSettings(String tag, Object value) {
-		elostore.put(tag, value);
-	}
-
-	public static Map<String, Object> generateBaseDBData(ArchrPlayer aP) {
-		Map<String, Object> data = new HashMap<>();
-		data.put("uuid", aP.getPlayer().getUniqueId().toString());
-		data.put("username", aP.getPlayer().getName());
-		data.put("rank", PlayerRank.Player);
-		data.put("state", PlayerState.NORMAL.toString());
-		data.put("ipaddress", "0");
-		data.put("banexpiredate", -1);
-		data.put("muteexpiredate", -1);
-		data.put("firstlogin", System.currentTimeMillis());
-		data.put("previoususernames", new JSONArray().toString());
-		data.put("previousipaddresses", new JSONArray().toString());
-		data.put("kicks", new JSONArray().toString());
-		data.put("mutes", new JSONArray().toString());
-		data.put("bans", new JSONArray().toString());
-		data.put("elos", new JSONObject().toString());
-		data.put("playersettings", new JSONArray().toString());
-
-		return data;
-	}
-
-	public static Map<String, Object> generateBaseDBData(String uuid, String username, String rank, String ipaddress,
-			int banexpiredate, int muteexpiredate, long firstlogin) {
-		Map<String, Object> data = new HashMap<>();
-		data.put("uuid", uuid);
-		data.put("username", username);
-		data.put("rank", rank);
-		data.put("state", PlayerState.NORMAL.toString());
-		data.put("ipaddress", ipaddress);
-		data.put("banexpiredate", banexpiredate);
-		data.put("muteexpiredate", muteexpiredate);
-		data.put("firstlogin", firstlogin);
-		data.put("previoususernames", new JSONArray().toString());
-		data.put("previousipaddresses", new JSONArray().toString());
-		data.put("kicks", new JSONArray().toString());
-		data.put("mutes", new JSONArray().toString());
-		data.put("bans", new JSONArray().toString());
-		data.put("elos", new JSONObject().toString());
-		data.put("playersettings", new JSONArray().toString());
-
-		return data;
 	}
 
 	public static ArrayList<ArchrPlayer> getOnlinePlayers() {
@@ -188,7 +144,6 @@ public class ArchrPlayer implements Listener {
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {
-		//Bukkit.broadcastMessage("ding");
 		ArchrPlayer aP = ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		if (PlayerRank.getValueByRank(aP.getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Admin)) {
 			aP.getPlayer().setOp(false);
@@ -205,32 +160,25 @@ public class ArchrPlayer implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override 
 			public void run() {
-				
-				ListEntry row;
-				try {
-					row = NetworkCore.getInstance().playersDB.getRow("uuid", event.getUniqueId());
-					Map<String, Object> result = NetworkCore.getInstance().playersDB.getRowData(row);
-					dataCache.put(event.getUniqueId().toString(), result);
-					if (Long.parseLong(result.get("banexpiredate").toString()) > System.currentTimeMillis()) {
-						if (Long.parseLong((String) result.get("banexpiredate")) == (Long.MAX_VALUE)) {
-							event.disallow(Result.KICK_BANNED,
-									NetworkCore.prefixError + "You have been permanently banned.");
-							
-						} else {
-							Date date = new Date(Long.parseLong((String) result.get("banexpiredate")));
-							String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
-							event.disallow(Result.KICK_BANNED,
-									NetworkCore.prefixError + "You have been banned until " + myDateStr + ". ");
-							
-						}
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), "-1", jsoninfo -> {
+					
+					long bl = jsoninfo.getJSONObject("data").getLong("banexpiredate");
+					if (bl > System.currentTimeMillis()) {
+						event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until: " ) + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
+					} else {
+						Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
+							@Override
+							public void run() {
+								if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
+									event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "This server is full, sorry for the inconvienence."));
+								}								
+							}
+						});
 					}
 					intA.set(0);
-				} catch (Exception e) {
-					Map<String, Object> datatemp = generateBaseDBData(event.getUniqueId().toString(), NameFetcher.getName(event.getUniqueId().toString()), "Player", "0", -1, -1, 0);
-					NetworkCore.getInstance().playersDB.addData(datatemp);
-					dataCache.put(event.getUniqueId().toString(), datatemp);
-					intA.set(0);					
-				}
+					
+					datacache.put(event.getUniqueId().toString(), jsoninfo.getJSONObject("data"));
+				}));				
 			}
 		});
 
@@ -241,58 +189,38 @@ public class ArchrPlayer implements Listener {
 				break;
 			}
 		}
-		if (!kickPlayerForRoom(dataCache.get(event.getUniqueId().toString()))) {
-			event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + "This server is full, sorry for the inconvienence.");
-		}
-
 	}
 
 	// Database data pulling and updating on login/join.
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		ArchrPlayer aP = new ArchrPlayer(event.getPlayer());
-		aP.setData(dataCache.get(aP.getPlayer().getUniqueId().toString()));
-		dataCache.remove(aP.getPlayer().getUniqueId().toString());
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-
-				try {
-					if (!aP.getPlayer().getName().equalsIgnoreCase(aP.getData().get("username").toString())) {
-						JSONArray previoususernames = new JSONArray(aP.getData().get("previoususernames").toString());
-						previoususernames.put(aP.getData().get("username"));
-						aP.getData().put("previoususernames", previoususernames);
-						aP.getData().put("username", aP.getPlayer().getName());
-					}
-					if (!event.getPlayer().getAddress().getAddress().toString().replace("/", "")
-							.equals(aP.getData().get("ipaddress"))) {
-						JSONArray previousips = new JSONArray(aP.getData().get("previousipaddresses").toString());
-						previousips.put(aP.getData().get("ipaddress"));
-						aP.getData().put("previousipaddresses", previousips);
-						aP.getData().put("ipaddress",
-								aP.getPlayer().getAddress().getAddress().toString().replace("/", ""));
-					}
-
-					ListEntry rowupdate = NetworkCore.getInstance().playersDB.getRow("uuid",
-							aP.getPlayer().getUniqueId());
-					NetworkCore.getInstance().playersDB.updateRow(rowupdate, aP.getData());
-					rowupdate.update();
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		aP.setRank(PlayerRank.fromString(aP.getData().get("rank").toString()));
-		aP.setPlayerstate(PlayerState.fromString(aP.getData().get("state").toString()));
+		aP.setRank(PlayerRank.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("rank")));
+		aP.setPlayerstate(
+				PlayerState.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("state")));
 		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
 		if (PlayerRank.getValueByRank(aP.getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Admin)) {
 			aP.getPlayer().setOp(true);
 		}
+		aP.setData(datacache.get(event.getPlayer().getUniqueId().toString()));
 		archrPlayerList.add(aP);
-		event.setJoinMessage("");
+		datacache.remove(event.getPlayer().getUniqueId().toString());	
 
+		event.setJoinMessage("");
+		
+		aP.reloadPlayerData();
+		if (!aP.getData().has("requirepwonlogin")) {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
+		}
+		
+		if (aP.getData().has("requirepwonlogin") && aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true")) {
+			aP.getPlayer().chat("/authenticate");
+		} else {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
+		}
 	}
+	
+	
 
 	public static void correctArchrPlayerList() {
 		if (Bukkit.getOnlinePlayers().size() != getArchrPlayerList().size()) {
@@ -306,14 +234,14 @@ public class ArchrPlayer implements Listener {
 		}
 	}
 	
-	public static boolean kickPlayerForRoom(Map<String, Object> dataCache) {
+	public static boolean kickPlayerForRoom(JSONObject playerData) {
 		if (getOnlinePlayers().size() == NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
 			ArrayList<ArchrPlayer> poolToKickFrom = new ArrayList<>();
 			ArchrPlayer playerToKick = null;
 			for (PlayerState ps : PlayerState.valuesOrderedForKickOrder()) {
 				for (PlayerRank pr : PlayerRank.valuesordered()) {
 					if (PlayerRank.getValueByRank(pr) < PlayerRank.getValueByRank(
-							PlayerRank.fromString(dataCache.get("rank").toString())) && PlayerState.fromString(dataCache.get("state").toString()) != PlayerState.GHOST) {
+							PlayerRank.fromString(playerData.get("rank").toString())) && PlayerState.fromString(playerData.get("state").toString()) != PlayerState.GHOST) {
 
 						for (ArchrPlayer ap : getOnlinePlayers()) {
 							if (pr == ap.getPlayerRank() && ps == ap.getPlayerState()) {
@@ -325,7 +253,7 @@ public class ArchrPlayer implements Listener {
 							playerToKick = poolToKickFrom.get(Random.instance().nextInt(poolToKickFrom.size()));
 							break;
 						}
-					} else if (PlayerState.fromString(dataCache.get("state").toString()) == PlayerState.GHOST) {
+					} else if (PlayerState.fromString(playerData.get("state").toString()) == PlayerState.GHOST) {
 						return true;
 					}
 
@@ -350,6 +278,22 @@ public class ArchrPlayer implements Listener {
 		} else {
 			return true;			
 		}
+	}
+	
+	public void reloadPlayerData() {
+		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+			@Override 
+			public void run() {
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
+					setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
+					setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
+					getPlayer().setDisplayName(PlayerRank.formatNameByRank(ArchrPlayer.getArchrPlayerByUUID(player.getUniqueId().toString())));
+					
+					setData(jsoninfo.getJSONObject("data"));
+					
+				}));				
+			}
+		});
 	}
 
 }

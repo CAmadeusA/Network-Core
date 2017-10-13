@@ -47,6 +47,10 @@
 			<id>stealthyone-repo</id>
 			<url>http://repo.stealthyone.com/content/groups/public</url>
 		</repository>
+		<repository>
+       		<id>wesjd-repo</id>
+    		    <url>https://nexus.wesjd.net/repository/thirdparty/</url>
+	    </repository>
 	</repositories>
 	<dependencies>
 		<!--Spigot API -->
@@ -114,5 +118,15 @@
 			<scope>system</scope>
 			<systemPath>${project.basedir}/src/resources/SubServers.Client.Bukkit.jar</systemPath>
 		</dependency>
+		<dependency>
+ 		   <groupId>com.rethinkdb</groupId>
+ 		   <artifactId>rethinkdb-driver</artifactId>
+ 		   <version>2.3.3</version>
+ 		 </dependency>
+		<dependency>
+        		<groupId>net.wesjd</groupId>
+        		<artifactId>anvilgui</artifactId>
+        		<version>1.1.1-SNAPSHOT</version>
+  		</dependency>
 	</dependencies>
 </project>

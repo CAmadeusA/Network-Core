@@ -22,7 +22,7 @@ public class PacketDownloadServerConfigInfo implements PacketIn, PacketOut {
 
 	public PacketDownloadServerConfigInfo(String name, JSONCallback... callback) {
 		serverName = name;
-		this.id = Util.getNew(callbacks.keySet(), UUID::randomUUID).toString();
+		id = Util.getNew(callbacks.keySet(), UUID::randomUUID).toString();
 		callbacks.put(id, callback);
 	}
 
