@@ -8,69 +8,37 @@ import org.bukkit.ChatColor;
 import com.camadeusa.utility.TextUtil;
 
 public enum PlayerRank {
-	Owner,
-	Developer,
-	Director,
-	Admin,
-	SrMod,
-	Mod,
-	Helper,
-	Vip,
-	Friend,
-	Donator7,
-	Donator6,
-	Donator5,
-	Donator4,
-	Donator3,
-	Donator2,
-	Donator1,
-	Player,
-	Banned;
+	Owner(Integer.MAX_VALUE),
+	Developer(Integer.MAX_VALUE - 1),
+	Director(500),
+	Admin(450),
+	SrMod(400),
+	Mod(300),
+	Helper(200),
+	Vip(90),
+	Friend(80),
+	Donator7(70),
+	Donator6(60),
+	Donator5(50),
+	Donator4(40),
+	Donator3(30),
+	Donator2(20),
+	Donator1(10),
+	Player(1),
+	//Should never be used. Just an intentional delimiter.
+	Banned(-1);
 	
-	public static int getValueByRank(PlayerRank r) {
-		switch (r) {
-		case Owner:
-			return Integer.MAX_VALUE;
-		case Developer:
-			return Integer.MAX_VALUE-1;
-		case Director:
-			return 500;
-		case Admin:
-			return 450;
-		case SrMod:
-			return 400;
-		case Mod: 
-			return 300;
-		case Helper:
-			return 200;
-		case Vip:
-			return 90;
-		case Friend:
-			return 80;
-		case Donator7:
-			return 70;
-		case Donator6: 
-			return 60;
-		case Donator5: 
-			return 50;
-		case Donator4:
-			return 40;
-		case Donator3:
-			return 30;
-		case Donator2:
-			return 20;
-		case Donator1:
-			return 10;
-		case Player:
-			return 1;
-		case Banned:
-			return -1;
-		default: 
-			return Integer.MIN_VALUE;
-		}
+	private final int value;
+	
+	PlayerRank(int value) {
+		this.value = value;
 	}
 	
-	public static String formatNameByRank(ArchrPlayer a) {
+	public int getValue() {
+		return value;
+	}
+	
+	public static String formatNameByRank(NetworkPlayer a) {
 		String icon = "•";
 		String colorPrefix = ChatColor.RESET + "";
 		switch (a.getPlayerRank()) {
@@ -145,8 +113,8 @@ public enum PlayerRank {
 		default:
 			break;
 		}
-		if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Player)) {
-			if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Director)) {
+		if (a.getPlayerRank().getValue() > PlayerRank.Player.getValue()) {
+			if (a.getPlayerRank().getValue() > PlayerRank.Director.getValue()) {
 				return (ChatColor.DARK_GRAY + "[" + ChatColor.RESET + icon + ChatColor.DARK_GRAY + "]" + ChatColor.RESET + " " + colorPrefix + ChatColor.RESET);			
 				
 			}
@@ -156,7 +124,7 @@ public enum PlayerRank {
 		}
 		
 	}
-	public static String formatNameByRankWOIcon(ArchrPlayer a) {
+	public static String formatNameByRankWOIcon(NetworkPlayer a) {
 		String colorPrefix = ChatColor.RESET + "";
 		switch (a.getPlayerRank()) {
 		case Owner:
@@ -214,8 +182,8 @@ public enum PlayerRank {
 		default:
 			break;
 		}
-		if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Player)) {
-			if (getValueByRank(a.getPlayerRank()) > getValueByRank(PlayerRank.Director)) {
+		if (a.getPlayerRank().getValue() > PlayerRank.Player.getValue()) {
+			if (a.getPlayerRank().getValue() > PlayerRank.Director.getValue()) {
 				return (colorPrefix + ChatColor.RESET);			
 				
 			}

@@ -3,7 +3,7 @@ package com.camadeusa.timing;
 import org.bukkit.Bukkit;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.player.NetworkPlayer;
 
 public class CoreLoop {
 	private double lastQuarterTick = 0;
@@ -38,6 +38,6 @@ public class CoreLoop {
 	
 	// Put tasks here: 
 	private void update() {
-		ArchrPlayer.correctArchrPlayerList();
+		NetworkPlayer.correctArchrPlayerList();
 	}
 }

@@ -13,15 +13,11 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.Module;
 import com.camadeusa.module.game.Gamemode;
-import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerRank;
-import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoard;
 import com.camadeusa.utility.xoreboard.XoreBoardPlayerSidebar;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
-
-import net.ME1312.SubServers.Client.Bukkit.SubAPI;
-import net.wesjd.anvilgui.AnvilGUI;
 
 
 public class HubModule extends Module implements Listener {
@@ -44,10 +40,10 @@ public class HubModule extends Module implements Listener {
 		xbps.setDisplayName(NetworkCore.prefixStandard);
 		HashMap<String, Integer> lines = new HashMap<>();
 		lines.put(ChatColor.GOLD + "Name: ", 20);
-		lines.put(StringUtils.abbreviate(PlayerRank.formatNameByRankWOIcon(ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString())), 40), 19);
+		lines.put(StringUtils.abbreviate(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())), 40), 19);
 		lines.put(" ", 18);
 		lines.put(ChatColor.GOLD + "Rank: ", 17);
-		lines.put(StringUtils.abbreviate(ChatColor.BLUE + ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerRank().toString(), 40), 16);
+		lines.put(StringUtils.abbreviate(ChatColor.BLUE + NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerRank().toString(), 40), 16);
 		lines.put("  ", 15);
 		lines.put(ChatColor.GOLD + "https://orionmc.net", -1);
 		xbps.rewriteLines(lines);

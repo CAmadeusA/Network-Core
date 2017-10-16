@@ -1,8 +1,5 @@
 package com.camadeusa;
 
-import java.io.File;
-import java.io.FileInputStream;
-
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -12,7 +9,7 @@ import com.camadeusa.module.network.command.NetworkCommands;
 import com.camadeusa.module.network.command.StaffCommands;
 import com.camadeusa.module.network.event.NetworkCommandEvents;
 import com.camadeusa.module.network.event.NetworkServerInfoEvents;
-import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.timing.CoreLoop;
 import com.camadeusa.utility.ConfigUtil;
 import com.camadeusa.utility.GSheetDBUtil;
@@ -26,11 +23,6 @@ import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketPunishPlayer;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import net.ME1312.SubServers.Client.Bukkit.Network.SubDataClient;
 import protocolsupport.api.ProtocolSupportAPI;
@@ -44,8 +36,6 @@ public class NetworkCore extends JavaPlugin {
 	public static String prefixError = ChatColor.BOLD + "" + ChatColor.DARK_PURPLE + "[" + ChatColor.DARK_RED + "Orion" + ChatColor.DARK_PURPLE + "]" + ChatColor.WHITE + ": " + ChatColor.RESET;
 	public GSheetDBUtil playersDB;
 	XoreBoardUtil xbu;
-	DatabaseReference fbdb;
-
 	
 	@Override
 	public void onEnable() {
@@ -58,18 +48,6 @@ public class NetworkCore extends JavaPlugin {
 		gamemodeManager.activateGametype();
 		registerEvents();
 		initializePlugin();
-		
-		try {
-			FileInputStream serviceAccount = new FileInputStream(new File("").getAbsolutePath() + "/resources/serviceaccountkey.json");
-			FirebaseOptions options = new FirebaseOptions.Builder()
-					.setCredential(FirebaseCredentials.fromCertificate(serviceAccount))
-					.setDatabaseUrl("https://voltcube-network.firebaseio.com")
-					.build();
-			
-			FirebaseApp.initializeApp(options);
-		} catch (Exception e) {}
-
-		fbdb = FirebaseDatabase.getInstance("https://voltcube-network.firebaseio.com").getReference();
 		
 	}
 	
@@ -103,7 +81,7 @@ public class NetworkCore extends JavaPlugin {
 	}
 	
 	public void registerEvents() {
-		getServer().getPluginManager().registerEvents(new ArchrPlayer(), this);
+		getServer().getPluginManager().registerEvents(new NetworkPlayer(), this);
 		getServer().getPluginManager().registerEvents(new ChatManager(), this);
 		getServer().getPluginManager().registerEvents(new NetworkCommandEvents(), this);
 		getServer().getPluginManager().registerEvents(new InventoryManager(), this);
@@ -129,11 +107,6 @@ public class NetworkCore extends JavaPlugin {
 
 	public XoreBoardUtil getXoreBoardUtil() {
 		return xbu;
-	}
-
-
-	public DatabaseReference getDatabase() {
-		return fbdb;
 	}
 	
 }

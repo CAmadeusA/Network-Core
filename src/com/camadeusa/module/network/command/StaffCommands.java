@@ -37,8 +37,7 @@ public class StaffCommands {
 	
 	@Command(name = "punish", usage = "/punish")
 	public void punishPlayer(CommandArgs args) {
-		if (PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank()) >= PlayerRank
-				.getValueByRank(PlayerRank.Helper)) {
+		if (args.getArchrPlayer().getPlayerRank().getValue() >= PlayerRank.Helper.getValue()) {
 
 			if (args.getArgs().length < 1) {
 				args.getPlayer().chat("/punish <What is your password?: (This is secure and will not be shared) > <Who would you like to punish?: (Player Name) > <For what type of punishment?: (kick/ban/mute) > <How Long?: (1-permanent) > <Units of time? (minutes/hours/days/weeks/months/permanent): > <For what reason?: >");
@@ -150,7 +149,7 @@ public class StaffCommands {
 	
 	@Command(name = "openPlayerManagmentMenu", usage = "/openPlayerManagmentMenu {Player Name}")
 	public void oPMM(CommandArgs args) {
-		if (PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Helper)) {
+		if (args.getArchrPlayer().getPlayerRank().getValue() >= PlayerRank.Helper.getValue()) {
 			Inventory inv = new Inventory(args.getArgs(0) + "'s Player info:", 3);
 			SlotItem item = new SlotItem("Player Information", args.getArgs(0), 0, Material.HOPPER);
 			inv.addSlotItem(0, item);

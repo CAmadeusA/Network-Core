@@ -9,7 +9,7 @@ import org.bukkit.event.Listener;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.GamemodeManager;
-import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.timing.TickQuarterSecondEvent;
 import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.timing.TickThreeSecondEvent;
@@ -24,12 +24,12 @@ public class NetworkServerInfoEvents implements Listener {
 
 	@EventHandler
 	public void onTickSecondEvent(TickThreeSecondEvent event) {
-		GamemodeManager.currentplayers = ArchrPlayer.getOnlinePlayers().size();
+		GamemodeManager.currentplayers = NetworkPlayer.getOnlinePlayers().size();
 	}
 
 	@EventHandler
 	public void onTickSecond(TickSecondEvent event) {
-		ArchrPlayer.correctArchrPlayerList();
+		NetworkPlayer.correctArchrPlayerList();
 
 	}
 

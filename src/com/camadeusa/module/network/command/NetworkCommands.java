@@ -146,8 +146,7 @@ public class NetworkCommands {
 								"sub teleport " + fullestServer + " " + args.getPlayer().getName());
 
 					} else {
-						if (PlayerRank.getValueByRank(args.getArchrPlayer().getPlayerRank()) >= PlayerRank
-								.getValueByRank(PlayerRank.Donator1)) {
+						if (args.getArchrPlayer().getPlayerRank().getValue() >= PlayerRank.Donator1.getValue()) {
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard
 									+ "All servers of this type are full... Attemting to send you to any available server of this type using your join-priority perk.");
 							for (String key : availableServers.keySet()) {

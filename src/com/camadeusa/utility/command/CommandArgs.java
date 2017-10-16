@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.camadeusa.player.ArchrPlayer;
+import com.camadeusa.player.NetworkPlayer;
 
 /**
  * Command Framework - CommandArgs <br>
@@ -108,8 +108,8 @@ public class CommandArgs {
 		}
 	}
 	
-	public ArchrPlayer getArchrPlayer() {
-		for (ArchrPlayer ap : ArchrPlayer.getArchrPlayerList()) {
+	public NetworkPlayer getArchrPlayer() {
+		for (NetworkPlayer ap : NetworkPlayer.getNetworkPlayerList()) {
 			if (ap.getPlayer().getUniqueId().equals(getPlayer().getUniqueId())) {
 				return ap;
 			}

@@ -22,15 +22,11 @@ import com.camadeusa.chat.ChatManager;
 import com.camadeusa.utility.Random;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
-import net.wesjd.anvilgui.AnvilGUI;
 
-public class ArchrPlayer implements Listener {
-	private static List<ArchrPlayer> archrPlayerList = new ArrayList<ArchrPlayer>();
+public class NetworkPlayer implements Listener {
+	private static List<NetworkPlayer> archrPlayerList = new ArrayList<NetworkPlayer>();
 	private PlayerState playerstate;
 	private PlayerRank rank;
 	
@@ -39,42 +35,22 @@ public class ArchrPlayer implements Listener {
 	Player player;
 	JSONObject data;
 
-	public ArchrPlayer() {
+	public NetworkPlayer() {
 		playerstate = PlayerState.NORMAL;
 		rank = PlayerRank.Player;
 	}
 
-	public ArchrPlayer(Player p) {
+	public NetworkPlayer(Player p) {
 		player = p;
 		playerstate = PlayerState.NORMAL;
 		rank = PlayerRank.Player;
 		
 		// Any time the data in the database changes, it updates this NetworkPlayer's referenced data on their object. 
-		NetworkCore.getInstance().getDatabase().child("game").child("players").child("data").child(p.getUniqueId().toString()).addChildEventListener(new ChildEventListener() {
-			@Override
-			public void onChildChanged(DataSnapshot arg0, String arg1) {
-				if (player.isOnline()) {
-					reloadPlayerData();
-				}
-			}
-			@Override
-			public void onCancelled(DatabaseError arg0) {}
-			@Override
-			public void onChildAdded(DataSnapshot arg0, String arg1) {}
-			@Override
-			public void onChildMoved(DataSnapshot arg0, String arg1) {}
-			@Override
-			public void onChildRemoved(DataSnapshot arg0) {}
-			
-		});
+		
 	}
 
 	public Player getPlayer() {
 		return player;
-	}
-
-	public void setPlayer(Player p) {
-		player = p;
 	}
 
 	public PlayerState getPlayerState() {
@@ -85,12 +61,12 @@ public class ArchrPlayer implements Listener {
 		return rank;
 	}
 
-	public static List<ArchrPlayer> getArchrPlayerList() {
+	public static List<NetworkPlayer> getNetworkPlayerList() {
 		return archrPlayerList;
 	}
 
-	public static ArchrPlayer getArchrPlayerByUUID(String uuid) {
-		for (ArchrPlayer ap : archrPlayerList) {
+	public static NetworkPlayer getNetworkPlayerByUUID(String uuid) {
+		for (NetworkPlayer ap : archrPlayerList) {
 			if (uuid.equals(ap.getPlayer().getUniqueId().toString())) {
 				return ap;
 			}
@@ -114,9 +90,9 @@ public class ArchrPlayer implements Listener {
 		this.rank = rank;
 	}
 
-	public static ArrayList<ArchrPlayer> getOnlinePlayers() {
-		ArrayList<ArchrPlayer> aList = new ArrayList<>();
-		for (ArchrPlayer ap : getArchrPlayerList()) {
+	public static ArrayList<NetworkPlayer> getOnlinePlayers() {
+		ArrayList<NetworkPlayer> aList = new ArrayList<>();
+		for (NetworkPlayer ap : getNetworkPlayerList()) {
 			if (!ap.getPlayerState().toString().equals(PlayerState.GHOST.toString())) {
 				aList.add(ap);
 			}
@@ -124,9 +100,9 @@ public class ArchrPlayer implements Listener {
 		return aList;
 	}
 
-	public static ArrayList<ArchrPlayer> getOnlinePlayersByRank(PlayerRank p) {
-		ArrayList<ArchrPlayer> aList = new ArrayList<>();
-		for (ArchrPlayer ap : getArchrPlayerList()) {
+	public static ArrayList<NetworkPlayer> getOnlinePlayersByRank(PlayerRank p) {
+		ArrayList<NetworkPlayer> aList = new ArrayList<>();
+		for (NetworkPlayer ap : getNetworkPlayerList()) {
 			if (ap.getPlayerState() != PlayerState.GHOST && ap.getPlayerRank() == p) {
 				aList.add(ap);
 			}
@@ -134,9 +110,9 @@ public class ArchrPlayer implements Listener {
 		return aList;
 	}
 
-	public static ArrayList<ArchrPlayer> getOnlinePlayersIncludingGhosts() {
-		ArrayList<ArchrPlayer> aList = new ArrayList<>();
-		for (ArchrPlayer ap : getArchrPlayerList()) {
+	public static ArrayList<NetworkPlayer> getOnlinePlayersIncludingGhosts() {
+		ArrayList<NetworkPlayer> aList = new ArrayList<>();
+		for (NetworkPlayer ap : getNetworkPlayerList()) {
 			aList.add(ap);
 		}
 		return aList;
@@ -144,8 +120,8 @@ public class ArchrPlayer implements Listener {
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {
-		ArchrPlayer aP = ArchrPlayer.getArchrPlayerByUUID(event.getPlayer().getUniqueId().toString());
-		if (PlayerRank.getValueByRank(aP.getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Admin)) {
+		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
+		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(false);
 		}
 		if (archrPlayerList.contains(aP)) {
@@ -194,12 +170,12 @@ public class ArchrPlayer implements Listener {
 	// Database data pulling and updating on login/join.
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		ArchrPlayer aP = new ArchrPlayer(event.getPlayer());
+		NetworkPlayer aP = new NetworkPlayer(event.getPlayer());
 		aP.setRank(PlayerRank.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("rank")));
 		aP.setPlayerstate(
 				PlayerState.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("state")));
 		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
-		if (PlayerRank.getValueByRank(aP.getPlayerRank()) >= PlayerRank.getValueByRank(PlayerRank.Admin)) {
+		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(true);
 		}
 		aP.setData(datacache.get(event.getPlayer().getUniqueId().toString()));
@@ -223,9 +199,9 @@ public class ArchrPlayer implements Listener {
 	
 
 	public static void correctArchrPlayerList() {
-		if (Bukkit.getOnlinePlayers().size() != getArchrPlayerList().size()) {
-			ArrayList<ArchrPlayer> toRemove = new ArrayList<>();
-			for (ArchrPlayer ap : getArchrPlayerList()) {
+		if (Bukkit.getOnlinePlayers().size() != getNetworkPlayerList().size()) {
+			ArrayList<NetworkPlayer> toRemove = new ArrayList<>();
+			for (NetworkPlayer ap : getNetworkPlayerList()) {
 				if (!ap.getPlayer().isOnline()) {
 					toRemove.add(ap);
 				}
@@ -236,14 +212,12 @@ public class ArchrPlayer implements Listener {
 	
 	public static boolean kickPlayerForRoom(JSONObject playerData) {
 		if (getOnlinePlayers().size() == NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
-			ArrayList<ArchrPlayer> poolToKickFrom = new ArrayList<>();
-			ArchrPlayer playerToKick = null;
+			ArrayList<NetworkPlayer> poolToKickFrom = new ArrayList<>();
+			NetworkPlayer playerToKick = null;
 			for (PlayerState ps : PlayerState.valuesOrderedForKickOrder()) {
 				for (PlayerRank pr : PlayerRank.valuesordered()) {
-					if (PlayerRank.getValueByRank(pr) < PlayerRank.getValueByRank(
-							PlayerRank.fromString(playerData.get("rank").toString())) && PlayerState.fromString(playerData.get("state").toString()) != PlayerState.GHOST) {
-
-						for (ArchrPlayer ap : getOnlinePlayers()) {
+					if (pr.getValue() < PlayerRank.fromString(playerData.get("rank").toString()).getValue() && PlayerState.fromString(playerData.get("state").toString()) != PlayerState.GHOST) {
+						for (NetworkPlayer ap : getOnlinePlayers()) {
 							if (pr == ap.getPlayerRank() && ps == ap.getPlayerState()) {
 								poolToKickFrom.add(ap);
 							}
@@ -263,7 +237,7 @@ public class ArchrPlayer implements Listener {
 				}
 			}
 			if (playerToKick != null) {
-				final ArchrPlayer pp = playerToKick;
+				final NetworkPlayer pp = playerToKick;
 				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
 					@Override
 					public void run() {
@@ -287,7 +261,7 @@ public class ArchrPlayer implements Listener {
 				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
 					setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
 					setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
-					getPlayer().setDisplayName(PlayerRank.formatNameByRank(ArchrPlayer.getArchrPlayerByUUID(player.getUniqueId().toString())));
+					getPlayer().setDisplayName(PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(player.getUniqueId().toString())));
 					
 					setData(jsoninfo.getJSONObject("data"));
 					
