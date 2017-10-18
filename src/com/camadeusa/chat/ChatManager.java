@@ -24,8 +24,19 @@ public class ChatManager implements Listener {
 	public void onChat(AsyncPlayerChatEvent event) {
 		if (!event.isCancelled()) {
 			String senderLang = event.getPlayer().spigot().getLocale().substring(0, 2);
-			long l = Long.parseLong(NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())
-					.getData().get("muteexpiredate").toString());
+			
+			long l = 0;			
+			// Sets the highest muteexpiredate to the only one that matters.
+			if (NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())
+					.getData().has("mutes")) {
+				for (String key : NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())
+						.getData().getJSONObject("mutes").keySet()) {
+					long lk = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())
+							.getData().getJSONObject("mutes").getJSONObject(key).getLong("muteexpiredate");
+					l = l > lk ? l : lk; 
+				}				
+			}
+			
 			Date date = new Date(l);
 			String myDateStr = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(date);
 			if (l > System.currentTimeMillis()) {

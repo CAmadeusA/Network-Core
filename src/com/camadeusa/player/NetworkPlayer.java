@@ -45,7 +45,7 @@ public class NetworkPlayer implements Listener {
 		playerstate = PlayerState.NORMAL;
 		rank = PlayerRank.Player;
 		
-		// Any time the data in the database changes, it updates this NetworkPlayer's referenced data on their object. 
+		//TODO: Track Changes
 		
 	}
 
@@ -137,19 +137,24 @@ public class NetworkPlayer implements Listener {
 			@Override 
 			public void run() {
 				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), "-1", jsoninfo -> {
-					
-					long bl = jsoninfo.getJSONObject("data").getLong("banexpiredate");
-					if (bl > System.currentTimeMillis()) {
-						event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until: " ) + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
-					} else {
-						Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-							@Override
-							public void run() {
-								if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
-									event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "This server is full, sorry for the inconvienence."));
-								}								
-							}
-						});
+					if (jsoninfo.getJSONObject("data").has("bans")) {
+						long bl = 0;
+						for (String key : jsoninfo.getJSONObject("data").getJSONObject("bans").keySet()) {
+							long lk = jsoninfo.getJSONObject("data").getJSONObject("bans").getJSONObject(key).getLong("banexpiredate");
+							bl = bl > lk ? bl : lk; 
+						}	
+						if (bl > System.currentTimeMillis()) {
+							event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until: " ) + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
+						} else {
+							Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
+								@Override
+								public void run() {
+									if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
+										event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "This server is full, sorry for the inconvienence."));
+									}								
+								}
+							});
+						}	
 					}
 					intA.set(0);
 					
