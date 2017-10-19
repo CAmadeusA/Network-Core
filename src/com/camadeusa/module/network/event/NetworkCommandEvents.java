@@ -60,7 +60,7 @@ public class NetworkCommandEvents implements Listener {
 			event.setCancelled(true);
 			aP.getPlayer().sendMessage(ChatManager.translateFor("en", aP, NetworkCore.prefixError + "You do not have permission to use this command. If you believe this to be an error, please contact the administration."));
 		}
-		if (!aP.getData().getString("authenticated").equalsIgnoreCase("true")) {
+		if (!(aP.getData().has("authenticated") && aP.getData().getString("authenticated").equalsIgnoreCase("true"))) {
 			if (!command.equalsIgnoreCase("authenticate")) {
 				event.setCancelled(true);
 				aP.getPlayer().sendMessage(ChatManager.translateFor("en", aP, NetworkCore.prefixError + "You are not authenticated to use this command. "));
