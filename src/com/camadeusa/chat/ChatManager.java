@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -98,19 +99,19 @@ public class ChatManager implements Listener {
 					info.add(new FancyMessage().text("You can click this name to lookup our records on this player.").color(ChatColor.GRAY));
 					
 					if (sender.getData().has("bans")) {
-						info.add(new FancyMessage().text("# Bans: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("bans").length() + ""));						
+						info.add(new FancyMessage().text("# Bans: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("bans").length()-1 + ""));						
 					} else {
 						info.add(new FancyMessage().text("# Bans: ").color(ChatColor.GOLD).then("0"));												
 					}
 					
 					if (sender.getData().has("kicks")) {
-						info.add(new FancyMessage().text("# Kicks: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("kicks").length() + ""));
+						info.add(new FancyMessage().text("# Kicks: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("kicks").length()-1 + ""));
 					} else {						
 						info.add(new FancyMessage().text("# Kicks: ").color(ChatColor.GOLD).then("0"));
 					}
 
 					if (sender.getData().has("mutes")) {
-						info.add(new FancyMessage().text("# Mutes: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("mutes").length() + ""));
+						info.add(new FancyMessage().text("# Mutes: ").color(ChatColor.GOLD).then(sender.getData().getJSONObject("mutes").length()-1 + ""));
 					} else {						
 						info.add(new FancyMessage().text("# Mutes: ").color(ChatColor.GOLD).then("0"));
 					}

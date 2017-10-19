@@ -222,7 +222,7 @@ public class NetworkPlayer implements Listener {
 			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
 		}
 		
-		if (aP.getData().has("requirepwonlogin") && aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true")) {
+		if (aP.getData().has("requirepwonlogin") && (aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
 			aP.getPlayer().chat("/authenticate");
 		} else {
 			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));

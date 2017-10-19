@@ -13,6 +13,7 @@ import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.player.PlayerRank;
+import com.camadeusa.utility.MD5;
 import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
 import com.camadeusa.utility.command.CommandFramework;
@@ -40,8 +41,8 @@ public class NetworkCommands {
 			page = commands.size() / lineHeight;
 		}
 
-		args.getPlayer().sendMessage("------=== " + NetworkCore.prefixStandard + "Help Menu: Showing Page " + page
-				+ " of " + commands.size() / lineHeight + " ===------");
+		args.getPlayer().sendMessage("=== " + NetworkCore.prefixStandard + "Help Menu: Showing Page " + page
+				+ " of " + commands.size() / lineHeight + " ===");
 		args.getPlayer().sendMessage(ChatColor.GRAY
 				+ "Use /help <page-number> to get the page of help, or hover over the command to get known information on the command.");
 
@@ -187,12 +188,12 @@ public class NetworkCommands {
 		if (args.getArgs().length < 1) {
 			args.getPlayer().chat("/changePassword <Enter your previous password: > <Enter your NEW password>");
 		} else {
-			if (!args.getArchrPlayer().getData().getString("password").equals(args.getArgs(0))) {
+			if (!args.getArchrPlayer().getData().getString("password").equals(MD5.getMD5(args.getArgs(0)))) {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect password.");
 				return;
 			} 
 			args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + args.getArchrPlayer().getData().getString("password") + ", and is now: " + args.getArgs(1));
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", args.getArgs(1)));
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", MD5.getMD5(args.getArgs(1))));
 			
 		}
 	}
@@ -220,7 +221,7 @@ public class NetworkCommands {
 				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getArchrPlayer().getPlayer().getUniqueId().toString(), "authenticated", "false"));
 				args.getPlayer().chat("/authenticate <Input Your Password: >");
 			} else {
-				if (args.getArgs(0).equals(args.getArchrPlayer().getData().getString("password"))) {
+				if (MD5.getMD5(args.getArgs(0)).equals(args.getArchrPlayer().getData().getString("password"))) {
 					
 					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getArchrPlayer().getPlayer().getUniqueId().toString(), "authenticated", "true"));
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Authenticated.");
@@ -253,7 +254,7 @@ public class NetworkCommands {
 							return;
 						}
 						
-						SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", args.getArgs(2)));
+						SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", MD5.getMD5(args.getArgs(2))));
 						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Password setup succeeded. Your password is: " + args.getArgs(2));
 						args.getArchrPlayer().reloadPlayerData();
 					} else {
