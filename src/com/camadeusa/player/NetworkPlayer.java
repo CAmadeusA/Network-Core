@@ -22,6 +22,9 @@ import com.camadeusa.chat.ChatManager;
 import com.camadeusa.utility.Random;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
+import com.rethinkdb.RethinkDB;
+import com.rethinkdb.net.Connection;
+import com.rethinkdb.net.Cursor;
 
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 
@@ -46,6 +49,31 @@ public class NetworkPlayer implements Listener {
 		rank = PlayerRank.Player;
 		
 		//TODO: Track Changes
+		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+			@Override
+			public void run() {
+				Connection con = RethinkDB.r.connection().hostname("192.168.1.100").db("Orion_Network").user("admin", "61797Caa").connect();
+				con.use("Orion_Network");
+				
+				Cursor cur = RethinkDB.r.db("Orion_Network").table("playerdata").get(p.getUniqueId().toString()).changes().run(con);
+				for (Object change : cur) {
+					reloadPlayerData();
+				}
+				Cursor curk = RethinkDB.r.db("Orion_Network").table("kicks").get(p.getUniqueId().toString()).changes().run(con);
+				for (Object change : curk) {
+					reloadPlayerData();
+				}
+				Cursor curb = RethinkDB.r.db("Orion_Network").table("bans").get(p.getUniqueId().toString()).changes().run(con);
+				for (Object change : curb) {
+					reloadPlayerData();
+				}
+				Cursor curm = RethinkDB.r.db("Orion_Network").table("mutes").get(p.getUniqueId().toString()).changes().run(con);
+				for (Object change : curm) {
+					reloadPlayerData();
+				}
+				
+			}
+		});
 		
 	}
 

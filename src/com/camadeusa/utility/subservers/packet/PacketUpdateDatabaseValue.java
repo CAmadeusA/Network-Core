@@ -2,9 +2,9 @@ package com.camadeusa.utility.subservers.packet;
 
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.json.JSONObject;
 
-import net.ME1312.SubServers.Client.Bukkit.Library.JSONCallback;
 import net.ME1312.SubServers.Client.Bukkit.Library.Version.Version;
 import net.ME1312.SubServers.Client.Bukkit.Network.PacketIn;
 import net.ME1312.SubServers.Client.Bukkit.Network.PacketOut;
@@ -31,7 +31,7 @@ public class PacketUpdateDatabaseValue implements PacketIn, PacketOut {
 		json.put("value", this.value);
 		json.put("uuid", this.uuid);
 		json.put("id", this.id);
-		
+				
 		return json;
 	}
 	
