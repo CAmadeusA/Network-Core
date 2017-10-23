@@ -10,6 +10,7 @@ import net.ME1312.SubServers.Client.Bukkit.Network.PacketIn;
 import net.ME1312.SubServers.Client.Bukkit.Network.PacketOut;
 
 public class PacketUpdateDatabaseValue implements PacketIn, PacketOut {
+	String table = "playerdata";
 	String uuid;
 	String key;
 	String value;
@@ -24,9 +25,18 @@ public class PacketUpdateDatabaseValue implements PacketIn, PacketOut {
 		this.id = UUID.randomUUID().toString();
 	}
 
+	public PacketUpdateDatabaseValue(String table, String uuid, String key, String value) {
+		this.table = table;
+		this.uuid = uuid;
+		this.key = key;
+		this.value = value;
+		this.id = UUID.randomUUID().toString();
+	}
+
 	@Override
 	public JSONObject generate() throws Throwable {
 		JSONObject json = new JSONObject();
+		json.put("table", table);		
 		json.put("key", this.key);
 		json.put("value", this.value);
 		json.put("uuid", this.uuid);

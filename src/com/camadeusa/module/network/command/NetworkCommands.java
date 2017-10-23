@@ -204,7 +204,7 @@ public class NetworkCommands {
 			args.getPlayer().chat("/setPasswordPromptOnLogin <Enter Value: (true/false)>");
 		} else {
 			if (args.getArgs(0).equalsIgnoreCase("true") || args.getArgs(0).equalsIgnoreCase("false")) {
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "requirepwonlogin", args.getArgs(0)));
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue("playersettings", args.getPlayer().getUniqueId().toString(), "requirepwonlogin", args.getArgs(0)));
 				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Changed Value. Thank you!");
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect input, please try again.");
@@ -246,9 +246,9 @@ public class NetworkCommands {
 				} else {
 					if (args.getArgs(0).equalsIgnoreCase("y")) {
 						if (args.getArgs(1).equalsIgnoreCase("y")) {
-							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "requirepwonlogin", "TRUE"));
+							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue("playersettings", args.getPlayer().getUniqueId().toString(), "requirepwonlogin", "TRUE"));
 						} else if (args.getArgs(1).equalsIgnoreCase("n")) {
-							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "requirepwonlogin", "FALSE"));							
+							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue("playersettings", args.getPlayer().getUniqueId().toString(), "requirepwonlogin", "FALSE"));							
 						} else {
 							args.getPlayer().sendMessage(NetworkCore.prefixError + "Password setup failed. You are dumb.");
 							return;
