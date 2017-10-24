@@ -17,6 +17,7 @@ import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.command.prompt.listener.CommandListener;
 import com.camadeusa.utility.menu.InventoryManager;
 import com.camadeusa.utility.subservers.event.SubserversEvents;
+import com.camadeusa.utility.subservers.packet.PacketDownloadNetworkSettings;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
@@ -77,6 +78,8 @@ public class NetworkCore extends JavaPlugin {
 		SubDataClient.registerPacket(PacketUpdateDatabaseValue.class, "PacketUpdateDatabaseValue");
 		SubDataClient.registerPacket(new PacketPunishPlayer(), "PacketPunishPlayer");
 		SubDataClient.registerPacket(PacketPunishPlayer.class, "PacketPunishPlayer");
+		SubDataClient.registerPacket(new PacketDownloadNetworkSettings(), "PacketDownloadNetworkSettings");
+		SubDataClient.registerPacket(PacketDownloadNetworkSettings.class, "PacketDownloadNetworkSettings");
 			
 	}
 	
