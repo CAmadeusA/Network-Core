@@ -4,12 +4,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.json.JSONArray;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.player.NetworkPlayer;
@@ -88,7 +86,7 @@ public class ChatManager implements Listener {
 		if (sender != null) {
 			if (PlayerState.canSee(sender.getPlayerState(), reciever.getPlayerState())) {
 				ArrayList<FancyMessage> info = new ArrayList<>();
-				FancyMessage fm = new FancyMessage().text(sender.getPlayer().getDisplayName() + "> ");
+				FancyMessage fm = new FancyMessage().text(PlayerRank.formatNameByRankWOIcon(sender) + ": ");
 				info.add(new FancyMessage().text("Name: ").color(ChatColor.GOLD).then(sender.getPlayer().getDisplayName()));
 				info.add(new FancyMessage().text("UUID: ").color(ChatColor.GOLD).then(sender.getPlayer().getUniqueId().toString()));
 				info.add(new FancyMessage().text("Rank: ").color(ChatColor.GOLD).then(sender.getPlayerRank().toString()));
@@ -126,7 +124,7 @@ public class ChatManager implements Listener {
 				if (translate) {
 					
 				ArrayList<FancyMessage> translation = new ArrayList<>();
-				translation.add(new FancyMessage().text(NetworkCore.prefixStandard + translateFor("en", reciever, "Attempting Translation on this text. This may not be 100% accurate.")));
+				translation.add(new FancyMessage().text(NetworkCore.prefixStandard + translateFor("en", reciever, "Attempting Translation on this text. This may not be accurate.")));
 				translation.add(new FancyMessage().text(ChatColor.GOLD + translateFor(sender.getPlayer().spigot().getLocale().substring(0,2), reciever, message)));
 				fm.formattedTooltip(info).then(message).formattedTooltip(translation).send(reciever.getPlayer());				
 				} else {

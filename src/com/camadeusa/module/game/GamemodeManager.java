@@ -1,15 +1,13 @@
 package com.camadeusa.module.game;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.Module;
-import com.camadeusa.module.network.ModuleManager;
+import com.camadeusa.module.ModuleManager;
 
 public class GamemodeManager {
 	ModuleManager modulemanager;

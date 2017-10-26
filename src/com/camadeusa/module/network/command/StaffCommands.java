@@ -38,12 +38,12 @@ public class StaffCommands {
 	
 	@Command(name = "punish", usage = "/punish")
 	public void punishPlayer(CommandArgs args) {
-		if (args.getArchrPlayer().getPlayerRank().getValue() >= PlayerRank.Helper.getValue()) {
+		if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Helper.getValue()) {
 
 			if (args.getArgs().length < 1) {
 				args.getPlayer().chat("/punish <What is your password?: (This is secure and will not be shared) > <Who would you like to punish?: (Player Name) > <For what type of punishment?: (kick/ban/mute) > <How Long?: (1-permanent) > <Units of time? (minutes/hours/days/weeks/months/permanent): > <For what reason?: >");
 			} else if (args.getArgs().length > 1) {
-				if (MD5.getMD5(args.getArgs(0)).equals(args.getArchrPlayer().getData().getString("password"))) {
+				if (MD5.getMD5(args.getArgs(0)).equals(args.getNetworkPlayer().getData().getString("password"))) {
 					String uuid = "";
 					if (Bukkit.getPlayer(args.getArgs(1)).isOnline()) {
 						uuid = Bukkit.getPlayer(args.getArgs(1)).getUniqueId().toString();
@@ -67,7 +67,7 @@ public class StaffCommands {
 								modifier = PunishType.MUTE;
 								break;
 								default:
-									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Incorrect punishment type input. "));
+									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "Incorrect punishment type input. "));
 									return;
 							}
 							boolean perm = false;
@@ -102,7 +102,7 @@ public class StaffCommands {
 									mult = -1;
 									break;
 								default:
-									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Incorrect time units input. "));
+									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "Incorrect time units input. "));
 									return;
 										
 								}
@@ -123,34 +123,34 @@ public class StaffCommands {
 									args.getPlayer().sendMessage("Player " + args.getArgs(1) + " has been given action " + modifier + " until " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(Long.MAX_VALUE));
 									
 								} else {
-									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You must supply a reason."));																								
+									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You must supply a reason."));																								
 								}
 								
 							} else {
-								args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You inputted an amount that was neither numeric or \"permanent\". "));															
+								args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You inputted an amount that was neither numeric or \"permanent\". "));															
 							}
 							
 						} else {
-							args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Invalid Punishment Type Input."));							
+							args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "Invalid Punishment Type Input."));							
 						}
 					} else {
-						args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Player could not be found."));
+						args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "Player could not be found."));
 						
 					}
 					
 				} else {
-					args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "Invalid Password."));
+					args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "Invalid Password."));
 				}
 			}
 
 		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You do not have permission to use this command."));			
+			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to use this command."));			
 		}
 	}
 	
 	@Command(name = "openPlayerManagmentMenu", usage = "/openPlayerManagmentMenu {Player Name}")
 	public void oPMM(CommandArgs args) {
-		if (args.getArchrPlayer().getPlayerRank().getValue() >= PlayerRank.Helper.getValue()) {
+		if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Helper.getValue()) {
 			Inventory inv = new Inventory(args.getArgs(0) + "'s Player info:", 3);
 			SlotItem item = new SlotItem("Player Information", args.getArgs(0), 0, Material.HOPPER);
 			inv.addSlotItem(0, item);
@@ -166,7 +166,7 @@ public class StaffCommands {
 			InventoryS.registerInventory(NetworkCore.getInstance(), inv);
 			InventoryS.openInventory(args.getPlayer(), args.getArgs(0) + "'s Player info:");
 		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getArchrPlayer(), "You do not have permission to use this command."));			
+			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to use this command."));			
 		}
 	}
 

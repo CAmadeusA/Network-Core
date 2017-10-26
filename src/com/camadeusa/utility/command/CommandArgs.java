@@ -108,7 +108,7 @@ public class CommandArgs {
 		}
 	}
 	
-	public NetworkPlayer getArchrPlayer() {
+	public NetworkPlayer getNetworkPlayer() {
 		for (NetworkPlayer ap : NetworkPlayer.getNetworkPlayerList()) {
 			if (ap.getPlayer().getUniqueId().equals(getPlayer().getUniqueId())) {
 				return ap;

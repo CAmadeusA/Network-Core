@@ -32,8 +32,8 @@ public class NetworkCore extends JavaPlugin {
 	static NetworkCore instance;
 	static ConfigUtil configManager;
 	static GamemodeManager gamemodeManager;
-	public static String prefixStandard = ChatColor.BOLD + "" + ChatColor.DARK_PURPLE + "[" + ChatColor.GOLD + "Orion" + ChatColor.DARK_PURPLE + "]" + ChatColor.WHITE + ": " + ChatColor.RESET;
-	public static String prefixError = ChatColor.BOLD + "" + ChatColor.DARK_PURPLE + "[" + ChatColor.DARK_RED + "Orion" + ChatColor.DARK_PURPLE + "]" + ChatColor.WHITE + ": " + ChatColor.RESET;
+	public static String prefixStandard = ChatColor.BOLD + "" + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + ">> " + ChatColor.RESET;
+	public static String prefixError = ChatColor.BOLD + "" + ChatColor.RED + "Orion" + ChatColor.GRAY + ">> " + ChatColor.RESET;
 	public GSheetDBUtil playersDB;
 	XoreBoardUtil xbu;
 	

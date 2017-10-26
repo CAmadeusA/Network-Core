@@ -207,7 +207,7 @@ public class NetworkPlayer implements Listener {
 		aP.setRank(PlayerRank.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("rank")));
 		aP.setPlayerstate(
 				PlayerState.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("state")));
-		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
+		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRankWOIcon(aP));
 		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(true);
 		}
@@ -217,16 +217,6 @@ public class NetworkPlayer implements Listener {
 
 		event.setJoinMessage("");
 		
-		aP.reloadPlayerData();
-		if (!aP.getData().has("requirepwonlogin")) {
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
-		}
-		
-		if (aP.getData().has("requirepwonlogin") && (aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
-			aP.getPlayer().chat("/authenticate");
-		} else {
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
-		}
 	}
 	
 	
@@ -294,7 +284,7 @@ public class NetworkPlayer implements Listener {
 				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
 					setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
 					setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
-					getPlayer().setDisplayName(PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(player.getUniqueId().toString())));
+					getPlayer().setDisplayName(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(player.getUniqueId().toString())));
 					
 					setData(jsoninfo.getJSONObject("data"));
 					

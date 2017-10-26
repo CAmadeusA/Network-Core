@@ -10,20 +10,20 @@ import com.camadeusa.utility.TextUtil;
 public enum PlayerRank {
 	Owner(Integer.MAX_VALUE),
 	Developer(Integer.MAX_VALUE - 1),
-	Director(500),
+	Manager(500),
 	Admin(450),
 	SrMod(400),
 	Mod(300),
 	Helper(200),
 	Vip(90),
-	Friend(80),
+	Contributer(80),
 	Donator7(70),
 	Donator6(60),
 	Donator5(50),
-	Donator4(40),
-	Donator3(30),
-	Donator2(20),
-	Donator1(10),
+	Emerald(40),
+	Diamond(30),
+	Gold(20),
+	Iron(10),
 	Player(1),
 	//Should never be used. Just an intentional delimiter.
 	Banned(-1);
@@ -44,14 +44,14 @@ public enum PlayerRank {
 		switch (a.getPlayerRank()) {
 		case Owner:
 			icon = "\u2654";
-			colorPrefix = TextUtil.toBoldRainbow(a.getPlayer().getName());
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
 			break;
 		case Developer:
 			colorPrefix = TextUtil.toRainbow(a.getPlayer().getName());
 			icon = "\u2328";
 			break;
-		case Director: 
-			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.ITALIC;
+		case Manager: 
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
 			icon = "\u2658";
 			break;
 		case Admin: 
@@ -59,22 +59,22 @@ public enum PlayerRank {
 			icon = "\u2658";
 			break;
 		case SrMod: 
-			colorPrefix = ChatColor.RED + "" + ChatColor.BOLD + "" + ChatColor.ITALIC;
+			colorPrefix = ChatColor.DARK_RED + "";
 			icon = "\u2656";
 			break;
 		case Mod:
-			colorPrefix = ChatColor.RED + "" + ChatColor.ITALIC;
+			colorPrefix = ChatColor.RED + "";
 			icon = "\u2657";
 			break;
 		case Helper:
-			colorPrefix = ChatColor.RED + "";
+			colorPrefix = ChatColor.RED + "" + ChatColor.ITALIC;
 			icon = "\u2659";
 			break;
 		case Vip:
 			colorPrefix = ChatColor.DARK_PURPLE + "";
 			icon = "\u2023";
 			break;
-		case Friend:
+		case Contributer:
 			colorPrefix = ChatColor.LIGHT_PURPLE + "";
 			icon = "\u221E";
 			break;
@@ -90,22 +90,22 @@ public enum PlayerRank {
 			colorPrefix = ChatColor.AQUA + "";
 			icon = "\u2164";
 			break;
-		case Donator4:
-			colorPrefix = ChatColor.GOLD + "";
+		case Emerald:
+			colorPrefix = ChatColor.GREEN + "";
 			icon = "\u2163";
 			break;
-		case Donator3:
-			colorPrefix = ChatColor.GOLD + "";
+		case Diamond:
+			colorPrefix = ChatColor.AQUA + "";
 			icon = "\u2162";
 			break;
-		case Donator2:
+		case Gold:
 			colorPrefix = ChatColor.GOLD + "";
 			icon = "\u2161";
-		case Donator1:
-			colorPrefix = ChatColor.GOLD + "";
+		case Iron:
+			colorPrefix = ChatColor.GRAY + "";
 			icon = "\u2160";
 		case Player:
-			colorPrefix = ChatColor.BLUE + "";
+			colorPrefix = ChatColor.DARK_GREEN + "";
 			break;
 		case Banned:
 			colorPrefix = ChatColor.BLACK + "";
@@ -114,7 +114,7 @@ public enum PlayerRank {
 			break;
 		}
 		if (a.getPlayerRank().getValue() > PlayerRank.Player.getValue()) {
-			if (a.getPlayerRank().getValue() > PlayerRank.Director.getValue()) {
+			if (a.getPlayerRank().getValue() > PlayerRank.Manager.getValue()) {
 				return (ChatColor.DARK_GRAY + "[" + ChatColor.RESET + icon + ChatColor.DARK_GRAY + "]" + ChatColor.RESET + " " + colorPrefix + ChatColor.RESET);			
 				
 			}
@@ -128,30 +128,30 @@ public enum PlayerRank {
 		String colorPrefix = ChatColor.RESET + "";
 		switch (a.getPlayerRank()) {
 		case Owner:
-			colorPrefix = TextUtil.toBoldRainbow(a.getPlayer().getName());
+			colorPrefix = ChatColor.BOLD + "" + ChatColor.DARK_RED;
 			break;
 		case Developer:
 			colorPrefix = TextUtil.toRainbow(a.getPlayer().getName());
 			break;
-		case Director: 
+		case Manager: 
 			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.ITALIC;
 			break;
 		case Admin: 
-			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
+			colorPrefix = ChatColor.BOLD + "" + ChatColor.DARK_RED;
 			break;
 		case SrMod: 
-			colorPrefix = ChatColor.RED + "" + ChatColor.BOLD + "" + ChatColor.ITALIC;
+			colorPrefix = ChatColor.DARK_RED + "";
 			break;
 		case Mod:
-			colorPrefix = ChatColor.RED + "" + ChatColor.ITALIC;
+			colorPrefix = ChatColor.RED + "";
 			break;
 		case Helper:
-			colorPrefix = ChatColor.RED + "";
+			colorPrefix = ChatColor.RED + "" + ChatColor.ITALIC;
 			break;
 		case Vip:
 			colorPrefix = ChatColor.DARK_PURPLE + "";
 			break;
-		case Friend:
+		case Contributer:
 			colorPrefix = ChatColor.LIGHT_PURPLE + "";
 			break;
 		case Donator7:
@@ -163,18 +163,18 @@ public enum PlayerRank {
 		case Donator5:
 			colorPrefix = ChatColor.AQUA + "";
 			break;
-		case Donator4:
-			colorPrefix = ChatColor.GOLD + "";
+		case Emerald:
+			colorPrefix = ChatColor.GREEN + "";
 			break;
-		case Donator3:
-			colorPrefix = ChatColor.GOLD + "";
+		case Diamond:
+			colorPrefix = ChatColor.AQUA + "";
 			break;
-		case Donator2:
+		case Gold:
 			colorPrefix = ChatColor.GOLD + "";
-		case Donator1:
-			colorPrefix = ChatColor.GOLD + "";
+		case Iron:
+			colorPrefix = ChatColor.GRAY + "";
 		case Player:
-			colorPrefix = ChatColor.BLUE + "";
+			colorPrefix = ChatColor.DARK_GREEN + "";
 			break;
 		case Banned:
 			colorPrefix = ChatColor.BLACK + "";
@@ -182,15 +182,8 @@ public enum PlayerRank {
 		default:
 			break;
 		}
-		if (a.getPlayerRank().getValue() > PlayerRank.Player.getValue()) {
-			if (a.getPlayerRank().getValue() > PlayerRank.Director.getValue()) {
-				return (colorPrefix + ChatColor.RESET);			
-				
-			}
 			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);			
-		} else {
-			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);
-		}
+
 		
 	}
 	
@@ -200,8 +193,8 @@ public enum PlayerRank {
 			return "Owner";
 		case Developer:
 			return "Developer";
-		case Director:
-			return "Director";
+		case Manager:
+			return "Manager";
 		case Admin:
 			return "Admin";
 		case SrMod:
@@ -212,21 +205,21 @@ public enum PlayerRank {
 			return "Helper";
 		case Vip:
 			return "Vip";
-		case Friend:
-			return "Friend";
+		case Contributer:
+			return "Contributer";
 		case Donator7:
 			return "Donator7";
 		case Donator6: 
 			return "Donator6";
 		case Donator5: 
 			return "Donator5";
-		case Donator4:
+		case Emerald:
 			return "Donator4";
-		case Donator3:
+		case Diamond:
 			return "Donator3";
-		case Donator2:
+		case Gold:
 			return "Donator2";
-		case Donator1:
+		case Iron:
 			return "Donator1";
 		case Player:
 			return "Player";
@@ -243,8 +236,8 @@ public enum PlayerRank {
 			return PlayerRank.Owner;
 		case "Developer":
 			return PlayerRank.Developer;
-		case "Director":
-			return PlayerRank.Director;
+		case "Manager":
+			return PlayerRank.Manager;
 		case "Admin":
 			return PlayerRank.Admin;
 		case "SrMod":
@@ -253,6 +246,10 @@ public enum PlayerRank {
 			return PlayerRank.Mod;
 		case "Helper":
 			return PlayerRank.Helper;
+		case "Vip":
+			return PlayerRank.Vip;
+		case "Contributer":
+			return PlayerRank.Contributer;
 		case "Donator7":
 			return PlayerRank.Donator7;
 		case "Donator6":
@@ -260,13 +257,13 @@ public enum PlayerRank {
 		case "Donator5":
 			return PlayerRank.Donator5;
 		case "Donator4":
-			return PlayerRank.Donator4;
+			return PlayerRank.Emerald;
 		case "Donator3":
-			return PlayerRank.Donator3;
+			return PlayerRank.Diamond;
 		case "Donator2":
-			return PlayerRank.Donator2;
+			return PlayerRank.Gold;
 		case "Donator1":
-			return PlayerRank.Donator1;
+			return PlayerRank.Iron;
 		case "Player":
 			return PlayerRank.Player;
 		case "Banned":
@@ -300,24 +297,24 @@ public enum PlayerRank {
 			commandsp.add("setpasswordpromptonlogin");
 			commandsp.add("changepassword");
 			return commandsp;
-		case Donator1:
+		case Iron:
 			ArrayList<String> commandsd1 = getCommandsAvailable(PlayerRank.Player);
 			// commands.add("foobar");
 			return commandsd1;
-		case Donator2:
-			ArrayList<String> commandsd2 = getCommandsAvailable(PlayerRank.Donator1);
+		case Gold:
+			ArrayList<String> commandsd2 = getCommandsAvailable(PlayerRank.Iron);
 			// commands.add("foobar");
 			return commandsd2;
-		case Donator3:
-			ArrayList<String> commandsd3 = getCommandsAvailable(PlayerRank.Donator2);
+		case Diamond:
+			ArrayList<String> commandsd3 = getCommandsAvailable(PlayerRank.Gold);
 			// commands.add("foobar");
 			return commandsd3;
-		case Donator4:
-			ArrayList<String> commandsd4 = getCommandsAvailable(PlayerRank.Donator3);
+		case Emerald:
+			ArrayList<String> commandsd4 = getCommandsAvailable(PlayerRank.Diamond);
 			// commands.add("foobar");
 			return commandsd4;
 		case Donator5:
-			ArrayList<String> commandsd5 = getCommandsAvailable(PlayerRank.Donator4);
+			ArrayList<String> commandsd5 = getCommandsAvailable(PlayerRank.Emerald);
 			// commands.add("foobar");
 			return commandsd5;
 		case Donator6:
@@ -339,13 +336,13 @@ public enum PlayerRank {
 			commandsH.add("lookup");
 			commandsH.add("punish");
 			commandsH.add("openplayermanagmentmenu");
+			commandsH.add("ban");
+			commandsH.add("banhammer");
+			commandsH.add("mute");
+			commandsH.add("gag");
 			return commandsH;
 		case Mod:
 			ArrayList<String> commandsM = getCommandsAvailable(PlayerRank.Helper);
-			commandsM.add("ban");
-			commandsM.add("banhammer");
-			commandsM.add("mute");
-			commandsM.add("gag");
 			return commandsM;
 		case SrMod:
 			ArrayList<String> commandsSM = getCommandsAvailable(PlayerRank.Mod);
@@ -354,12 +351,12 @@ public enum PlayerRank {
 		case Admin:
 			ArrayList<String> commandsA = getCommandsAvailable(PlayerRank.SrMod);
 			return commandsA;
-		case Director:
+		case Manager:
 			ArrayList<String> commandsD = getCommandsAvailable(PlayerRank.Admin);
 			// commands.add("foobar");
 			return commandsD;
 		case Developer:
-			ArrayList<String> commandsDD = getCommandsAvailable(PlayerRank.Director);
+			ArrayList<String> commandsDD = getCommandsAvailable(PlayerRank.Manager);
 			// Junk Minecraft commands and Aliases
 			commandsDD.add("about");
 			commandsDD.add("version");
@@ -372,8 +369,6 @@ public enum PlayerRank {
 			commandsDD.add("plugins");
 			commandsDD.add("ps");
 			commandsDD.add("protocolsupport");
-			commandsDD.add("reload");
-			commandsDD.add("rl");
 			commandsDD.add("ver");
 			commandsDD.add("version");
 			// Bukkit Commands
@@ -406,20 +401,20 @@ public enum PlayerRank {
 	public static LinkedList<PlayerRank> valuesordered() {
 		LinkedList<PlayerRank> ll = new LinkedList<>();
 		ll.add(Player);
-		ll.add(Donator1);
-		ll.add(Donator2);
-		ll.add(Donator3);
-		ll.add(Donator4);
+		ll.add(Iron);
+		ll.add(Gold);
+		ll.add(Diamond);
+		ll.add(Emerald);
 		ll.add(Donator5);
 		ll.add(Donator6);
 		ll.add(Donator7);
-		ll.add(Friend);
+		ll.add(Contributer);
 		ll.add(Vip);
 		ll.add(Helper);
 		ll.add(Mod);
 		ll.add(SrMod);
 		ll.add(Admin);
-		ll.add(Director);
+		ll.add(Manager);
 		ll.add(Developer);
 		ll.add(Owner);
 		

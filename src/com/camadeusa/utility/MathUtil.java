@@ -129,6 +129,15 @@ public class MathUtil {
     public static int getNthDigit(int number, int base, int n) {
         return (int)((double)number / Math.pow(base, n - 1) % (double)base);
     }
+    
+    public static double distance(float x1, float x2, float z1, float z2) {
+    		return Math.hypot(x1 - x2, z1 - z2);
+    }
+
+    public static double distance(double x1, double x2, double z1, double z2) {
+   		return Math.hypot(x1 - x2, z1 - z2);
+
+    }
 
     static {
         int radian_factor = sin_precision * 180;
@@ -149,5 +158,6 @@ public class MathUtil {
             }
         }
     }
+
 }
 

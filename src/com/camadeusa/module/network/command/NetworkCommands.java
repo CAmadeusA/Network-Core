@@ -35,7 +35,7 @@ public class NetworkCommands {
 			page = Integer.parseInt(args.getArgs(0));
 		}
 
-		ArrayList<String> commands = PlayerRank.getCommandsAvailable(args.getArchrPlayer().getPlayerRank());
+		ArrayList<String> commands = PlayerRank.getCommandsAvailable(args.getNetworkPlayer().getPlayerRank());
 		Collections.sort(commands);
 		if (page > commands.size() / lineHeight) {
 			page = commands.size() / lineHeight;
@@ -90,7 +90,7 @@ public class NetworkCommands {
 		}
 		
 		if (selected != null) {
-			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getArchrPlayer(),
+			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(),
 					NetworkCore.prefixStandard + "Searching for servers of type: " + selected.getValue()));
 			Gamemode seltemp = selected;
 			Bukkit.getServer().getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
@@ -147,7 +147,7 @@ public class NetworkCommands {
 								"sub teleport " + fullestServer + " " + args.getPlayer().getName());
 
 					} else {
-						if (args.getArchrPlayer().getPlayerRank().getValue() >= PlayerRank.Donator1.getValue()) {
+						if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Iron.getValue()) {
 							args.getPlayer().sendMessage(NetworkCore.prefixStandard
 									+ "All servers of this type are full... Attemting to send you to any available server of this type using your join-priority perk.");
 							for (String key : availableServers.keySet()) {
@@ -174,7 +174,7 @@ public class NetworkCommands {
 			}, 20);
 
 		} else {
-			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getArchrPlayer(), "That is not a kind of server we support. Please try again."));
+			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(), "That is not a kind of server we support. Please try again."));
 		}
 	}
 	
@@ -188,11 +188,11 @@ public class NetworkCommands {
 		if (args.getArgs().length < 1) {
 			args.getPlayer().chat("/changePassword <Enter your previous password: > <Enter your NEW password>");
 		} else {
-			if (!args.getArchrPlayer().getData().getString("password").equals(MD5.getMD5(args.getArgs(0)))) {
+			if (!args.getNetworkPlayer().getData().getString("password").equals(MD5.getMD5(args.getArgs(0)))) {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect password.");
 				return;
 			} 
-			args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + args.getArchrPlayer().getData().getString("password") + ", and is now: " + args.getArgs(1));
+			args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + args.getNetworkPlayer().getData().getString("password") + ", and is now: " + args.getArgs(1));
 			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", MD5.getMD5(args.getArgs(1))));
 			
 		}
@@ -216,14 +216,14 @@ public class NetworkCommands {
 	
 	@Command(name = "authenticate", usage = "/authenticate")
 	public void auth(CommandArgs args) {
-		if (args.getArchrPlayer().getData().has("password")) {
+		if (args.getNetworkPlayer().getData().has("password")) {
 			if (args.getArgs().length < 1) {
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getArchrPlayer().getPlayer().getUniqueId().toString(), "authenticated", "false"));
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getNetworkPlayer().getPlayer().getUniqueId().toString(), "authenticated", "false"));
 				args.getPlayer().chat("/authenticate <Input Your Password: >");
 			} else {
-				if (MD5.getMD5(args.getArgs(0)).equals(args.getArchrPlayer().getData().getString("password"))) {
+				if (MD5.getMD5(args.getArgs(0)).equals(args.getNetworkPlayer().getData().getString("password"))) {
 					
-					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getArchrPlayer().getPlayer().getUniqueId().toString(), "authenticated", "true"));
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getNetworkPlayer().getPlayer().getUniqueId().toString(), "authenticated", "true"));
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Authenticated.");
 				} else {
 					args.getPlayer().sendMessage(NetworkCore.prefixError + "Password incorrect. Please Try again.");
@@ -240,7 +240,7 @@ public class NetworkCommands {
 	
 	@Command(name = "setuppassword", usage = "/setuppassword")
 	public void setupPassword(CommandArgs args) {
-			if (!args.getArchrPlayer().getData().has("password")) {
+			if (!args.getNetworkPlayer().getData().has("password")) {
 				if (args.getArgs().length < 1) {
 					args.getPlayer().chat("/setupPassword <This password is unique to this network, and is case sensitive. Do you understand? (Y/N)?> <Do you want the server to require your password on login? (Y/N)?> <Input Your Password: >");
 				} else {
@@ -256,7 +256,7 @@ public class NetworkCommands {
 						
 						SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", MD5.getMD5(args.getArgs(2))));
 						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Password setup succeeded. Your password is: " + args.getArgs(2));
-						args.getArchrPlayer().reloadPlayerData();
+						args.getNetworkPlayer().reloadPlayerData();
 					} else {
 						args.getPlayer().sendMessage(NetworkCore.prefixError + "Password setup failed. You are dumb.");
 						return;
