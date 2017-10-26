@@ -310,7 +310,7 @@ public class NetworkPlayer implements Listener {
 				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(playeruuid, getPlayer().getName(), getPlayer().getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
 					setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
 					setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
-					getPlayer().setDisplayName(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(player.getUniqueId().toString())));
+					getPlayer().setDisplayName(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(getPlayer().getUniqueId().toString())));
 					getPlayer().setDisplayName(PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));					
 					setData(jsoninfo.getJSONObject("data"));
 					
