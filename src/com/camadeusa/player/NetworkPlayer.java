@@ -32,10 +32,9 @@ public class NetworkPlayer implements Listener {
 	private static List<NetworkPlayer> archrPlayerList = new ArrayList<NetworkPlayer>();
 	private PlayerState playerstate;
 	private PlayerRank rank;
-	
+	private PlayerSettings playerSettings;	
 	private HashMap<String, JSONObject> datacache = new HashMap<>();
-
-	Player player;
+	String playeruuid;
 	JSONObject data;
 
 	public NetworkPlayer() {
@@ -44,11 +43,11 @@ public class NetworkPlayer implements Listener {
 	}
 
 	public NetworkPlayer(Player p) {
-		player = p;
+		playeruuid = p.getUniqueId().toString();
 		playerstate = PlayerState.NORMAL;
 		rank = PlayerRank.Player;
 		
-		//TODO: Track Changes
+		//Track Changes to the accrued data across the multiple tables that are combined here.
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
@@ -71,6 +70,10 @@ public class NetworkPlayer implements Listener {
 				for (Object change : curm) {
 					reloadPlayerData();
 				}
+				Cursor curs = RethinkDB.r.db("Orion_Network").table("playersettings").get(p.getUniqueId().toString()).changes().run(con);
+				for (Object change : curs) {
+					reloadPlayerData();
+				}
 				
 			}
 		});
@@ -78,7 +81,7 @@ public class NetworkPlayer implements Listener {
 	}
 
 	public Player getPlayer() {
-		return player;
+		return Bukkit.getPlayer(playeruuid);
 	}
 
 	public PlayerState getPlayerState() {
@@ -116,6 +119,14 @@ public class NetworkPlayer implements Listener {
 
 	public void setRank(PlayerRank rank) {
 		this.rank = rank;
+	}
+
+	public PlayerSettings getPlayerSettings() {
+		return playerSettings;
+	}
+
+	private void setPlayerSettings(PlayerSettings playerSettings) {
+		this.playerSettings = playerSettings;
 	}
 
 	public static ArrayList<NetworkPlayer> getOnlinePlayers() {
@@ -211,12 +222,27 @@ public class NetworkPlayer implements Listener {
 		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(true);
 		}
+		
+		aP.setPlayerSettings(new PlayerSettings(datacache.get(event.getPlayer().getUniqueId().toString()).getJSONObject("playersettings")));
+		datacache.get(event.getPlayer().getUniqueId().toString()).remove("playersettings");
+		
 		aP.setData(datacache.get(event.getPlayer().getUniqueId().toString()));
 		archrPlayerList.add(aP);
 		datacache.remove(event.getPlayer().getUniqueId().toString());	
+		
 
 		event.setJoinMessage("");
 		
+		aP.reloadPlayerData();
+		if (!aP.getPlayerSettings().has("requirepwonlogin")) {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue("playersettings", aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
+		}
+		
+		if (aP.getPlayerSettings().has("requirepwonlogin") && (aP.getPlayerSettings().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
+			aP.getPlayer().chat("/authenticate");
+		} else {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
+		}
 	}
 	
 	
@@ -281,11 +307,11 @@ public class NetworkPlayer implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override 
 			public void run() {
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(playeruuid, getPlayer().getName(), getPlayer().getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
 					setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
 					setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
 					getPlayer().setDisplayName(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(player.getUniqueId().toString())));
-					
+					getPlayer().setDisplayName(PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));					
 					setData(jsoninfo.getJSONObject("data"));
 					
 				}));				
