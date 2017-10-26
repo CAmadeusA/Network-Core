@@ -5,10 +5,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.GamemodeManager;
-import com.camadeusa.module.network.command.NetworkCommands;
-import com.camadeusa.module.network.command.StaffCommands;
-import com.camadeusa.module.network.event.NetworkCommandEvents;
-import com.camadeusa.module.network.event.NetworkServerInfoEvents;
+import com.camadeusa.network.command.NetworkCommands;
+import com.camadeusa.network.command.StaffCommands;
+import com.camadeusa.network.event.NetworkCommandEvents;
+import com.camadeusa.network.event.NetworkServerInfoEvents;
 import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.timing.CoreLoop;
 import com.camadeusa.utility.ConfigUtil;
