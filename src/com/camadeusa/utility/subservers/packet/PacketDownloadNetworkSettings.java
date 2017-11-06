@@ -23,7 +23,7 @@ public class PacketDownloadNetworkSettings implements PacketIn, PacketOut {
 	@Override
 	public JSONObject generate() throws Throwable {
 		JSONObject jso = new JSONObject();
-		jso.put("id", UUID.randomUUID().toString());
+		jso.put("id", String.valueOf(id.toString()));
 		return jso;
 	}
 

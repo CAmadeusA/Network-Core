@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
@@ -81,7 +83,7 @@ public class NetworkPlayer implements Listener {
 	}
 
 	public Player getPlayer() {
-		return Bukkit.getPlayer(playeruuid);
+		return Bukkit.getPlayer(UUID.fromString(playeruuid));
 	}
 
 	public PlayerState getPlayerState() {
@@ -212,7 +214,7 @@ public class NetworkPlayer implements Listener {
 	}
 
 	// Database data pulling and updating on login/join.
-	@EventHandler
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		NetworkPlayer aP = new NetworkPlayer(event.getPlayer());
 		aP.setRank(PlayerRank.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("rank")));
@@ -222,7 +224,7 @@ public class NetworkPlayer implements Listener {
 		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(true);
 		}
-		
+				
 		aP.setPlayerSettings(new PlayerSettings(datacache.get(event.getPlayer().getUniqueId().toString()).getJSONObject("playersettings")));
 		datacache.get(event.getPlayer().getUniqueId().toString()).remove("playersettings");
 		
@@ -233,16 +235,6 @@ public class NetworkPlayer implements Listener {
 
 		event.setJoinMessage("");
 		
-		aP.reloadPlayerData();
-		if (!aP.getPlayerSettings().has("requirepwonlogin")) {
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue("playersettings", aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
-		}
-		
-		if (aP.getPlayerSettings().has("requirepwonlogin") && (aP.getPlayerSettings().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
-			aP.getPlayer().chat("/authenticate");
-		} else {
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
-		}
 	}
 	
 	

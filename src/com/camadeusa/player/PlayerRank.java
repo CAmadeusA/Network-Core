@@ -180,6 +180,7 @@ public enum PlayerRank {
 			colorPrefix = ChatColor.BLACK + "";
 			break;
 		default:
+			colorPrefix = ChatColor.BLACK + "";
 			break;
 		}
 			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);			

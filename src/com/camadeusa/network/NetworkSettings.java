@@ -21,9 +21,11 @@ public class NetworkSettings {
 
 		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadNetworkSettings(callback -> {
 			for (String key : callback.getJSONObject("data").keySet()) {
-				settings.put(key, callback.getJSONObject("data").getJSONObject(key));
+				if (!key.equals("id")) 
+					settings.put(key, callback.getJSONObject("data").getJSONObject(key));					
+				}
 			}
-		}));
+		));
 
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override
@@ -32,7 +34,7 @@ public class NetworkSettings {
 						.user("admin", "61797Caa").connect();
 				con.use("Orion_Network");
 
-				Cursor<JSONObject> cur = RethinkDB.r.db("Orion_Network").table("networksettings").changes().run(con);
+				Cursor<JSONObject> cur = RethinkDB.r.db("Orion_Network").table("networksettings").get("settings").changes().run(con);
 				for (JSONObject change : cur) {
 					if (settings.containsKey(change.getString("id"))) {
 						settings.replace(change.getString("id"), change);
@@ -43,5 +45,9 @@ public class NetworkSettings {
 
 			}
 		});
+	}
+	
+	public HashMap<String, JSONObject> getSettings() {
+		return settings;
 	}
 }
