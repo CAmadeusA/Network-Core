@@ -5,22 +5,27 @@ import java.util.HashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 
-import com.camadeusa.NetworkCore;
 import com.camadeusa.module.Module;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.player.NetworkPlayer;
@@ -31,13 +36,14 @@ import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoard;
 import com.camadeusa.utility.xoreboard.XoreBoardPlayerSidebar;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
+import com.camadeusa.world.WorldManager;
 
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 
 
 public class HubModule extends Module implements Listener {
 	XoreBoard xb;
-	String scoreboardTitle = ChatColor.GRAY + "" + ChatColor.BOLD + " ---- " + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + " ---- ";
+	String scoreboardTitle = ChatColor.GRAY + "" + ChatColor.BOLD + "--- " + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + " ---";
 	
 	public HubModule() {}
 	
@@ -47,12 +53,26 @@ public class HubModule extends Module implements Listener {
 		Bukkit.getLogger().info("Activated");
 		xb = XoreBoardUtil.getNextXoreBoard();
 		Bukkit.getLogger().info(xb.getBukkitScoreboard().toString());
+		
+		WorldManager.loadWorld("Hub");
+		
+		Bukkit.getWorld("Hub").setDifficulty(Difficulty.PEACEFUL);
+		
+		for (Entity e : Bukkit.getWorld("Hub").getEntities()) {
+			if ((e.getType() != EntityType.PLAYER) && e instanceof LivingEntity) {
+				e.remove();
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.HIGH)
 	public void onJoin(PlayerJoinEvent event) {
 		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		event.setJoinMessage("");
+		aP.getPlayer().teleport(Bukkit.getWorld("Hub").getSpawnLocation());
+		aP.getPlayer().setHealth(20);
+		aP.getPlayer().setFoodLevel(20);
+		aP.getPlayer().setAllowFlight(true);
 		xb.addPlayer(event.getPlayer());
 		XoreBoardPlayerSidebar xbps = xb.getSidebar(event.getPlayer());
 		xbps.setDisplayName(scoreboardTitle);
@@ -63,7 +83,7 @@ public class HubModule extends Module implements Listener {
 		lines.put(ChatColor.GOLD + "Rank: ", 17);
 		lines.put(StringUtils.abbreviate(ChatColor.BLUE + NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerRank().toString(), 40), 16);
 		lines.put("  ", 15);
-		lines.put(ChatColor.GOLD + "https://orionmc.net", -1);
+		lines.put(ChatColor.GOLD + "orionmc.net", -1);
 		xbps.rewriteLines(lines);
 		
 		xbps.showSidebar();
@@ -82,11 +102,11 @@ public class HubModule extends Module implements Listener {
 	
 	@EventHandler
 	public void onPlayerMoveOutOfBounds(PlayerMoveEvent event) {
-		// 250 is arbitrary hub size. 
-		/*World w = event.getPlayer().getWorld();
-		if ((MathUtil.distance(w.getSpawnLocation().getX(), event.getTo().getX(), w.getSpawnLocation().getZ(), event.getTo().getZ())) > 250) {
+		// 100 is arbitrary hub size. 
+		World w = event.getPlayer().getWorld();
+		if ((MathUtil.distance(w.getSpawnLocation().getX(), event.getTo().getX(), w.getSpawnLocation().getZ(), event.getTo().getZ())) > 100) {
 			event.setCancelled(true);
-		}*/
+		}
 	}
 	
 	@EventHandler
@@ -122,6 +142,22 @@ public class HubModule extends Module implements Listener {
 			event.setCancelled(true);
 		}
 	}
+	
+	@EventHandler
+	public void onBlockPlace(BlockPlaceEvent event) {
+		if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
+			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler
+    public void FrameRotate(PlayerInteractEntityEvent e) {
+        if (e.getRightClicked().getType().equals(EntityType.ITEM_FRAME)) {
+            if (e.getPlayer().getGameMode() != GameMode.CREATIVE) {
+                e.setCancelled(true);
+            }
+        }
+    }
 	
 	@EventHandler
 	public void onLeave(PlayerQuitEvent event) {
