@@ -1,6 +1,5 @@
 package com.camadeusa.module.game;
 
-import java.util.HashMap;
 import java.util.UUID;
 
 import org.bukkit.configuration.file.FileConfiguration;
@@ -8,6 +7,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.Module;
 import com.camadeusa.module.ModuleManager;
+import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
+import com.camadeusa.module.hub.HubModule;
 
 public class GamemodeManager {
 	ModuleManager modulemanager;
@@ -16,6 +17,8 @@ public class GamemodeManager {
 	String serveruuid;
 	int maxplayers;
 	public static int currentplayers;
+	
+	OrionGame currentGame;
 
 	@SuppressWarnings("deprecation")
 	public GamemodeManager() {
@@ -49,21 +52,21 @@ public class GamemodeManager {
 	}
 
 	public void activateGametype() {
-		HashMap<String, ? super Module> modules = modulemanager.gatherModules();
 		switch (gamemode) {
 		case Hub:
-			modulemanager.modulesToRegister.add((Module) modules.get("hubmodule"));
+			modulemanager.modulesToRegister.add(new HubModule());
 			break;
-		case ArenaPVP:
-
+		case UHCSG:
+			UHCSGOrionGame game = new UHCSGOrionGame();
+			game.initializeGame();
+			currentGame = game;
 			break;
-
-		case MCOW:
-			modulemanager.modulesToRegister.add((Module) modules.get("mcowmodule"));
 		default:
 			break;
 		}
-		getModulemanager().registerModules();
+		if (modulemanager.modulesToRegister.size() > 0) {
+			modulemanager.registerModules();
+		}
 	}
 
 	public ModuleManager getModulemanager() {

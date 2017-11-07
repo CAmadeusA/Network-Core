@@ -6,26 +6,26 @@ import java.util.HashMap;
 import org.bukkit.event.Listener;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.module.game.mcow.MCOWModule;
+import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
+import com.camadeusa.module.game.uhcsg.segments.Deathmatch;
+import com.camadeusa.module.game.uhcsg.segments.Endgame;
+import com.camadeusa.module.game.uhcsg.segments.Livegame;
+import com.camadeusa.module.game.uhcsg.segments.Lobby;
+import com.camadeusa.module.game.uhcsg.segments.Predeathmatch;
+import com.camadeusa.module.game.uhcsg.segments.Pregame;
 import com.camadeusa.module.hub.HubModule;
 
 public class ModuleManager {
-	HashMap<String, ? super Module> modules = new HashMap<>();
 	public ArrayList<? super Module> modulesToRegister = new ArrayList<>();
 
 	public ModuleManager() {
 	}
 	
-	public HashMap<String, ? super  Module> gatherModules() {
-		modules.put("hubmodule", new HubModule());
-		modules.put("mcowmodule", new MCOWModule());
-		return modules;
-	}
-	
 	public void registerModules() {
-		modulesToRegister.forEach(m -> {
-			NetworkCore.getInstance().getServer().getPluginManager().registerEvents((Listener) m, NetworkCore.getInstance());
-			((Module) m).activateModule();
-		});
+		if (!modulesToRegister.isEmpty()) {
+			modulesToRegister.forEach(m -> {
+				((Module) m).activateModule();
+			});			
+		}
 	}
 }

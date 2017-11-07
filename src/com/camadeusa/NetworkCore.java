@@ -1,5 +1,6 @@
 package com.camadeusa;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,6 +25,7 @@ import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketPunishPlayer;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
+import com.camadeusa.world.WorldManager;
 
 import net.ME1312.SubServers.Client.Bukkit.Network.SubDataClient;
 import protocolsupport.api.ProtocolSupportAPI;
@@ -97,6 +99,11 @@ public class NetworkCore extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
+		Bukkit.getWorlds().forEach(w -> {
+			if (!w.getName().equals("world") && !w.getName().equals("world_nether") && !w.getName().equals("world_the_end")) {
+				WorldManager.unloadWorld(w.getName());
+			}
+		});
 		super.onDisable();
 	}
 	

@@ -24,10 +24,21 @@ public class WorldManager {
 		if (map.exists()) {
 			FileUtil.recursiveCopy(map, new File(root.getAbsolutePath() + "/" + name));
 			Bukkit.createWorld(new WorldCreator(name));
+		}	
+	}
+
+	public static void loadWorld(String name, String folder) {
+		File root = new File("");
+		File worldsFolder = new File(new File("").getAbsolutePath() + "/maps/" + folder);
+		if (!worldsFolder.exists()) {
+			worldsFolder.mkdirs();
 		}
+		File map = new File(worldsFolder.getAbsolutePath() + "/" + name);
 		
-		
-		
+		if (map.exists()) {
+			FileUtil.recursiveCopy(map, new File(root.getAbsolutePath() + "/" + name));
+			Bukkit.createWorld(new WorldCreator(name));
+		}	
 	}
 
 	@SuppressWarnings("deprecation")

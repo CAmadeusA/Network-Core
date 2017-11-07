@@ -2,9 +2,7 @@ package com.camadeusa.module.game;
 
 public enum Gamemode {
 	Hub("HUB"),
-	ArenaPVP("ARENAPVP"),
-	OITQ("OITQ"),
-	MCOW("MCOW");
+	UHCSG("UHCSG");
 	
 	private final String value;
 	
@@ -20,12 +18,8 @@ public enum Gamemode {
 		switch (s) {
 		case "HUB":
 			return Hub;
-		case "ARENAPVP":
-			return ArenaPVP;
-		case "OITQ":
-			return OITQ;
-		case "MCOW":
-			return MCOW;
+		case "UHCSG":
+			return UHCSG;
 		default:
 			return null;
 		}

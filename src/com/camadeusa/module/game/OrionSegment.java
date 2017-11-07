@@ -5,6 +5,7 @@ import com.camadeusa.module.Module;
 public class OrionSegment extends Module {
 	
 	int time = 0;
+	int timeLog = 0;
 	OrionSegment nextSegment;
 	
 	public int getTime() {
@@ -13,6 +14,7 @@ public class OrionSegment extends Module {
 	
 	public void setTime(int time) {
 		this.time = time;
+		this.timeLog = time;
 	}
 
 	public OrionSegment getNextSegment() {
@@ -29,5 +31,9 @@ public class OrionSegment extends Module {
 	
 	public void deactivate() {
 		
+	}
+	
+	public void resetTimer() {
+		time = timeLog;
 	}
 }
