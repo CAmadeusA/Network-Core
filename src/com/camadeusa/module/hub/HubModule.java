@@ -41,7 +41,7 @@ import com.camadeusa.world.WorldManager;
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 
 
-public class HubModule extends Module implements Listener {
+public class HubModule extends Module {
 	XoreBoard xb;
 	String scoreboardTitle = ChatColor.GRAY + "" + ChatColor.BOLD + "--- " + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + " ---";
 	
@@ -63,6 +63,7 @@ public class HubModule extends Module implements Listener {
 				e.remove();
 			}
 		}
+		super.activateModule();
 	}
 	
 	@EventHandler(priority = EventPriority.HIGH)

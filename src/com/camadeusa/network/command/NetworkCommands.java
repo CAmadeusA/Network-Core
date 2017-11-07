@@ -77,7 +77,7 @@ public class NetworkCommands {
 	}
 
 	@SuppressWarnings("deprecation")
-	@Command(name = "join", aliases = { "server" }, usage = "/join {hub/arenapvp/etc}")
+	@Command(name = "join", aliases = { "server" }, usage = "/join {hub/uhcsg/etc}")
 	public void join(CommandArgs args) {
 		Gamemode selected = null;
 		HashMap<String, JSONObject> availableServers = new HashMap<>();
@@ -93,27 +93,19 @@ public class NetworkCommands {
 			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(),
 					NetworkCore.prefixStandard + "Searching for servers of type: " + selected.getValue()));
 			Gamemode seltemp = selected;
-			Bukkit.getServer().getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-				@Override
-				public void run() {
-					SubAPI.getInstance().getSubDataNetwork()
-							.sendPacket(new PacketDownloadServerList(null, null, json -> {
-								for (String server : json.getJSONObject("hosts").getJSONObject("~")
-										.getJSONObject("servers").keySet()) {
-									if (server.substring(0, seltemp.getValue().length())
-											.equalsIgnoreCase(seltemp.getValue())) {
-										SubAPI.getInstance().getSubDataNetwork()
-												.sendPacket(new PacketDownloadServerConfigInfo(server, infojson -> {
-													availableServers.put(server, infojson);
-												}));
-
-										// Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "sub teleport "
-										// + server + " " + args.getPlayer().getName());
-									}
-								}
-							}));
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadServerList(null, null, json -> {
+				for (String server : json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet()) {
+					if (server.replaceAll("[-+]?[0-9]*\\.?[0-9]+", "").equalsIgnoreCase(seltemp.getValue())) {
+						SubAPI.getInstance().getSubDataNetwork()
+								.sendPacket(new PacketDownloadServerConfigInfo(server, infojson -> {
+									availableServers.put(server, infojson);
+								}));
+					}
 				}
-			});
+				
+				
+			}));
+
 
 			Bukkit.getScheduler().scheduleAsyncDelayedTask(NetworkCore.getInstance(), new Runnable() {
 				@Override
@@ -171,7 +163,7 @@ public class NetworkCommands {
 					}
 
 				}
-			}, 20);
+			}, 17);
 
 		} else {
 			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(), "That is not a kind of server we support. Please try again."));
