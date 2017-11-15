@@ -53,7 +53,7 @@ public class NetworkPlayer implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
-				Connection con = RethinkDB.r.connection().hostname("192.168.1.100").db("Orion_Network").user("admin", "61797Caa").connect();
+				Connection con = RethinkDB.r.connection().hostname("camadeusa.ydns.eu").db("Orion_Network").user("orion", "B1EEADCD32176C3644C63F9664CD549799E6041FB351C4A7BEEB86361DE3C3FF").connect();
 				con.use("Orion_Network");
 				
 				Cursor cur = RethinkDB.r.db("Orion_Network").table("playerdata").get(p.getUniqueId().toString()).changes().run(con);

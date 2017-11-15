@@ -5,13 +5,14 @@ import java.util.UUID;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.module.Module;
 import com.camadeusa.module.ModuleManager;
 import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
 import com.camadeusa.module.hub.HubModule;
+import com.camadeusa.module.mapeditor.MapEditorModule;
 
 public class GamemodeManager {
 	ModuleManager modulemanager;
+	private static GamemodeManager instance;
 	String server;
 	Gamemode gamemode;
 	String serveruuid;
@@ -22,6 +23,7 @@ public class GamemodeManager {
 
 	@SuppressWarnings("deprecation")
 	public GamemodeManager() {
+		instance = this;
 		modulemanager = new ModuleManager();
 		if (NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()) != null) {
 			FileConfiguration serverconfig = NetworkCore.getConfigManger().getConfig("server",
@@ -61,6 +63,9 @@ public class GamemodeManager {
 			game.initializeGame();
 			currentGame = game;
 			break;
+		case MAPEDITOR:
+			modulemanager.modulesToRegister.add(new MapEditorModule());
+			break;
 		default:
 			break;
 		}
@@ -81,4 +86,7 @@ public class GamemodeManager {
 		return gamemode;
 	}
 
+	public static GamemodeManager getInstance() {
+		return instance;
+	}
 }

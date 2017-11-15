@@ -38,10 +38,6 @@ public class UHCSGOrionGame extends OrionGame {
 	private static UHCSGOrionGame instance;
 	private OrionSegment currentSegment;
 	
-	public UHCSGOrionGame() {
-	
-	}
-	
 	public void initializeGame() {
 		this.activateModule();
 		
@@ -84,6 +80,10 @@ public class UHCSGOrionGame extends OrionGame {
 		
 		currentSegment = lobby;
 		currentSegment.activate();
+		
+	}
+	
+	public void loadMaps() {
 		
 	}
 	

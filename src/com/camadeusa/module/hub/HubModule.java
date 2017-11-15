@@ -74,6 +74,10 @@ public class HubModule extends Module {
 		aP.getPlayer().setHealth(20);
 		aP.getPlayer().setFoodLevel(20);
 		aP.getPlayer().setAllowFlight(true);
+		aP.getPlayer().getInventory().clear();
+		aP.getPlayer().getActivePotionEffects().forEach(pe -> {
+			aP.getPlayer().removePotionEffect(pe.getType());
+		});
 		xb.addPlayer(event.getPlayer());
 		XoreBoardPlayerSidebar xbps = xb.getSidebar(event.getPlayer());
 		xbps.setDisplayName(scoreboardTitle);

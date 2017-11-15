@@ -36,4 +36,8 @@ public class OrionSegment extends Module {
 	public void resetTimer() {
 		time = timeLog;
 	}
+	
+	public void endSegment() {
+		
+	}
 }
