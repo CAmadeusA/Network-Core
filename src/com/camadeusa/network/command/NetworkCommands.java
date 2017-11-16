@@ -13,6 +13,7 @@ import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.player.PlayerRank;
+import com.camadeusa.utility.Encryption;
 import com.camadeusa.utility.MD5;
 import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
@@ -180,12 +181,16 @@ public class NetworkCommands {
 		if (args.getArgs().length < 1) {
 			args.getPlayer().chat("/changePassword <Enter your previous password: > <Enter your NEW password>");
 		} else {
-			if (!args.getNetworkPlayer().getData().getString("password").equals(MD5.getMD5(args.getArgs(0)))) {
-				args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect password.");
-				return;
+			try {
+				if (!args.getNetworkPlayer().getData().getString("password").equals(Encryption.decrypt(MD5.getMD5(args.getArgs(0)), "OrionAuth"))) {
+					args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect password.");
+					return;
+				}
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + Encryption.decrypt(args.getNetworkPlayer().getData().getString("password"), "OrionAuth") + ", and is now: " + args.getArgs(1));
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", Encryption.encrypt(MD5.getMD5(args.getArgs(1)), "OrionAuth")));
+			} catch (Exception e) {
+				e.printStackTrace();
 			} 
-			args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + args.getNetworkPlayer().getData().getString("password") + ", and is now: " + args.getArgs(1));
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", MD5.getMD5(args.getArgs(1))));
 			
 		}
 	}
@@ -213,14 +218,19 @@ public class NetworkCommands {
 				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getNetworkPlayer().getPlayer().getUniqueId().toString(), "authenticated", "false"));
 				args.getPlayer().chat("/authenticate <Input Your Password: >");
 			} else {
-				if (MD5.getMD5(args.getArgs(0)).equals(args.getNetworkPlayer().getData().getString("password"))) {
-					
-					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getNetworkPlayer().getPlayer().getUniqueId().toString(), "authenticated", "true"));
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Authenticated.");
-				} else {
-					args.getPlayer().sendMessage(NetworkCore.prefixError + "Password incorrect. Please Try again.");
-					args.getPlayer().chat("/authenticate <Input Your Password: >");
-					return;
+				try {
+					if (MD5.getMD5(args.getArgs(0)).equals(Encryption.decrypt(args.getNetworkPlayer().getData().getString("password"), "OrionAuth"))) {
+						
+						SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getNetworkPlayer().getPlayer().getUniqueId().toString(), "authenticated", "true"));
+						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Authenticated.");
+					} else {
+						args.getPlayer().sendMessage(NetworkCore.prefixError + "Password incorrect. Please Try again.");
+						args.getPlayer().chat("/authenticate <Input Your Password: >");
+						return;
+					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 
@@ -246,7 +256,11 @@ public class NetworkCommands {
 							return;
 						}
 						
-						SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", MD5.getMD5(args.getArgs(2))));
+						try {
+							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", Encryption.encrypt(MD5.getMD5(args.getArgs(2)), "OrionAuth")));
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Password setup succeeded. Your password is: " + args.getArgs(2));
 						args.getNetworkPlayer().reloadPlayerData();
 					} else {
