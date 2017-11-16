@@ -1,5 +1,6 @@
 package com.camadeusa.world;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ public class OrionMap {
 	private Gamemode gamemode;
 	private int radius;
 	
+	private HashMap<String, String> dataCache = new HashMap<>();
 	
 	public OrionMap() {}
 
@@ -39,8 +41,8 @@ public class OrionMap {
 	public OrionMap(String json) {
 		JSONObject omJson = new JSONObject(json);
 		
-		this.worldSpawn = new SoftLocation(omJson.getString("worldSpawn"));
-		this.deathmatchSpawn = new SoftLocation(omJson.getString("deathmatchSpawn"));
+		this.worldSpawn = new SoftLocation(omJson.getJSONObject("worldSpawn").toString());
+		this.deathmatchSpawn = new SoftLocation(omJson.getJSONObject("deathmatchSpawn").toString());
 		this.gamemode = Gamemode.valueof(omJson.getString("gamemode"));
 		this.radius = omJson.getInt("radius");
 		
@@ -177,6 +179,22 @@ public class OrionMap {
 
 	public void setRadius(int radius) {
 		this.radius = radius;
+	}
+	
+	public void addToCache(String key, String value) {
+		dataCache.put(key, value);
+	}
+	
+	public void removeFromCache(String key) {
+		dataCache.remove(key);
+	}
+	
+	public String getCachedValue(String key) {
+		return dataCache.get(key);
+	}
+	
+	public boolean hasCached(String key) {
+		return dataCache.containsKey(key);
 	}
 
 	public class SoftLocation {

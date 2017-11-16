@@ -5,6 +5,8 @@ import java.util.LinkedList;
 
 import org.bukkit.ChatColor;
 
+import com.camadeusa.module.game.Gamemode;
+import com.camadeusa.module.game.GamemodeManager;
 import com.camadeusa.utility.TextUtil;
 
 public enum PlayerRank {
@@ -351,16 +353,18 @@ public enum PlayerRank {
 			return commandsSM;
 		case Admin:
 			ArrayList<String> commandsA = getCommandsAvailable(PlayerRank.SrMod);
-			commandsA.add("loadmap");
-			commandsA.add("savemap");
-			commandsA.add("setmapname");
-			commandsA.add("setmapauthor");
-			commandsA.add("setmaplink");
-			commandsA.add("setradius");
-			commandsA.add("adddeathmatchspawn");
-			commandsA.add("addworldspawn");
-			commandsA.add("setoworldspawn");
-			commandsA.add("setodeathmatchspawn");
+			if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
+				commandsA.add("loadmap");
+				commandsA.add("savemap");
+				commandsA.add("setmapname");
+				commandsA.add("setmapauthor");
+				commandsA.add("setmaplink");
+				commandsA.add("setradius");
+				commandsA.add("adddeathmatchspawn");
+				commandsA.add("addworldspawn");
+				commandsA.add("setoworldspawn");
+				commandsA.add("setodeathmatchspawn");				
+			}
 			return commandsA;
 		case Manager:
 			ArrayList<String> commandsD = getCommandsAvailable(PlayerRank.Admin);

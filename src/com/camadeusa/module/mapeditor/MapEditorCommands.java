@@ -33,27 +33,21 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				if (args.getArgs().length == 0) {
-					args.getPlayer().chat("/loadmap <Is this map unconfigured? (Y/N)> <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");
+					args.getPlayer().chat("/loadmap <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");
 				} else {
-					boolean first = false;
-					if (args.getArgs(0).toLowerCase().contains("y")) {
-						first = true;
+					activeWorldName = args.getArgs(0);
+					gamemode = Gamemode.valueof(args.getArgs(1).toUpperCase());
+
+					om = WorldManager.loadWorld(activeWorldName);
+					if (om == null) {
+						om = new OrionMap();						
 					}
+					om.setGamemode(gamemode);
+					Bukkit.getOnlinePlayers().forEach(p -> {
+						p.teleport(Bukkit.getWorld(activeWorldName).getSpawnLocation());
+					});					
 					
-					activeWorldName = args.getArgs(1);
-					gamemode = Gamemode.valueOf(args.getArgs(2));
-					if (args.getPlayer().getWorld().getName().equalsIgnoreCase("world")) {
-						WorldManager.switchWorld(args.getPlayer().getWorld().getName(), false, activeWorldName);
-					} else {
-						if (first) {
-							WorldManager.loadWorld(activeWorldName);
-							om = new OrionMap();
-						} else {
-							om = WorldManager.loadWorldByConfig(activeWorldName, gamemode);
-							om.setGamemode(gamemode);
-						}						
-					}
-					
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Loaded world: " + activeWorldName + " with gamemode: " + gamemode.getValue());
 				}
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -75,6 +69,7 @@ public class MapEditorCommands {
 						link += args.getArgs(i) + " ";
 					}
 					om.setMapLink(link);
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Link set!");
 				}
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -96,6 +91,7 @@ public class MapEditorCommands {
 						author += args.getArgs(i) + " ";
 					}
 					om.setMapAuthor(author);
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Author set!");
 				}
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -117,6 +113,7 @@ public class MapEditorCommands {
 						name += args.getArgs(i) + " ";
 					}
 					om.setMapName(name);
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Name set!");
 				}
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -137,6 +134,7 @@ public class MapEditorCommands {
 						args.getPlayer().chat("/setRadius <Try again... What is the radius?: (Integer in blocks)>");						
 					} else {
 						om.setRadius(Integer.parseInt(args.getArgs(0)));
+						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Radius set!");
 					}
 				}
 			} else {
@@ -152,6 +150,8 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				om.addDMSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn" + (om.getDeathmatchSpawns().size()) + " set!");
+
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
 			}
@@ -165,6 +165,8 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				om.addSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Spawn" + (om.getSpawns().size()) + " set!");
+
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
 			}
@@ -178,6 +180,8 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				om.setWorldSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "World spawn set!");
+
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
 			}
@@ -191,6 +195,8 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				om.setDeathmatchSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "DeathmatchSpawn set!");
+
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
 			}
@@ -203,20 +209,21 @@ public class MapEditorCommands {
 	public void saveMap(CommandArgs args) {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
-				if (Bukkit.getWorld(activeWorldName) != null) {
-					try {
-						File map = new File(new File("").getAbsolutePath() + "/" + activeWorldName + "/OrionMap.yml");
-						if (!map.exists()) {
-							map.createNewFile();
+					if (Bukkit.getWorld(activeWorldName) != null) {
+						try {
+							File map = new File(new File("").getAbsolutePath() + "/" + activeWorldName + "/OrionMap.yml");
+							if (!map.exists()) {
+								map.createNewFile();
+							}
+							Files.write(om.toJSONString().getBytes(), map);
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
-						Files.write(om.toJSONString().getBytes(), map);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					Bukkit.getWorld(activeWorldName).save();
-					WorldManager.saveWorld(activeWorldName);
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Map Saved!");
-				}
+						Bukkit.getWorld(activeWorldName).save();
+						WorldManager.saveWorld(activeWorldName);
+						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Map Saved!");
+					}	
+				
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
 			}
