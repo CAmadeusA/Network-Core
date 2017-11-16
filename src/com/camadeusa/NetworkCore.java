@@ -27,6 +27,8 @@ import com.camadeusa.utility.subservers.packet.PacketPunishPlayer;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
 import com.camadeusa.world.WorldManager;
+import com.rethinkdb.RethinkDB;
+import com.rethinkdb.net.Connection;
 
 import net.ME1312.SubServers.Client.Bukkit.Network.SubDataClient;
 import protocolsupport.api.ProtocolSupportAPI;
@@ -40,11 +42,15 @@ public class NetworkCore extends JavaPlugin {
 	public static String prefixError = ChatColor.BOLD + "" + ChatColor.RED + "Orion" + ChatColor.GRAY + ">> " + ChatColor.RESET;
 	public GSheetDBUtil playersDB;
 	XoreBoardUtil xbu;
+	Connection con;
+
 	
 	@Override
 	public void onEnable() {
 		super.onEnable();
 		instance = this;
+		con = RethinkDB.r.connection().hostname("camadeusa.ydns.eu").db("Orion_Network").user("orion", "B1EEADCD32176C3644C63F9664CD549799E6041FB351C4A7BEEB86361DE3C3FF").connect();
+		con.use("Orion_Network");
 		xbu = new XoreBoardUtil();
 		xbu.init();
 		configManager = new ConfigUtil();
@@ -119,6 +125,16 @@ public class NetworkCore extends JavaPlugin {
 
 	public XoreBoardUtil getXoreBoardUtil() {
 		return xbu;
+	}
+
+
+	public Connection getCon() {
+		return con;
+	}
+
+
+	public void setCon(Connection con) {
+		this.con = con;
 	}
 	
 }

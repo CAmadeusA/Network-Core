@@ -38,6 +38,8 @@ public class NetworkPlayer implements Listener {
 	private HashMap<String, JSONObject> datacache = new HashMap<>();
 	String playeruuid;
 	JSONObject data;
+	
+	ArrayList<Cursor> cursors = new ArrayList<>();
 
 	public NetworkPlayer() {
 		playerstate = PlayerState.NORMAL;
@@ -53,30 +55,37 @@ public class NetworkPlayer implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
-				Connection con = RethinkDB.r.connection().hostname("camadeusa.ydns.eu").db("Orion_Network").user("orion", "B1EEADCD32176C3644C63F9664CD549799E6041FB351C4A7BEEB86361DE3C3FF").connect();
-				con.use("Orion_Network");
-				
-				Cursor cur = RethinkDB.r.db("Orion_Network").table("playerdata").get(p.getUniqueId().toString()).changes().run(con);
+				Cursor cur = RethinkDB.r.db("Orion_Network").table("playerdata").get(p.getUniqueId().toString())
+						.changes().run(NetworkCore.getInstance().getCon());
 				for (Object change : cur) {
 					reloadPlayerData();
 				}
-				Cursor curk = RethinkDB.r.db("Orion_Network").table("kicks").get(p.getUniqueId().toString()).changes().run(con);
+				cursors.add(cur);
+				Cursor curk = RethinkDB.r.db("Orion_Network").table("kicks").get(p.getUniqueId().toString()).changes()
+						.run(NetworkCore.getInstance().getCon());
 				for (Object change : curk) {
 					reloadPlayerData();
 				}
-				Cursor curb = RethinkDB.r.db("Orion_Network").table("bans").get(p.getUniqueId().toString()).changes().run(con);
+				cursors.add(curk);
+				Cursor curb = RethinkDB.r.db("Orion_Network").table("bans").get(p.getUniqueId().toString()).changes()
+						.run(NetworkCore.getInstance().getCon());
 				for (Object change : curb) {
 					reloadPlayerData();
 				}
-				Cursor curm = RethinkDB.r.db("Orion_Network").table("mutes").get(p.getUniqueId().toString()).changes().run(con);
+				cursors.add(curb);
+				Cursor curm = RethinkDB.r.db("Orion_Network").table("mutes").get(p.getUniqueId().toString()).changes()
+						.run(NetworkCore.getInstance().getCon());
 				for (Object change : curm) {
 					reloadPlayerData();
 				}
-				Cursor curs = RethinkDB.r.db("Orion_Network").table("playersettings").get(p.getUniqueId().toString()).changes().run(con);
+				cursors.add(curm);
+				Cursor curs = RethinkDB.r.db("Orion_Network").table("playersettings").get(p.getUniqueId().toString())
+						.changes().run(NetworkCore.getInstance().getCon());
 				for (Object change : curs) {
 					reloadPlayerData();
 				}
-				
+				cursors.add(curs);
+
 			}
 		});
 		
@@ -168,6 +177,9 @@ public class NetworkPlayer implements Listener {
 		if (archrPlayerList.contains(aP)) {
 			archrPlayerList.remove(aP);
 		}
+		aP.cursors.forEach(c -> {
+			c.close();
+		});
 	}
 
 	@EventHandler
@@ -245,6 +257,9 @@ public class NetworkPlayer implements Listener {
 			for (NetworkPlayer ap : getNetworkPlayerList()) {
 				if (!ap.getPlayer().isOnline()) {
 					toRemove.add(ap);
+					ap.cursors.forEach(c -> {
+						c.close();
+					});
 				}
 			}
 			archrPlayerList.removeAll(toRemove);
@@ -296,18 +311,21 @@ public class NetworkPlayer implements Listener {
 	}
 	
 	public void reloadPlayerData() {
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override 
-			public void run() {
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(playeruuid, getPlayer().getName(), getPlayer().getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
-					setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
-					setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
-					getPlayer().setDisplayName(PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));					
-					setData(jsoninfo.getJSONObject("data"));
-					
-				}));				
-			}
-		});
+		if (getPlayer() != null) {
+			Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+				@Override 
+				public void run() {
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(playeruuid, getPlayer().getName(), getPlayer().getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
+						setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
+						setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
+						getPlayer().setDisplayName(PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));					
+						setData(jsoninfo.getJSONObject("data"));
+						
+					}));				
+				}
+			});
+		}
+		
 	}
 
 }

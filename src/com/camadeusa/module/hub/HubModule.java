@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 
+import com.camadeusa.NetworkCore;
 import com.camadeusa.module.Module;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.player.NetworkPlayer;
@@ -66,6 +67,7 @@ public class HubModule extends Module {
 		super.activateModule();
 	}
 	
+	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGH)
 	public void onJoin(PlayerJoinEvent event) {
 		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
@@ -92,16 +94,21 @@ public class HubModule extends Module {
 		xbps.rewriteLines(lines);
 		
 		xbps.showSidebar();
-		
-		if (!aP.getData().has("requirepwonlogin")) {
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
-		}
-		
-		if (aP.getData().has("requirepwonlogin") && (aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
-			aP.getPlayer().chat("/authenticate");
-		} else {
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
-		}
+		Bukkit.getScheduler().scheduleAsyncDelayedTask(NetworkCore.getInstance(), new Runnable() {
+			@Override
+			public void run() {
+				if (!aP.getData().has("requirepwonlogin")) {
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
+				}
+				
+				if (aP.getData().has("requirepwonlogin") && (aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
+					aP.getPlayer().chat("/authenticate");
+				} else {
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
+				}
+				
+			}
+		}, 7);
 		
 	}
 	
