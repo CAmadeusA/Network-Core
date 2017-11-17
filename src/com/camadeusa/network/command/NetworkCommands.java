@@ -182,12 +182,12 @@ public class NetworkCommands {
 			args.getPlayer().chat("/changePassword <Enter your previous password: > <Enter your NEW password>");
 		} else {
 			try {
-				if (!args.getNetworkPlayer().getData().getString("password").equals(Encryption.decrypt(MD5.getMD5(args.getArgs(0)), "OrionAuth"))) {
+				if (!args.getNetworkPlayer().getData().getString("password").equals(Encryption.decrypt(MD5.getMD5(args.getArgs(0)), Encryption.getKey()))) {
 					args.getPlayer().sendMessage(NetworkCore.prefixError + "Incorrect password.");
 					return;
 				}
-				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + Encryption.decrypt(args.getNetworkPlayer().getData().getString("password"), "OrionAuth") + ", and is now: " + args.getArgs(1));
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", Encryption.encrypt(MD5.getMD5(args.getArgs(1)), "OrionAuth")));
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Success! Your password was " + Encryption.decrypt(args.getNetworkPlayer().getData().getString("password"), Encryption.getKey()) + ", and is now: " + args.getArgs(1));
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", Encryption.encrypt(MD5.getMD5(args.getArgs(1)), Encryption.getKey())));
 			} catch (Exception e) {
 				e.printStackTrace();
 			} 
@@ -219,7 +219,7 @@ public class NetworkCommands {
 				args.getPlayer().chat("/authenticate <Input Your Password: >");
 			} else {
 				try {
-					if (MD5.getMD5(args.getArgs(0)).equals(Encryption.decrypt(args.getNetworkPlayer().getData().getString("password"), "OrionAuth"))) {
+					if (MD5.getMD5(args.getArgs(0)).equals(Encryption.decrypt(args.getNetworkPlayer().getData().getString("password"), Encryption.getKey()))) {
 						
 						SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getNetworkPlayer().getPlayer().getUniqueId().toString(), "authenticated", "true"));
 						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Successfully Authenticated.");
@@ -257,7 +257,7 @@ public class NetworkCommands {
 						}
 						
 						try {
-							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", Encryption.encrypt(MD5.getMD5(args.getArgs(2)), "OrionAuth")));
+							SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getPlayer().getUniqueId().toString(), "password", Encryption.encrypt(MD5.getMD5(args.getArgs(2)), Encryption.getKey())));
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
