@@ -75,7 +75,7 @@ public class InventoryManager implements Listener {
 
     @EventHandler
     void onInvClick(InventoryClickEvent e) {
-        if (inventories.containsKey(e.getInventory().getTitle())) {
+    	if (inventories.containsKey(e.getInventory().getTitle())) {
             Inventory inv = inventories.get(e.getInventory().getTitle());
             if (e.getSlot() < inv.getRows() * 9 && !inv.isDragDropEnabled()) {
                 inv.onSlotClick(e.getSlot(), e);

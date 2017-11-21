@@ -138,7 +138,7 @@ public class ChatManager implements Listener {
 				}
 			}
 		} else {
-			reciever.getPlayer().sendMessage(NetworkCore.prefixError + "" + ChatColor.DARK_RED + "BROADCAST: CONSOLE" + ChatColor.RESET + "> " + message);
+			reciever.getPlayer().sendMessage(NetworkCore.prefixError + "" + ChatColor.DARK_RED + "BROADCAST: CONSOLE" + ChatColor.RESET + ">>" + message);
 		}
 	}
 

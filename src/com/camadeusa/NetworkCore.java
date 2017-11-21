@@ -6,6 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.GamemodeManager;
+import com.camadeusa.module.game.uhcsg.UHCSGCommands;
 import com.camadeusa.module.mapeditor.MapEditorCommands;
 import com.camadeusa.network.command.NetworkCommands;
 import com.camadeusa.network.command.StaffCommands;
@@ -17,7 +18,6 @@ import com.camadeusa.utility.ConfigUtil;
 import com.camadeusa.utility.GSheetDBUtil;
 import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.command.prompt.listener.CommandListener;
-import com.camadeusa.utility.menu.InventoryManager;
 import com.camadeusa.utility.subservers.event.SubserversEvents;
 import com.camadeusa.utility.subservers.packet.PacketDownloadNetworkSettings;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
@@ -70,6 +70,7 @@ public class NetworkCore extends JavaPlugin {
 		frameWork.registerCommands(new StaffCommands());
 		frameWork.registerCommands(new NetworkCommands());
 		frameWork.registerCommands(new MapEditorCommands());
+		frameWork.registerCommands(new UHCSGCommands());
 		
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_4_7);
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_5_1);
@@ -97,7 +98,6 @@ public class NetworkCore extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new NetworkPlayer(), this);
 		getServer().getPluginManager().registerEvents(new ChatManager(), this);
 		getServer().getPluginManager().registerEvents(new NetworkCommandEvents(), this);
-		getServer().getPluginManager().registerEvents(new InventoryManager(), this);
 		getServer().getPluginManager().registerEvents(new NetworkServerInfoEvents(), this);
 		getServer().getPluginManager().registerEvents(new SubserversEvents(), this);
 		getServer().getPluginManager().registerEvents(new CommandListener(), this);

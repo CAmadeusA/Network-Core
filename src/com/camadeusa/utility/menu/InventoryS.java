@@ -1,5 +1,6 @@
 package com.camadeusa.utility.menu;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -32,7 +33,7 @@ public class InventoryS {
      */
     public static void registerInventory(JavaPlugin pl, Inventory inv) {
         if (!isInvEnabled) {
-            pl.getServer().getPluginManager().registerEvents(new InventoryManager(), pl);
+        		pl.getServer().getPluginManager().registerEvents(new InventoryManager(), pl);
             isInvEnabled = true;
         }
         InventoryManager.registerInventory(inv);

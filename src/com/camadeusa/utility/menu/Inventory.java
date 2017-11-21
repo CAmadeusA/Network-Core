@@ -52,6 +52,7 @@ public class Inventory {
      */
     public org.bukkit.inventory.Inventory build(Player owner) {
         org.bukkit.inventory.Inventory inv = Bukkit.createInventory(owner, 9 * rows, title);
+        inv.setMaxStackSize(127);
         for (int i = 0; i < 9 * rows; i++) {
             if (this.getBackground() != null)
                 inv.setItem(i, this.getBackground().build(1));

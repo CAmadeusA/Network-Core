@@ -28,6 +28,7 @@ com/camadeusa/network/event/NetworkCommandEvents.class
 com/camadeusa/utility/command/CommandArgs.class
 com/camadeusa/player/NetworkPlayer$3.class
 com/camadeusa/utility/command/CommandFramework.class
+com/camadeusa/utility/ItemStackBuilderUtil$1.class
 com/camadeusa/timing/TickQuarterSecondEvent.class
 com/camadeusa/module/game/GamemodeManager.class
 com/camadeusa/utility/command/BukkitCommand.class
@@ -75,6 +76,7 @@ com/camadeusa/utility/fetcher/UUIDFetcher$1$1.class
 com/camadeusa/utility/command/prompt/listener/Prompt.class
 com/camadeusa/utility/subservers/packet/PacketDownloadPlayerInfo.class
 com/camadeusa/utility/menu/option/YesNoDialogue.class
+com/camadeusa/module/game/VotingMode$1.class
 com/camadeusa/utility/fetcher/NameFetcher$1$1.class
 com/camadeusa/timing/TickSecondEvent.class
 com/camadeusa/NetworkCore.class

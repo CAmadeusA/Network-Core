@@ -12,9 +12,11 @@ import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.module.game.GamemodeManager;
 import com.camadeusa.player.PlayerRank;
+import com.camadeusa.utility.Cuboid;
 import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
 import com.camadeusa.world.OrionMap;
+import com.camadeusa.world.OrionMap.SoftLocation;
 import com.camadeusa.world.WorldManager;
 import com.google.common.io.Files;
 
@@ -25,6 +27,8 @@ public class MapEditorCommands {
 	File worldsFolder = new File(new File("").getAbsolutePath() + "/maps");
 	String activeWorldName = "world";
 	Gamemode gamemode;
+	
+	SoftLocation wp1, wp2, temp;
 	
 	OrionMap om = new OrionMap();
 	
@@ -66,8 +70,11 @@ public class MapEditorCommands {
 				} else {
 					String link = "";
 					for (int i = 0; i < args.getArgs().length; i++) {
-						link += args.getArgs(i) + " ";
-					}
+						if (i+1 == args.getArgs().length) {
+							link += args.getArgs(i);
+						} else {
+							link += args.getArgs(i) + " ";							
+						}					}
 					om.setMapLink(link);
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Link set!");
 				}
@@ -88,7 +95,11 @@ public class MapEditorCommands {
 				} else {
 					String author = "";
 					for (int i = 0; i < args.getArgs().length; i++) {
-						author += args.getArgs(i) + " ";
+						if (i+1 == args.getArgs().length) {
+							author += args.getArgs(i);
+						} else {
+							author += args.getArgs(i) + " ";							
+						}
 					}
 					om.setMapAuthor(author);
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Author set!");
@@ -110,8 +121,11 @@ public class MapEditorCommands {
 				} else {
 					String name = "";
 					for (int i = 0; i < args.getArgs().length; i++) {
-						name += args.getArgs(i) + " ";
-					}
+						if (i+1 == args.getArgs().length) {
+							name += args.getArgs(i);
+						} else {
+							name += args.getArgs(i) + " ";							
+						}					}
 					om.setMapName(name);
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Name set!");
 				}
@@ -149,7 +163,7 @@ public class MapEditorCommands {
 	public void addDeathmatchSpawn(CommandArgs args) {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
-				om.addDMSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				om.addDMSpawn(new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
 				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn" + (om.getDeathmatchSpawns().size()) + " set!");
 
 			} else {
@@ -159,12 +173,61 @@ public class MapEditorCommands {
 			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "This server is not configured to edit maps. Please contact a developer if you think this is an error."));
 		}
 	}
+	
+	@Command(name = "setWallPos1", usage = "/setWallPos1", description = "Set the deathmatch wall position 1")
+	public void setWallPos1(CommandArgs args) {
+		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
+			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
+				wp1 = new SoftLocation(args.getPlayer().getEyeLocation().getWorld().getName(), args.getPlayer().getEyeLocation().getX(), args.getPlayer().getEyeLocation().getY(), args.getPlayer().getEyeLocation().getZ());
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn" + (om.getDeathmatchSpawns().size()) + " set!");
+				
+			} else {
+				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
+			}
+		} else {
+			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "This server is not configured to edit maps. Please contact a developer if you think this is an error."));
+		}
+		
+	}
+
+	@Command(name = "setWallPos2", usage = "/setWallPos2", description = "Set the deathmatch wall position 2")
+	public void setWallPos2(CommandArgs args) {
+		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
+			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
+				wp2 = new SoftLocation(args.getPlayer().getEyeLocation().getWorld().getName(), args.getPlayer().getEyeLocation().getX(), args.getPlayer().getEyeLocation().getY(), args.getPlayer().getEyeLocation().getZ());
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn" + (om.getDeathmatchSpawns().size()) + " set!");
+				
+			} else {
+				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
+			}
+		} else {
+			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "This server is not configured to edit maps. Please contact a developer if you think this is an error."));
+		}
+		
+	}
+
+	@Command(name = "ToggleSelectable", usage = "/toggleSelectable", description = "Toggles wether a map is selectable or not.")
+	public void toggleSelectable(CommandArgs args) {
+		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
+			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
+				om.toggleSelectable();
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Selectable is now: " + om.isSelectable());
+				
+			} else {
+				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
+			}
+		} else {
+			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "This server is not configured to edit maps. Please contact a developer if you think this is an error."));
+		}
+		
+	}
+
 
 	@Command(name = "addWorldSpawn", usage = "/addWorldSpawn", description = "Add a spawn location to the list of spawns.")
 	public void addWorldSpawn(CommandArgs args) {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
-				om.addSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				om.addSpawn(new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
 				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Spawn" + (om.getSpawns().size()) + " set!");
 
 			} else {
@@ -179,7 +242,7 @@ public class MapEditorCommands {
 	public void setOWorldSpawn(CommandArgs args) {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
-				om.setWorldSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				om.setWorldSpawn(new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
 				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "World spawn set!");
 
 			} else {
@@ -194,7 +257,7 @@ public class MapEditorCommands {
 	public void setODeathMatchSpawn(CommandArgs args) {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
-				om.setDeathmatchSpawn(om.new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
+				om.setDeathmatchSpawn(new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
 				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "DeathmatchSpawn set!");
 
 			} else {
@@ -210,6 +273,13 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 					if (Bukkit.getWorld(activeWorldName) != null) {
+						if (wp1 != null && wp2 != null) {
+							Cuboid c = new Cuboid(wp1.toLocation(), wp2.toLocation());
+							c.getBlocks().forEach(b -> {
+								om.addToWall(new SoftLocation(b.getLocation()));
+							});							
+						}
+						
 						try {
 							File map = new File(new File("").getAbsolutePath() + "/" + activeWorldName + "/OrionMap.yml");
 							if (!map.exists()) {

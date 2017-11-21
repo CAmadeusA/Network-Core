@@ -14,7 +14,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -31,12 +30,14 @@ import com.camadeusa.module.Module;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerRank;
+import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.utility.MathUtil;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoard;
 import com.camadeusa.utility.xoreboard.XoreBoardPlayerSidebar;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
+import com.camadeusa.world.OrionMap;
 import com.camadeusa.world.WorldManager;
 
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
@@ -45,6 +46,7 @@ import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 public class HubModule extends Module {
 	XoreBoard xb;
 	String scoreboardTitle = ChatColor.GRAY + "" + ChatColor.BOLD + "--- " + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + " ---";
+	OrionMap hubConfig;
 	
 	public HubModule() {}
 	
@@ -55,7 +57,7 @@ public class HubModule extends Module {
 		xb = XoreBoardUtil.getNextXoreBoard();
 		Bukkit.getLogger().info(xb.getBukkitScoreboard().toString());
 		
-		WorldManager.loadWorld("Hub");
+		hubConfig = WorldManager.loadWorld("Hub");
 		
 		Bukkit.getWorld("Hub").setDifficulty(Difficulty.PEACEFUL);
 		
@@ -72,7 +74,7 @@ public class HubModule extends Module {
 	public void onJoin(PlayerJoinEvent event) {
 		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		event.setJoinMessage("");
-		aP.getPlayer().teleport(Bukkit.getWorld("Hub").getSpawnLocation());
+		aP.getPlayer().teleport(hubConfig.getWorldSpawn().toLocation());
 		aP.getPlayer().setHealth(20);
 		aP.getPlayer().setFoodLevel(20);
 		aP.getPlayer().setAllowFlight(true);
@@ -94,6 +96,7 @@ public class HubModule extends Module {
 		xbps.rewriteLines(lines);
 		
 		xbps.showSidebar();
+		NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).updatePlayerstate(PlayerState.NORMAL);
 		Bukkit.getScheduler().scheduleAsyncDelayedTask(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
@@ -110,13 +113,13 @@ public class HubModule extends Module {
 			}
 		}, 7);
 		
+		
 	}
 	
 	@EventHandler
 	public void onPlayerMoveOutOfBounds(PlayerMoveEvent event) {
 		// 100 is arbitrary hub size. 
-		World w = event.getPlayer().getWorld();
-		if ((MathUtil.distance(w.getSpawnLocation().getX(), event.getTo().getX(), w.getSpawnLocation().getZ(), event.getTo().getZ())) > 100) {
+		if ((MathUtil.distance(hubConfig.getWorldSpawn().toLocation().getX(), event.getTo().getX(), hubConfig.getWorldSpawn().toLocation().getZ(), event.getTo().getZ())) > hubConfig.getRadius()) {
 			event.setCancelled(true);
 		}
 	}

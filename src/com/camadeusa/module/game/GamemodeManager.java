@@ -62,6 +62,7 @@ public class GamemodeManager {
 			UHCSGOrionGame game = new UHCSGOrionGame();
 			game.initializeGame();
 			currentGame = game;
+			modulemanager.modulesToRegister.add(new GoldenHead());
 			break;
 		case MAPEDITOR:
 			modulemanager.modulesToRegister.add(new MapEditorModule());

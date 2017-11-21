@@ -190,6 +190,7 @@ public enum PlayerRank {
 		
 	}
 	
+	@Override
 	public String toString() {
 		switch (this) {
 		case Owner:
@@ -363,7 +364,13 @@ public enum PlayerRank {
 				commandsA.add("adddeathmatchspawn");
 				commandsA.add("addworldspawn");
 				commandsA.add("setoworldspawn");
-				commandsA.add("setodeathmatchspawn");				
+				commandsA.add("setodeathmatchspawn");	
+				commandsA.add("setwallpos1");
+				commandsA.add("setwallpos2");
+				commandsA.add("toggleselectable");
+			}
+			if (GamemodeManager.getInstance().getGamemode() == Gamemode.UHCSG) {
+				commandsA.add("nextsegment");
 			}
 			return commandsA;
 		case Manager:

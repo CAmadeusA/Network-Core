@@ -7,6 +7,8 @@
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/network/points/Basepoint.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/xoreboard/XoreBoardUtil.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/network/command/NetworkCommands.java
+/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/game/uhcsg/UHCSGChestContents.java
+/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/game/GoldenHead.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/command/prompt/SRegex.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/TextUtil.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/MapUtil.java
@@ -48,11 +50,14 @@
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/ConfigUtil.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/GSheetDBUtil.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/network/event/NetworkServerInfoEvents.java
+/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/game/uhcsg/UHCSGCommands.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/player/PlayerSettings.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/game/GamemodeManager.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/game/uhcsg/UHCSGOrionGame.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/subservers/packet/PacketDownloadNetworkSettings.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/network/event/NetworkCommandEvents.java
+/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/ItemStackBuilderUtil.java
+/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/module/game/VotingMode.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/menu/InventoryManager.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/subservers/packet/PacketDownloadPlayerInfo.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/timing/TickThreeSecondEvent.java
@@ -69,6 +74,7 @@
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/timing/TickSecondEvent.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/chat/ChatManager.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/fetcher/UUIDFetcher.java
+/Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/Cuboid.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/timing/CoreLoop.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/menu/InventoryRunnable.java
 /Volumes/MacOS Storage/Minecraft Workspace/Network-Core/src/com/camadeusa/utility/ReflectionUtil.java

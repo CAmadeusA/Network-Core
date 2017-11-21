@@ -123,6 +123,14 @@ public class NetworkPlayer implements Listener {
 	public void setData(JSONObject data) {
 		this.data = data;
 	}
+	
+	public void updatePlayerstate(PlayerState state) {
+		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(playeruuid, "state", state.toString()));
+	}
+	
+	public void updateRank(PlayerRank rank) {
+		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(playeruuid, "rank", rank.toString()));
+	}
 
 	public void setPlayerstate(PlayerState playerstate) {
 		this.playerstate = playerstate;
@@ -154,6 +162,16 @@ public class NetworkPlayer implements Listener {
 		ArrayList<NetworkPlayer> aList = new ArrayList<>();
 		for (NetworkPlayer ap : getNetworkPlayerList()) {
 			if (ap.getPlayerState() != PlayerState.GHOST && ap.getPlayerRank() == p) {
+				aList.add(ap);
+			}
+		}
+		return aList;
+	}
+
+	public static ArrayList<NetworkPlayer> getOnlinePlayersByState(PlayerState p) {
+		ArrayList<NetworkPlayer> aList = new ArrayList<>();
+		for (NetworkPlayer ap : getNetworkPlayerList()) {
+			if (ap.getPlayerState() == p) {
 				aList.add(ap);
 			}
 		}

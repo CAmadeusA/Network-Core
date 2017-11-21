@@ -1,5 +1,6 @@
 package com.camadeusa.world;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -20,13 +21,15 @@ public class OrionMap {
 	private SoftLocation deathmatchSpawn;
 	private Gamemode gamemode;
 	private int radius;
+	private boolean selectable = true;
+	private ArrayList<SoftLocation> wall = new ArrayList<>();
 	
 	private HashMap<String, String> dataCache = new HashMap<>();
 	
 	public OrionMap() {}
 
 	public OrionMap(String mapName, String mapAuthor, String mapLink, LinkedList<SoftLocation> spawns, LinkedList<SoftLocation> deathmatchSpawns, SoftLocation worldSpawn,
-			SoftLocation deathmatchSpawn, Gamemode gm, int radius) {
+			SoftLocation deathmatchSpawn, Gamemode gm, int radius, boolean selectable, ArrayList<SoftLocation> wall) {
 		this.mapName = mapName;
 		this.mapAuthor = mapAuthor;
 		this.mapLink = mapLink;
@@ -36,6 +39,8 @@ public class OrionMap {
 		this.deathmatchSpawn = deathmatchSpawn;
 		this.gamemode = gm;
 		this.radius = radius;
+		this.selectable = selectable;
+		this.wall = wall;
 	}
 
 	public OrionMap(String json) {
@@ -48,19 +53,28 @@ public class OrionMap {
 		
 		LinkedList<SoftLocation> spwns = new LinkedList<>();
 		LinkedList<SoftLocation> dmspwns = new LinkedList<>();
+		ArrayList<SoftLocation> wallLocs = new ArrayList<>();
+		
 		omJson.getJSONArray("spawns").forEach(s -> {
 			spwns.add(new SoftLocation((String) s));
 		});
+		
 		omJson.getJSONArray("deathmatchSpawns").forEach(s -> {
 			dmspwns.add(new SoftLocation((String) s));
 		});
 		
+		omJson.getJSONArray("wall").forEach(s -> {
+			wallLocs.add(new SoftLocation((String) s));
+		});
+		
 		this.spawns = spwns;
 		this.deathmatchSpawns = dmspwns;
+		this.wall = wallLocs;
 		
 		this.mapName = omJson.getString("mapName");
 		this.mapAuthor = omJson.getString("mapAuthor");
 		this.mapLink = omJson.getString("mapLink");
+		this.selectable = omJson.getBoolean("selectable");
 	}
 	
 	public String toJSONString() {
@@ -68,6 +82,7 @@ public class OrionMap {
 		
 		JSONArray spwns = new JSONArray();
 		JSONArray dmspwns = new JSONArray();
+		JSONArray wallocs = new JSONArray();
 		
 		spawns.forEach(sl -> {
 			spwns.put(sl);
@@ -75,6 +90,10 @@ public class OrionMap {
 		
 		deathmatchSpawns.forEach(dms -> {
 			dmspwns.put(dms);
+		});
+		
+		wall.forEach(b -> {
+			wallocs.put(b);
 		});
 		
 		map.put("spawns", spwns);
@@ -89,6 +108,8 @@ public class OrionMap {
 		map.put("mapName", mapName);
 		map.put("mapAuthor", mapAuthor);
 		map.put("mapLink", mapLink);
+		map.put("selectable", selectable);
+		map.put("wall", wallocs);
 		
 		return map.toString();
 	}
@@ -196,19 +217,53 @@ public class OrionMap {
 	public boolean hasCached(String key) {
 		return dataCache.containsKey(key);
 	}
+	
+	public boolean isSelectable() {
+		return selectable;
+	}
+	
+	public void toggleSelectable() {
+		this.selectable = !this.selectable;
+	}
 
-	public class SoftLocation {
+	public ArrayList<SoftLocation> getWall() {
+		return wall;
+	}
+	
+	public void addToWall(SoftLocation loc) {
+		wall.add(loc);
+	}
+	
+	public void clearWall() {
+		wall = new ArrayList<SoftLocation>();
+	}
+
+	public static class SoftLocation {
 		private String worldName;
 		private double x;
 		private double y;
 		private double z;
-		private double yaw;
+		private double yaw = 0;
 		public SoftLocation(String worldName, double d, double e, double f, float yaw) {
 			this.worldName = worldName;
 			this.x = d;
 			this.y = e;
 			this.z = f;
 			this.yaw = yaw;
+		}
+		public SoftLocation(String worldName, double d, double e, double f) {
+			this.worldName = worldName;
+			this.x = d;
+			this.y = e;
+			this.z = f;
+		}
+		
+		public SoftLocation(Location loc) {
+			this.worldName = loc.getWorld().getName();
+			this.x = loc.getX();
+			this.y = loc.getY();
+			this.z = loc.getZ();
+			this.yaw = loc.getYaw();
 		}
 
 		public SoftLocation(String jsonString) {
@@ -230,6 +285,34 @@ public class OrionMap {
 			sl.put("z", z);
 			sl.put("yaw", yaw);
 			return sl.toString();
+		}
+		
+		public boolean equals(SoftLocation loc) {
+			if (worldName.equals(loc.getWorldName())) {
+				if (x == loc.getX()) {
+					if (y == loc.getY()) {
+						if (z == loc.getZ()) {
+							if (yaw == loc.getYaw()) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+			return false;
+		}
+
+		public boolean equalsSoft(SoftLocation loc) {
+			if (worldName.equals(loc.getWorldName())) {
+				if (Math.floor(x) == Math.floor(loc.getX())) {
+					if (Math.floor(y) == Math.floor(loc.getY())) {
+						if (Math.floor(z) == Math.floor(loc.getZ())) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
 		}
 		
 		public String getWorldName() {

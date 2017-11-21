@@ -15,6 +15,7 @@ public class SlotItem {
     private Material material;
     private InventoryRunnable onClick;
     private ItemStack premadeItem;
+    private int amount = 0;
 
 
     /**
@@ -44,6 +45,14 @@ public class SlotItem {
         this.material = material;
     }
 
+    public SlotItem(String title, String lore, int data, Material material, int amount) {
+    	this.data = data;
+    	this.title = title;
+    	this.lore = lore;
+    	this.material = material;
+    	this.amount = amount;
+    }
+
     /**
      * Creates the SlotItem in the Game to display it.
      *
@@ -51,13 +60,17 @@ public class SlotItem {
      * @return The ItemStack
      */
     public ItemStack build(int ammount) {
+    	if (this.amount == 0) {
+    		this.amount = ammount;
+    	}
         if (premadeItem == null) {
-            ItemStack is = new ItemStack(material, ammount, (byte) data);
+            ItemStack is = new ItemStack(material, this.amount, (byte) data);
             ItemMeta im = is.getItemMeta();
             im.setDisplayName(title);
             im.addItemFlags(ItemFlag.values());
             im.setLore(TextUtil.getSubStrings(lore, 30));
             is.setItemMeta(im);
+            premadeItem = is;
             return is;
         } else {
             ItemStack is = premadeItem;
@@ -143,6 +156,10 @@ public class SlotItem {
      */
     public void setOnClick(InventoryRunnable onClick) {
         this.onClick = onClick;
+    }
+    
+    public ItemStack getItemStack() {
+    		return premadeItem;
     }
 
 }
