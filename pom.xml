@@ -43,6 +43,10 @@
 			<id>spigot-repo</id>
 			<url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
 		</repository>
+		<repository>
+   			<id>jitpack.io</id>
+    			<url>https://jitpack.io</url>
+  		</repository>
 	</repositories>
 	<dependencies>
 		<!--Spigot API -->
@@ -119,6 +123,11 @@
  		   <groupId>org.apache.tomcat</groupId>
   		   <artifactId>tomcat-util</artifactId>
   		   <version>8.0.0-RC1</version>
+		</dependency>
+		<dependency>
+  			<groupId>com.github.ptnplanet</groupId>
+  			<artifactId>Java-Naive-Bayes-Classifier</artifactId>
+  			<version>1.0.7</version>
 		</dependency>
 	</dependencies>
 </project>

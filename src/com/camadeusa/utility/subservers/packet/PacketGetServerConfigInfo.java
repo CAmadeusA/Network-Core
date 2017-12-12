@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.GamemodeManager;
+import com.camadeusa.network.ServerMode;
 import com.camadeusa.utility.Random;
 
 import net.ME1312.SubServers.Client.Bukkit.Library.JSONCallback;
@@ -36,6 +37,7 @@ public class PacketGetServerConfigInfo implements PacketIn, PacketOut {
 		json.put("maxplayers", NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers"));
 		json.put("serveruuid", NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getString("uuid"));
 		json.put("gamemode", NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getString("gamemode"));
+		json.put("servermode", ServerMode.getMode().getValue());
 		json.put("onlineplayers", GamemodeManager.currentplayers);
 		json.put("timestamp", System.currentTimeMillis());
 		return json;

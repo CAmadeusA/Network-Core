@@ -12,7 +12,7 @@ import net.ME1312.SubServers.Client.Bukkit.Network.PacketOut;
 public class PacketUpdateDatabaseValue implements PacketIn, PacketOut {
 	String table = "playerdata";
 	String uuid;
-	String key;
+	Object key;
 	String value;
 	String id;
 	
@@ -25,9 +25,41 @@ public class PacketUpdateDatabaseValue implements PacketIn, PacketOut {
 		this.id = UUID.randomUUID().toString();
 	}
 
-	public PacketUpdateDatabaseValue(String table, String uuid, String key, String value) {
+	public PacketUpdateDatabaseValue(String table, String id, String key, String value) {
 		this.table = table;
-		this.uuid = uuid;
+		this.uuid = id;
+		this.key = key;
+		this.value = value;
+		this.id = UUID.randomUUID().toString();
+	}
+
+	public PacketUpdateDatabaseValue(String table, String id, int key, String value) {
+		this.table = table;
+		this.uuid = id;
+		this.key = key;
+		this.value = value;
+		this.id = UUID.randomUUID().toString();
+	}
+	
+	public PacketUpdateDatabaseValue(String table, String id, long key, String value) {
+		this.table = table;
+		this.uuid = id;
+		this.key = key;
+		this.value = value;
+		this.id = UUID.randomUUID().toString();
+	}
+	
+	public PacketUpdateDatabaseValue(String table, String id, double key, String value) {
+		this.table = table;
+		this.uuid = id;
+		this.key = key;
+		this.value = value;
+		this.id = UUID.randomUUID().toString();
+	}
+	
+	public PacketUpdateDatabaseValue(String table, String id, char key, String value) {
+		this.table = table;
+		this.uuid = id;
 		this.key = key;
 		this.value = value;
 		this.id = UUID.randomUUID().toString();

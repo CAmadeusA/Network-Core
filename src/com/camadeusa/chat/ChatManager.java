@@ -14,11 +14,17 @@ import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.player.PlayerState;
 import com.camadeusa.utility.language.Translator;
+import com.camadeusa.utility.subservers.packet.PacketLogChatMessage;
 
+import de.daslaboratorium.machinelearning.classifier.Classification;
 import mkremins.fanciful.FancyMessage;
+import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 import protocolsupport.api.ProtocolSupportAPI;
 
 public class ChatManager implements Listener {
+	
+	Sentiment sentiment = new Sentiment();
+	
 	@EventHandler
 	public void onChat(AsyncPlayerChatEvent event) {
 		if (!event.isCancelled()) {
@@ -50,6 +56,13 @@ public class ChatManager implements Listener {
 								NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()),
 								"You are muted until:") + " " + myDateStr);
 			} else {
+				
+				Classification<String, String> classif = sentiment.evaluate(event.getMessage());
+				if (classif.getCategory().equals("Negative")) {
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketLogChatMessage(event.getPlayer().getUniqueId(), System.currentTimeMillis(), event.getMessage()));
+				}
+				event.setMessage(Profanity.filterText(event.getMessage()));
+				
 				NetworkPlayer.getNetworkPlayerList().forEach(aP -> {
 					if (PlayerState.canSee(NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())
 							.getPlayerState(), aP.getPlayerState())) {
@@ -93,7 +106,7 @@ public class ChatManager implements Listener {
 			if (PlayerState.canSee(sender.getPlayerState(), reciever.getPlayerState())) {
 				ArrayList<FancyMessage> info = new ArrayList<>();
 				FancyMessage fm = new FancyMessage().text(PlayerRank.formatNameByRankWOIcon(sender) + ": ");
-				info.add(new FancyMessage().text("Name: ").color(ChatColor.GOLD).then(sender.getPlayer().getDisplayName()));
+				info.add(new FancyMessage().text("Name: ").color(ChatColor.GOLD).then(PlayerRank.formatNameByRankWOIcon(sender)));
 				info.add(new FancyMessage().text("UUID: ").color(ChatColor.GOLD).then(sender.getPlayer().getUniqueId().toString()));
 				info.add(new FancyMessage().text("Rank: ").color(ChatColor.GOLD).then(sender.getPlayerRank().toString()));
 				info.add(new FancyMessage().text("First Login: ").color(ChatColor.GOLD).then(new SimpleDateFormat("dd/MM/yy").format(Long.parseLong(sender.getData().get("firstlogin").toString()))));

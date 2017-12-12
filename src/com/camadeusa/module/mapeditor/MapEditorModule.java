@@ -13,6 +13,8 @@ import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.Module;
 import com.camadeusa.module.game.Gamemode;
+import com.camadeusa.network.ServerMode;
+import com.camadeusa.network.ServerMode.ServerJoinMode;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 
@@ -24,6 +26,8 @@ public class MapEditorModule extends Module {
 	public void activateModule() {
 		this.setTag(Gamemode.MAPEDITOR.getValue());
 		Bukkit.getLogger().info("Activated");
+		
+		ServerMode.setMode(ServerJoinMode.ADMIN);
 		
 		super.activateModule();
 	}

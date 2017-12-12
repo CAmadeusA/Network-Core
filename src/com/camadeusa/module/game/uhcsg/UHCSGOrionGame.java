@@ -13,24 +13,33 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SpawnEggMeta;
+import org.bukkit.potion.PotionEffectType;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.Gamemode;
@@ -47,6 +56,7 @@ import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
+import com.camadeusa.utility.ItemStackBuilderUtil;
 import com.camadeusa.utility.Random;
 import com.camadeusa.utility.xoreboard.XoreBoard;
 import com.camadeusa.utility.xoreboard.XoreBoardPlayerSidebar;
@@ -59,16 +69,15 @@ public class UHCSGOrionGame extends OrionGame {
 	XoreBoard xb;
 	String scoreboardTitle = ChatColor.GRAY + "" + ChatColor.BOLD + "--- " + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + " ---";
 	ArrayList<OrionMap> availableMaps = new ArrayList<>();
-	ArrayList<NetworkPlayer> players = new ArrayList<>();
 	ArrayList<SoftLocation> placedBlocks = new ArrayList<>();
-	Map<SoftLocation, Boolean> chests = new LinkedHashMap<>();
+	public Map<SoftLocation, Boolean> chests = new LinkedHashMap<>();
 		
 	int LOBBYTIME = 120;
-	int PREGAMETIME = 30;
+	int PREGAMETIME = 10;
 	int LIVEGAMETIME = 1200;
-	int PREDMTIME = 30;
+	int PREDMTIME = 10;
 	int DMTIME = 240;
-	int ENDGAMETIME = 30;
+	int ENDGAMETIME = 15;
 	
 	Lobby lobby;
 	Pregame pregame;
@@ -85,6 +94,7 @@ public class UHCSGOrionGame extends OrionGame {
 	public void initializeGame() {
 		this.activateModule();
 		NetworkCore.getInstance().getServer().addRecipe(GoldenHead.getRecipe());
+		Bukkit.setSpawnRadius(0);
 		loadMaps();
 		
 		xb = XoreBoardUtil.getNextXoreBoard();
@@ -138,15 +148,17 @@ public class UHCSGOrionGame extends OrionGame {
 	
 	//Loads only maps for this specific gamemode
 	public void loadMaps() {
-		File worldsFolder = new File(new File("").getAbsolutePath() + "/maps");
-		for (File map : worldsFolder.listFiles()) {
+		for (File map : WorldManager.worldFolder.listFiles()) {
 			if (map.isDirectory()) {
 				OrionMap temp = WorldManager.loadWorld(map.getName());
 				if (temp.getGamemode().getValue().equalsIgnoreCase(Gamemode.UHCSG.getValue()) && temp.isSelectable()) {
-					if (temp.getMapName().toLowerCase().contains("lobby")) {
+					if (temp.getMapName().toLowerCase().contains("lobby_uhcsg")) {
 						lobbyMap = temp;
 					} else {
 						availableMaps.add(temp);						
+					}
+					if (Bukkit.getWorld(map.getName()).setGameRuleValue("announceAdvancements", "false")) {
+						Bukkit.getLogger().info("Disabled Achievement Broadcasting on world: " + map.getName());
 					}
 					Bukkit.getLogger().info("Loaded map: " + temp.getMapName());
 				} else {
@@ -182,12 +194,24 @@ public class UHCSGOrionGame extends OrionGame {
 			
 			xbps.showSidebar();
 		}
-		players = NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL);
+		
+		//Player visability managment
+		NetworkPlayer.getOnlinePlayers().forEach(p1 -> {
+			NetworkPlayer.getOnlinePlayers().forEach(p2 -> {
+				if (PlayerState.canSee(p1.getPlayerState(), p2.getPlayerState())) {
+					p1.getPlayer().showPlayer(p2.getPlayer());
+				} else {
+					p1.getPlayer().hidePlayer(p2.getPlayer());
+				}
+			});
+		});
 		
 	}
 	
 	@EventHandler
 	public void onJoin(PlayerJoinEvent event) {
+		
+		
 		xb.addPlayer(event.getPlayer());
 		XoreBoardPlayerSidebar xbps = xb.getSidebar(event.getPlayer());
 		xbps.setDisplayName(scoreboardTitle);
@@ -203,22 +227,69 @@ public class UHCSGOrionGame extends OrionGame {
 		xbps.rewriteLines(lines);
 		
 		xbps.showSidebar();
+		
+		event.getPlayer().spigot().setCollidesWithEntities(true);
+		
+		//Player visability managment
+		NetworkPlayer.getOnlinePlayers().forEach(p1 -> {
+			NetworkPlayer.getOnlinePlayers().forEach(p2 -> {
+				if (PlayerState.canSee(p1.getPlayerState(), p2.getPlayerState())) {
+					p1.getPlayer().showPlayer(p2.getPlayer());
+				} else {
+					p1.getPlayer().hidePlayer(p2.getPlayer());
+				}
+			});
+		});
+		
 	}
 	
 	@EventHandler
-	public void onBlockPlace(BlockPlaceEvent event) {
-		if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-			if (getPlacableBlocks().contains(event.getBlockPlaced().getType())) {
-				if (!event.isCancelled()) {
-					placedBlocks.add(new SoftLocation(event.getBlockPlaced().getLocation()));
+	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+		if (NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerState() != PlayerState.NORMAL) {
+			event.setCancelled(true);
+			return;
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerDamage(EntityDamageByEntityEvent event) {
+		if (event.getEntity() instanceof Player && event.getDamager() instanceof Player) {
+			if (NetworkPlayer.getNetworkPlayerByUUID(event.getEntity().getUniqueId().toString()).getPlayerState() != PlayerState.NORMAL) {
+				event.setCancelled(true);
+				return;
+			} else {
+				// Fixes Strength values damage percent
+				if (((Player) event.getDamager()).getPotionEffect(PotionEffectType.INCREASE_DAMAGE) != null) {
+					if (((Player) event.getDamager()).getPotionEffect(PotionEffectType.INCREASE_DAMAGE).getAmplifier() == 1) {
+						event.setDamage((event.getDamage() / 1.3D) + ((event.getDamage() / 1.3D) * 0.4)); 
+					}
+					if (((Player) event.getDamager()).getPotionEffect(PotionEffectType.INCREASE_DAMAGE).getAmplifier() == 2) {
+						event.setDamage((event.getDamage() / 2.6D) + ((event.getDamage() / 2.6D) * 0.55)); 
+					}
 				}
 			}
 		}
 	}
 	
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler
+	public void onBlockPlace(BlockPlaceEvent event) {
+		if (NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerState() != PlayerState.NORMAL) {
+			event.setCancelled(true);
+			return;
+		}
+		if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
+			if (getPlacableBlocks().contains(event.getBlockPlaced().getType())) {
+				if (!event.isCancelled()) {
+					placedBlocks.add(new SoftLocation(event.getBlockPlaced().getLocation()));
+				}
+			} else {
+				event.setCancelled(true);
+			}
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.LOW)
 	public void onRegainHealth(EntityRegainHealthEvent event) {
-		event.getEntity().sendMessage("Healed: " + event.getRegainReason().name());
 		if (event.getRegainReason().equals(RegainReason.REGEN)  || event.getRegainReason().equals(RegainReason.SATIATED)) {
 			event.setCancelled(true);
 		}
@@ -226,6 +297,10 @@ public class UHCSGOrionGame extends OrionGame {
 	
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event) {
+		if (NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerState() != PlayerState.NORMAL) {
+			event.setCancelled(true);
+			return;
+		}
 		if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
 			if (!getBreakableBlocks().contains(event.getBlock().getType())) {
 				event.setCancelled(true);
@@ -235,6 +310,10 @@ public class UHCSGOrionGame extends OrionGame {
 	
 	@EventHandler
 	public void onClickBlock(PlayerInteractEvent event) {
+		if (NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerState() != PlayerState.NORMAL) {
+			event.setCancelled(true);
+			return;
+		}
 		if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
 			SoftLocation contains = null;
 			for (SoftLocation sl : placedBlocks) {
@@ -260,6 +339,10 @@ public class UHCSGOrionGame extends OrionGame {
 	
 	@EventHandler
 	public void onOpenChest(PlayerInteractEvent event) {
+		if (NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerState() != PlayerState.NORMAL) {
+			event.setCancelled(true);
+			return;
+		}
 		if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 			if (event.getClickedBlock().getType() == Material.CHEST) {
 				Chest ch = (Chest) event.getClickedBlock().getState();
@@ -272,16 +355,32 @@ public class UHCSGOrionGame extends OrionGame {
 				if (!has) {
 					int chance = Random.instance().nextInt(100);
 					ItemStack[] contents = null;
-					if (chance <= UHCSGChestContents.TIER1.getPercent() * 100) {
-						contents = UHCSGChestContents.TIER1.getTierContents();
-					} else {
-						if (chance > UHCSGChestContents.TIER1.getPercent() * 100 && chance < UHCSGChestContents.TIER3.getPercent() * 100) {
+					if (UHCSGCommands.debugList.contains("tier")) {
+						if (chance <= 33) {
+							contents = UHCSGChestContents.TIER1.getTierContents();
+							ch.setCustomName("Tier: 1");							
+						} else if (chance > 33 && chance <= 66) {
 							contents = UHCSGChestContents.TIER2.getTierContents();
-							
-						} else if (chance >= UHCSGChestContents.TIER3.getPercent() * 100) {
+							ch.setCustomName("Tier: 2");							
+						} else if (chance > 66) {
 							contents = UHCSGChestContents.TIER3.getTierContents();
-							
+							ch.setCustomName("Tier: 3");
 						}
+					} else {
+						if (chance <= UHCSGChestContents.TIER1.getPercent() * 100) {
+							contents = UHCSGChestContents.TIER1.getTierContents();
+							ch.setCustomName("Tier: 1");
+						} else {
+							if (chance > UHCSGChestContents.TIER1.getPercent() * 100 && chance < (UHCSGChestContents.TIER2.getPercent() * 100) + (UHCSGChestContents.TIER1.getPercent() * 100)) {
+								contents = UHCSGChestContents.TIER2.getTierContents();
+								ch.setCustomName("Tier: 2");
+								
+							} else if (chance >= (UHCSGChestContents.TIER3.getPercent() * 100) + (UHCSGChestContents.TIER2.getPercent() * 100) + (UHCSGChestContents.TIER1.getPercent() * 100)) {
+								contents = UHCSGChestContents.TIER3.getTierContents();
+								ch.setCustomName("Tier: 3");
+								
+							}
+						}						
 					}
 					
 					if (contents != null) {
@@ -310,11 +409,56 @@ public class UHCSGOrionGame extends OrionGame {
 	}
 	
 	@EventHandler
-	public void onDeath(EntityDeathEvent event) {
+	public void onDeath(PlayerDeathEvent event) {
 		if (event.getEntity() instanceof Player) {
 			NetworkPlayer.getNetworkPlayerByUUID(event.getEntity().getUniqueId().toString()).updatePlayerstate(PlayerState.SPECTATOR);
-			event.getEntity().teleport(UHCSGOrionGame.getInstance().getCurrentSegment().getOrionMap().getWorldSpawn().toLocation());
+			event.getDrops().add(new ItemStackBuilderUtil().toSkullBuilder().withOwner(event.getEntity().getName()).buildSkull());
+			((Player) event.getEntity()).setExp(0);
+			event.getEntity().getLocation().getWorld().strikeLightningEffect(event.getEntity().getLocation());
+			event.setDeathMessage("");
+			Bukkit.broadcastMessage(NetworkCore.prefixStandard + event.getEntity().getDisplayName() + " has been slain. There are now " + NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() + " players left. ");
+
 		}
+	}
+	
+	@EventHandler
+	public void onRespawn(PlayerRespawnEvent event) {
+		event.setRespawnLocation(UHCSGOrionGame.getInstance().getCurrentSegment().getOrionMap().getWorldSpawn().toLocation());
+		NetworkPlayer.getOnlinePlayers().forEach(p1 -> {
+			NetworkPlayer.getOnlinePlayers().forEach(p2 -> {
+				if (PlayerState.canSee(p1.getPlayerState(), p2.getPlayerState())) {
+					p1.getPlayer().showPlayer(p2.getPlayer());
+				} else {
+					p1.getPlayer().hidePlayer(p2.getPlayer());
+				}
+			});
+		});
+		event.getPlayer().spigot().setCollidesWithEntities(false);
+	}
+	
+	@EventHandler
+	public void onHorseSpawn(PlayerInteractEvent event) {
+		if (event.getPlayer().getInventory().getItemInMainHand().getType() == Material.MONSTER_EGG && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			if (((SpawnEggMeta) event.getPlayer().getInventory().getItemInMainHand().getItemMeta()).getSpawnedType() == EntityType.HORSE) {
+				event.setCancelled(true);
+				if (event.getPlayer().getInventory().getItemInMainHand().getAmount() > 1) {
+					ItemStack is = event.getPlayer().getInventory().getItemInMainHand();
+					is.setAmount(is.getAmount() - 1);
+					event.getPlayer().getInventory().setItemInMainHand(is);
+				} else {
+					event.getPlayer().getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+				}
+				Horse h = (Horse) event.getClickedBlock().getWorld().spawnEntity(event.getClickedBlock().getRelative(BlockFace.UP).getLocation(), EntityType.HORSE);
+				h.setAdult();
+				h.setOwner(event.getPlayer());
+				h.getInventory().setSaddle(new ItemStack(Material.SADDLE));
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onBlockSpread(BlockSpreadEvent event)  {
+		event.setCancelled(true);
 	}
 	
 	public OrionSegment getCurrentSegment() {
@@ -329,9 +473,6 @@ public class UHCSGOrionGame extends OrionGame {
 		return availableMaps;
 	}
 
-	public ArrayList<NetworkPlayer> getPlayers() {
-		return players;
-	}
 
 	public static UHCSGOrionGame getInstance() {
 		return instance;

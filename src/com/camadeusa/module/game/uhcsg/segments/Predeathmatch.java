@@ -35,11 +35,13 @@ public class Predeathmatch extends OrionSegment {
 			NetworkPlayer.getOnlinePlayersByState(PlayerState.GHOST).get(i).getPlayer().teleport(getOrionMap().getDeathmatchSpawn().toLocation());
 		}
 		
-		getOrionMap().getWall().forEach(softLocation -> {
-			if (!softLocation.toLocation().getBlock().getType().isSolid()) {
-				softLocation.toLocation().getBlock().setType(Material.GLASS);				
-			}
-		});
+		if (NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() > 2) {			
+			getOrionMap().getWall().forEach(softLocation -> {
+				if (!softLocation.toLocation().getBlock().getType().isSolid()) {
+					softLocation.toLocation().getBlock().setType(Material.GLASS);				
+				}
+			});
+		}
 		
 		getNextSegment().setOrionMap(getOrionMap());
 		

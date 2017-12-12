@@ -371,6 +371,7 @@ public enum PlayerRank {
 			}
 			if (GamemodeManager.getInstance().getGamemode() == Gamemode.UHCSG) {
 				commandsA.add("nextsegment");
+				commandsA.add("debug");
 			}
 			return commandsA;
 		case Manager:

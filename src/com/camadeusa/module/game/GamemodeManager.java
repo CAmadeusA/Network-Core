@@ -63,6 +63,7 @@ public class GamemodeManager {
 			game.initializeGame();
 			currentGame = game;
 			modulemanager.modulesToRegister.add(new GoldenHead());
+			modulemanager.modulesToRegister.add(new GameTime());
 			break;
 		case MAPEDITOR:
 			modulemanager.modulesToRegister.add(new MapEditorModule());

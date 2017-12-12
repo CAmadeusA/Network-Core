@@ -6,6 +6,7 @@ import java.util.LinkedList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -236,6 +237,10 @@ public class OrionMap {
 	
 	public void clearWall() {
 		wall = new ArrayList<SoftLocation>();
+	}
+	
+	public World getWorld() {
+		return Bukkit.getWorld(getWorldSpawn().getWorldName());
 	}
 
 	public static class SoftLocation {

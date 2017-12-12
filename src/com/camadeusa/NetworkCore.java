@@ -5,6 +5,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.camadeusa.chat.ChatManager;
+import com.camadeusa.chat.Profanity;
+import com.camadeusa.module.anticheat.AnticheatCore;
 import com.camadeusa.module.game.GamemodeManager;
 import com.camadeusa.module.game.uhcsg.UHCSGCommands;
 import com.camadeusa.module.mapeditor.MapEditorCommands;
@@ -23,6 +25,7 @@ import com.camadeusa.utility.subservers.packet.PacketDownloadNetworkSettings;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
+import com.camadeusa.utility.subservers.packet.PacketLogChatMessage;
 import com.camadeusa.utility.subservers.packet.PacketPunishPlayer;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
@@ -49,11 +52,16 @@ public class NetworkCore extends JavaPlugin {
 	public void onEnable() {
 		super.onEnable();
 		instance = this;
+		
+		new AnticheatCore();
+		Profanity.loadConfigs();
+		
 		con = RethinkDB.r.connection().hostname("camadeusa.ydns.eu").db("Orion_Network").user("orion", "B1EEADCD32176C3644C63F9664CD549799E6041FB351C4A7BEEB86361DE3C3FF").connect();
 		con.use("Orion_Network");
 		xbu = new XoreBoardUtil();
 		xbu.init();
 		configManager = new ConfigUtil();
+		new WorldManager();
 		gamemodeManager = new GamemodeManager();
 		gamemodeManager.activateGametype();
 		registerEvents();
@@ -72,6 +80,8 @@ public class NetworkCore extends JavaPlugin {
 		frameWork.registerCommands(new MapEditorCommands());
 		frameWork.registerCommands(new UHCSGCommands());
 		
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_7_10);
+		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_7_5);
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_4_7);
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_5_1);
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_5_2);
@@ -91,6 +101,8 @@ public class NetworkCore extends JavaPlugin {
 		SubDataClient.registerPacket(PacketPunishPlayer.class, "PacketPunishPlayer");
 		SubDataClient.registerPacket(new PacketDownloadNetworkSettings(), "PacketDownloadNetworkSettings");
 		SubDataClient.registerPacket(PacketDownloadNetworkSettings.class, "PacketDownloadNetworkSettings");
+		SubDataClient.registerPacket(new PacketLogChatMessage(), "PacketLogChatMessage");
+		SubDataClient.registerPacket(PacketLogChatMessage.class, "PacketLogChatMessage");
 			
 	}
 	

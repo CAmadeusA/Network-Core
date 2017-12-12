@@ -22,9 +22,7 @@ import com.google.common.io.Files;
 
 
 public class MapEditorCommands {
-
 	HashMap<String, String> loadedMaps = new HashMap<>();
-	File worldsFolder = new File(new File("").getAbsolutePath() + "/maps");
 	String activeWorldName = "world";
 	Gamemode gamemode;
 	
@@ -38,7 +36,7 @@ public class MapEditorCommands {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				if (args.getArgs().length == 0) {
 					args.getPlayer().chat("/loadmap <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");
-				} else {
+				} else if (args.getArgs().length == 2) {
 					activeWorldName = args.getArgs(0);
 					gamemode = Gamemode.valueof(args.getArgs(1).toUpperCase());
 
@@ -52,6 +50,8 @@ public class MapEditorCommands {
 					});					
 					
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Loaded world: " + activeWorldName + " with gamemode: " + gamemode.getValue());
+				} else {
+					args.getPlayer().chat("/loadmap <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");					
 				}
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -67,7 +67,7 @@ public class MapEditorCommands {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				if (args.getArgs().length == 0) {
 					args.getPlayer().chat("/setMapLink <What is the Map Link?: >");
-				} else {
+				} else if (args.getArgs().length == 1) {
 					String link = "";
 					for (int i = 0; i < args.getArgs().length; i++) {
 						if (i+1 == args.getArgs().length) {
@@ -77,6 +77,8 @@ public class MapEditorCommands {
 						}					}
 					om.setMapLink(link);
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Link set!");
+				} else {
+					args.getPlayer().chat("/setMapLink <What is the Map Link?: >");					
 				}
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -118,7 +120,7 @@ public class MapEditorCommands {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				if (args.getArgs().length == 0) {
 					args.getPlayer().chat("/setMapName <What is the Map Name?: >");
-				} else {
+				} else if (args.getArgs().length == 1) {
 					String name = "";
 					for (int i = 0; i < args.getArgs().length; i++) {
 						if (i+1 == args.getArgs().length) {
@@ -128,6 +130,8 @@ public class MapEditorCommands {
 						}					}
 					om.setMapName(name);
 					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Name set!");
+				} else {
+					args.getPlayer().chat("/setMapName <Please only use one word: What is the Map Name?: >");					
 				}
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -164,7 +168,7 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				om.addDMSpawn(new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
-				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn" + (om.getDeathmatchSpawns().size()) + " set!");
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn " + (om.getDeathmatchSpawns().size()) + " set!");
 
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -179,7 +183,7 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				wp1 = new SoftLocation(args.getPlayer().getEyeLocation().getWorld().getName(), args.getPlayer().getEyeLocation().getX(), args.getPlayer().getEyeLocation().getY(), args.getPlayer().getEyeLocation().getZ());
-				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn" + (om.getDeathmatchSpawns().size()) + " set!");
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Wall position 1 set!");
 				
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -195,7 +199,7 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				wp2 = new SoftLocation(args.getPlayer().getEyeLocation().getWorld().getName(), args.getPlayer().getEyeLocation().getX(), args.getPlayer().getEyeLocation().getY(), args.getPlayer().getEyeLocation().getZ());
-				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Deathmatch Spawn" + (om.getDeathmatchSpawns().size()) + " set!");
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Wall position 2 set!");
 				
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
@@ -228,7 +232,7 @@ public class MapEditorCommands {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 				om.addSpawn(new SoftLocation(args.getPlayer().getLocation().getWorld().getName(), args.getPlayer().getLocation().getX(), args.getPlayer().getLocation().getY(), args.getPlayer().getLocation().getZ(), args.getPlayer().getLocation().getYaw()));
-				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Spawn" + (om.getSpawns().size()) + " set!");
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Spawn " + (om.getSpawns().size()) + " set!");
 
 			} else {
 				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));

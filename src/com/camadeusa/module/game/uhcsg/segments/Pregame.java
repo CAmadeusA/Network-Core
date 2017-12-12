@@ -13,8 +13,11 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import com.camadeusa.module.game.GameTime;
 import com.camadeusa.module.game.OrionSegment;
 import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
+import com.camadeusa.network.ServerMode;
+import com.camadeusa.network.ServerMode.ServerJoinMode;
 import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
@@ -24,16 +27,22 @@ import com.camadeusa.world.OrionMap;
 
 public class Pregame extends OrionSegment {
 
+	GameTime gt;
+	
 	@Override
 	public void activate() {
 		UHCSGOrionGame.getInstance().setCurrentSegment(this);
 		this.activateModule();
+		
+		
+		ServerMode.setMode(ServerJoinMode.STAFF);
+		
 		if (Lobby.top.size() > 0) {
-			setOrionMap(((OrionMap) Lobby.top.keySet().toArray()[0]));
+			setOrionMap(((OrionMap) Lobby.top.keySet().toArray()[Lobby.top.size() - 1]));
 		} else {
 			setOrionMap((OrionMap) Lobby.votes.keySet().toArray()[Random.instance().nextInt(Lobby.votes.keySet().size())]);
 		}
-		getOrionMap().getWorldSpawn().toLocation().getWorld().setDifficulty(Difficulty.PEACEFUL);
+		getOrionMap().getWorld().setDifficulty(Difficulty.PEACEFUL);
 		
 		for (int i = 0; i < NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size(); i++) {
 			NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).get(i).getPlayer().teleport(getOrionMap().getSpawns().get(i).toLocation());
@@ -51,6 +60,10 @@ public class Pregame extends OrionSegment {
 		
 		getNextSegment().setOrionMap(getOrionMap());
 
+		GameTime.getInstance().setDayLength(480);
+		GameTime.getInstance().setNightLength(120);
+		GameTime.getInstance().setOrionMap(getOrionMap());
+		GameTime.getInstance().setFrozen(false);
 		
 	}
 	

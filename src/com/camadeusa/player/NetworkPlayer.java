@@ -21,7 +21,9 @@ import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
+import com.camadeusa.network.ServerMode;
 import com.camadeusa.utility.Random;
+import com.camadeusa.utility.subservers.event.SubserversEvents;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.rethinkdb.RethinkDB;
@@ -204,6 +206,12 @@ public class NetworkPlayer implements Listener {
 	public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
 		AtomicInteger intA = new AtomicInteger();
 		intA.set(1);
+		
+		if (!SubserversEvents.connected) {
+			event.disallow(Result.KICK_OTHER, "This server is not online yet.");
+			return;
+		}
+		
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override 
 			public void run() {
@@ -217,14 +225,18 @@ public class NetworkPlayer implements Listener {
 						if (bl > System.currentTimeMillis()) {
 							event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until: " ) + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
 						} else {
-							Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-								@Override
-								public void run() {
-									if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
-										event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "This server is full, sorry for the inconvienence."));
-									}								
-								}
-							});
+							if (!ServerMode.canJoin(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")))) {
+								event.disallow(Result.KICK_OTHER, NetworkCore.prefixError + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You are unable to join this server. Please try again later."));
+							} else {								
+								Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
+									@Override
+									public void run() {
+										if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
+											event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "This server is full, sorry for the inconvienence."));
+										}								
+									}
+								});
+							}
 						}	
 					}
 					intA.set(0);

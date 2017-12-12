@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -31,14 +32,14 @@ public class GoldenHead extends Module {
 		return new ItemStackBuilderUtil(Material.GOLDEN_APPLE).withName("Golden-Head").withLocalizedName("Golden-Head").addEnchantment(Enchantment.ARROW_INFINITE, 3).withItemFlags(ItemFlag.HIDE_ENCHANTS).buildStack();
 	}
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGH)
 	public void onConsume(PlayerItemConsumeEvent event) {
 		if (event.getItem().getItemMeta().hasLocalizedName()) {
 			if (event.getItem().getItemMeta().getLocalizedName().equals("Golden-Head")) {
 				for (PotionEffect effect : event.getPlayer().getActivePotionEffects())
 			        event.getPlayer().removePotionEffect(effect.getType());
-				event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 7, 3, false, true, Color.MAROON), true);
-				event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 7, 3, false, true, Color.MAROON), true);
+				event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 2400, 1, false, true, Color.MAROON), true);
+				event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 50, 3, false, true, Color.MAROON), true);
 			}
 		}
 	}

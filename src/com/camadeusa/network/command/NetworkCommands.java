@@ -2,7 +2,8 @@ package com.camadeusa.network.command;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
@@ -12,6 +13,8 @@ import org.json.JSONObject;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.Gamemode;
+import com.camadeusa.network.ServerMode;
+import com.camadeusa.network.ServerMode.ServerJoinMode;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.utility.Encryption;
 import com.camadeusa.utility.MD5;
@@ -80,95 +83,79 @@ public class NetworkCommands {
 	@SuppressWarnings("deprecation")
 	@Command(name = "join", aliases = { "server" }, usage = "/join {hub/uhcsg/etc}")
 	public void join(CommandArgs args) {
-		Gamemode selected = null;
-		HashMap<String, JSONObject> availableServers = new HashMap<>();
-
-		for (Gamemode mode : Gamemode.values()) {
-			if (args.getArgs(0).equalsIgnoreCase(mode.getValue())) {
-				selected = mode;
-				break;
-			}
+		
+		if (args.getArgs().length != 1) {
+			args.getPlayer().chat("/join <What Kind of server would you like to join? (Hub/UHCSG): >");
 		}
 		
-		if (selected != null) {
-			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(),
-					NetworkCore.prefixStandard + "Searching for servers of type: " + selected.getValue()));
-			Gamemode seltemp = selected;
-			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadServerList(null, null, json -> {
-				for (String server : json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet()) {
-					if (server.replaceAll("[-+]?[0-9]*\\.?[0-9]+", "").equalsIgnoreCase(seltemp.getValue())) {
-						SubAPI.getInstance().getSubDataNetwork()
-								.sendPacket(new PacketDownloadServerConfigInfo(server, infojson -> {
-									availableServers.put(server, infojson);
-								}));
+		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+			@Override
+			public void run() {
+				Gamemode selected = null;
+				for (Gamemode mode : Gamemode.values()) {
+					if (args.getArgs(0).equalsIgnoreCase(mode.getValue())) {
+						selected = mode;
+						break;
 					}
 				}
-				
-				
-			}));
-
-
-			Bukkit.getScheduler().scheduleAsyncDelayedTask(NetworkCore.getInstance(), new Runnable() {
-				@Override
-				public void run() {
-					boolean containsNotFullServer = false;
-					HashMap<String, JSONObject> notFullServers = new HashMap<>();
-
-					for (String key : availableServers.keySet()) {
-						if (availableServers.get(key).getJSONObject("serverdata").getInt("onlineplayers") < availableServers.get(key).getJSONObject("serverdata")
-								.getInt("maxplayers")) {
-							notFullServers.put(key, availableServers.get(key));
-							containsNotFullServer = true;
-						}
-					}
-					if (containsNotFullServer) {
-						String fullestServer = "";
-						for (String key : notFullServers.keySet()) {
-							if (fullestServer.equals("")) {
-								fullestServer = key;
-							} else {
-								if (notFullServers.get(fullestServer).getJSONObject("serverdata").getInt("onlineplayers") < notFullServers.get(key).getJSONObject("serverdata")
-										.getInt("onlineplayers")) {
-									fullestServer = key;
-								}
-							}
-						}
+				if (selected != null) {
+					args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(),
+							NetworkCore.prefixStandard + "Searching for servers of type: " + selected.getValue()));
+					Gamemode seltemp = selected;
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadServerList(null, null, json -> {
+						ArrayList<JSONObject> list = new ArrayList<>();
+						AtomicLong timeSinceLast = new AtomicLong(System.currentTimeMillis());
 						
-						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Sending you to server: " + fullestServer + ".");
-						
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
-								"sub teleport " + fullestServer + " " + args.getPlayer().getName());
 
-					} else {
-						if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Iron.getValue()) {
-							args.getPlayer().sendMessage(NetworkCore.prefixStandard
-									+ "All servers of this type are full... Attemting to send you to any available server of this type using your join-priority perk.");
-							for (String key : availableServers.keySet()) {
-								Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
-										"sub teleport " + availableServers.get(key).getString("name") + " "
-												+ args.getPlayer().getName());
-								double d = System.currentTimeMillis() + 1000;
-								while (true) {
-									if (System.currentTimeMillis() >= d) {
-										break;
+						AtomicInteger ii = new AtomicInteger(0);
+						for (int i = 0; i < json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().size(); i++) {	
+							ii.set(i);
+							if (((String) json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().toArray()[i]).replaceAll("[-+]?[0-9]*\\.?[0-9]+", "").equalsIgnoreCase(seltemp.getValue())) {
+								SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadServerConfigInfo(((String) json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().toArray()[i]), infojson -> {
+									if (infojson.has("serverdata")) {
+										if (ServerMode.canJoin(ServerJoinMode.fromString(infojson.getJSONObject("serverdata").getString("servermode")), args.getNetworkPlayer().getPlayerRank())) {
+											if (infojson.getJSONObject("serverdata").getInt("onlineplayers") < infojson.getJSONObject("serverdata").getInt("maxplayers")) {
+												if (list.size() == 0) {
+													list.add(infojson);
+												} else {
+													if (list.get(0).getJSONObject("serverdata").getInt("onlineplayers") < infojson.getJSONObject("serverdata").getInt("onlineplayers")) {
+														list.set(0, infojson);													
+													}
+												}
+											} else {
+												if (list.size() == 0) {
+													list.set(0, infojson);
+												}
+											}											
+										}
+									} else {
+										args.getPlayer().sendMessage(NetworkCore.prefixError + "No servers of that type are available or there is no data for that kind of server available. Please try again later.");
 									}
-								}
-								if (!args.getPlayer().isOnline()) {
-									break;
-								}
+									//Bukkit.broadcastMessage(ii.get() + " ||| " + json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().size());
+									if (ii.get() + 1 == json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().size()) {
+										if (list.size() > 0) {
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Sending you to server: " + list.get(0).getJSONObject("serverdata").getString("server") + ".");
+											Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
+													"sub teleport " + list.get(0).getJSONObject("serverdata").getString("server") + " " + args.getPlayer().getName());
+											
+										} else {
+											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "No servers of that type found.");
+											
+										}										
+									}
+								}));
+							} else {
+								timeSinceLast.set(System.currentTimeMillis());
 							}
-						} else {
-							args.getPlayer().sendMessage(NetworkCore.prefixError
-									+ "All servers of this type are full... Please try again later, or donate for the join priority perk to allow you to join full games. ");
-						}
-					}
-
-				}
-			}, 17);
-
-		} else {
-			args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(), "That is not a kind of server we support. Please try again."));
-		}
+						}														
+					}));				
+				} else {
+					args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(), "That is not a kind of server we support. Please try again."));
+				}				
+			}
+		});
+		
+		
 	}
 	
 	@Command(name = "hub", aliases = { "lobby" }, usage = "/hub")
@@ -178,7 +165,7 @@ public class NetworkCommands {
 	
 	@Command(name = "changePassword", usage = "/changePassword {Current Password} {New Password}")
 	public void changePassword(CommandArgs args) {
-		if (args.getArgs().length < 1) {
+		if (args.getArgs().length != 1) {
 			args.getPlayer().chat("/changePassword <Enter your previous password: > <Enter your NEW password>");
 		} else {
 			try {
@@ -197,7 +184,7 @@ public class NetworkCommands {
 	
 	@Command(name = "setPasswordPromptOnLogin", usage = "/setPasswordPromptOnLogin {true/false}")
 	public void setpwpol(CommandArgs args) {
-		if (args.getArgs().length < 1) {
+		if (args.getArgs().length != 1) {
 			args.getPlayer().chat("/setPasswordPromptOnLogin <Enter Value: (true/false)>");
 		} else {
 			if (args.getArgs(0).equalsIgnoreCase("true") || args.getArgs(0).equalsIgnoreCase("false")) {
@@ -214,7 +201,7 @@ public class NetworkCommands {
 	@Command(name = "authenticate", usage = "/authenticate")
 	public void auth(CommandArgs args) {
 		if (args.getNetworkPlayer().getData().has("password")) {
-			if (args.getArgs().length < 1) {
+			if (args.getArgs().length != 1) {
 				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(args.getNetworkPlayer().getPlayer().getUniqueId().toString(), "authenticated", "false"));
 				args.getPlayer().chat("/authenticate <Input Your Password: >");
 			} else {
@@ -243,7 +230,7 @@ public class NetworkCommands {
 	@Command(name = "setuppassword", usage = "/setuppassword")
 	public void setupPassword(CommandArgs args) {
 			if (!args.getNetworkPlayer().getData().has("password")) {
-				if (args.getArgs().length < 1) {
+				if (args.getArgs().length != 3) {
 					args.getPlayer().chat("/setupPassword <This password is unique to this network, and is case sensitive. Do you understand? (Y/N)?> <Do you want the server to require your password on login? (Y/N)?> <Input Your Password: >");
 				} else {
 					if (args.getArgs(0).equalsIgnoreCase("y")) {

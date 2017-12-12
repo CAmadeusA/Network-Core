@@ -21,7 +21,7 @@ public enum PlayerState {
 	}
 	
 	public static PlayerState fromString(String s) {
-		switch (s) {
+		switch (s.toLowerCase()) {
 		case "normal":
 			return NORMAL;
 		case "spectator":

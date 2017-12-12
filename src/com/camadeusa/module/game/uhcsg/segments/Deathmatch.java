@@ -1,9 +1,11 @@
 package com.camadeusa.module.game.uhcsg.segments;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.OrionSegment;
 import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
 import com.camadeusa.player.NetworkPlayer;
@@ -42,6 +44,11 @@ public class Deathmatch extends OrionSegment {
 				resetTimer();
 			}			
 		} else {
+			if (NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() == 1) {
+				NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).forEach(xp -> {
+					Bukkit.broadcastMessage(NetworkCore.prefixStandard +  xp.getPlayer().getDisplayName() + " has won the game!");					
+				});
+			}
 			nextSegment();
 		}
 		
