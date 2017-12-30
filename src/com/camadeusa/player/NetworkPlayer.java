@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,7 +36,6 @@ public class NetworkPlayer implements Listener {
 	private static List<NetworkPlayer> archrPlayerList = new ArrayList<NetworkPlayer>();
 	private PlayerState playerstate;
 	private PlayerRank rank;
-	private PlayerSettings playerSettings;	
 	private HashMap<String, JSONObject> datacache = new HashMap<>();
 	String playeruuid;
 	JSONObject data;
@@ -144,14 +142,6 @@ public class NetworkPlayer implements Listener {
 		this.rank = rank;
 	}
 
-	public PlayerSettings getPlayerSettings() {
-		return playerSettings;
-	}
-
-	private void setPlayerSettings(PlayerSettings playerSettings) {
-		this.playerSettings = playerSettings;
-	}
-
 	public HashMap<CheckType, Integer> getViolationLevels() {
 		return violationLevels;
 	}
@@ -225,7 +215,7 @@ public class NetworkPlayer implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override 
 			public void run() {
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), "-1", jsoninfo -> {
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), event.getAddress().toString().replace("/", ""), jsoninfo -> {
 					if (jsoninfo.getJSONObject("data").has("bans")) {
 						long bl = 0;
 						for (String key : jsoninfo.getJSONObject("data").getJSONObject("bans").keySet()) {
@@ -278,9 +268,6 @@ public class NetworkPlayer implements Listener {
 		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(true);
 		}
-				
-		aP.setPlayerSettings(new PlayerSettings(datacache.get(event.getPlayer().getUniqueId().toString()).getJSONObject("playersettings")));
-		datacache.get(event.getPlayer().getUniqueId().toString()).remove("playersettings");
 		
 		aP.setData(datacache.get(event.getPlayer().getUniqueId().toString()));
 		archrPlayerList.add(aP);
@@ -354,7 +341,6 @@ public class NetworkPlayer implements Listener {
 	
 	public void reloadPlayerData() {
 		if (getPlayer() != null && getPlayer().isOnline()) {
-
 			SubAPI.getInstance().getSubDataNetwork()
 					.sendPacket(new PacketDownloadPlayerInfo(playeruuid, getPlayer().getName(),
 							getPlayer().getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {

@@ -12,3 +12,5 @@ target/original-Network-Core-0.0.1-SNAPSHOT.jar
 .DS_Store
 *.jar
 *.class
+*.class
+*.class

@@ -39,7 +39,7 @@ public class MapEditorModule extends Module {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override 
 			public void run() {
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), "-1", jsoninfo -> {
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), event.getAddress().toString().replace("/", ""), jsoninfo -> {
 					if (PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")).getValue() < PlayerRank.Admin.getValue()) {
 						event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You do not have permission to be on this server."));
 					}

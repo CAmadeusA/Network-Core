@@ -57,7 +57,11 @@ public class NetworkCore extends JavaPlugin {
 		new AnticheatCore();
 		Profanity.loadConfigs();
 		
-		con = RethinkDB.r.connection().hostname("na-central.orionmc.net").db("Orion_Network").connect();
+		if (System.getProperty("orionDebug") != null) {
+			con = RethinkDB.r.connection().hostname("camadeusa.ydns.eu").db("Orion_Network").user("orion", "B1EEADCD32176C3644C63F9664CD549799E6041FB351C4A7BEEB86361DE3C3FF").connect();
+		} else {
+			con = RethinkDB.r.connection().hostname("na-central.orionmc.net").db("Orion_Network").user("orion", "B1EEADCD32176C3644C63F9664CD549799E6041FB351C4A7BEEB86361DE3C3FF").connect();			
+		}
 		con.use("Orion_Network");
 		xbu = new XoreBoardUtil();
 		xbu.init();

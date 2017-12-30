@@ -28,14 +28,7 @@ public class ChatManager implements Listener {
 	@EventHandler
 	public void onChat(AsyncPlayerChatEvent event) {
 		if (!event.isCancelled()) {
-			String senderLang;
-			
-			if (!NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerSettings().getString("locale").equals("--")) {
-				senderLang = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerSettings().getString("locale");			
-			} else {
-				senderLang = event.getPlayer().spigot().getLocale().substring(0, 2);				
-			}
-			
+			String senderLang = event.getPlayer().spigot().getLocale().substring(0, 2);				
 			long l = 0;			
 			// Sets the highest muteexpiredate to the only one that matters.
 			if (NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())
