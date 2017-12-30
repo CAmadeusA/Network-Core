@@ -1,8 +1,9 @@
 package com.camadeusa.module.anticheat;
 
 public enum CheckType {
-	SPEED(true),
-	FORCEFIELD(true);
+	SPEED(false),
+	FORCEFIELD(true),
+	VAPE(true);
 	
 	
 	private boolean enabled;

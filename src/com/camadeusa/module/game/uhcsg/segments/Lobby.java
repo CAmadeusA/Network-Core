@@ -1,6 +1,5 @@
 package com.camadeusa.module.game.uhcsg.segments;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -8,13 +7,14 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,6 +36,7 @@ import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.OrionSegment;
 import com.camadeusa.module.game.VotingMode;
+import com.camadeusa.module.game.uhcsg.UHCSGCommands;
 import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
 import com.camadeusa.network.ServerMode;
 import com.camadeusa.network.ServerMode.ServerJoinMode;
@@ -51,12 +52,17 @@ import com.camadeusa.utility.menu.hotbar.HotbarItem;
 import com.camadeusa.utility.menu.hotbar.HotbarRunnable;
 import com.camadeusa.world.OrionMap;
 
+import io.github.theluca98.textapi.ActionBar;
+import io.github.theluca98.textapi.Title;
+import mkremins.fanciful.FancyMessage;
+
 public class Lobby extends OrionSegment {
 
 	HotbarItem votingItem = new HotbarItem("Vote for a Map!", "Vote for a Map!", 0, Material.REDSTONE_COMPARATOR);
 	Inventory votingMenu = new Inventory("Voting-Menu", 1);
-	public static LinkedHashMap<OrionMap, HashMap<UUID, Integer>> votes = new LinkedHashMap<>();
-	public static Map<OrionMap, Integer> top = new LinkedHashMap<>();
+	public static Lobby instance;
+	public LinkedHashMap<OrionMap, HashMap<UUID, Integer>> votes = new LinkedHashMap<>();
+	public Map<OrionMap, Integer> top = new LinkedHashMap<>();
 	
 	VotingMode mode = VotingMode.DIRECT;
 	
@@ -64,6 +70,9 @@ public class Lobby extends OrionSegment {
 	public void activate() {
 		UHCSGOrionGame.getInstance().setCurrentSegment(this);
 		this.activateModule();
+		instance = this;
+		
+		votes = UHCSGOrionGame.getInstance().gatherMaps();
 		
 		getOrionMap().getWorldSpawn().toLocation().getWorld().setDifficulty(Difficulty.PEACEFUL);
 		
@@ -79,7 +88,13 @@ public class Lobby extends OrionSegment {
 			}
 		});	
 		
-		for (int i = 0; i < votes.size(); i++) {
+		for (int i = 0; i < votingMenu.getSize(); i++) {
+			if (votingMenu.getSlotItemAt(i) != null) {
+				votingMenu.removeSlotItem(i);
+			}
+		}
+		
+		for (int i = 0; i < 5; i++) {
 			SlotItem item = new SlotItem(((OrionMap) votes.keySet().toArray()[i]).getMapName(), "Vote for: " + ((OrionMap) votes.keySet().toArray()[i]).getMapName(), 0, Material.MAP);
 			votingMenu.addSlotItem(i + 2, item);
 			
@@ -91,6 +106,8 @@ public class Lobby extends OrionSegment {
 				}
 			});
 		}
+		
+		ServerMode.setMode(ServerJoinMode.PUBLIC);
 		
 	}
 	
@@ -130,27 +147,6 @@ public class Lobby extends OrionSegment {
 			top.put(mm, total);
 		});			
 		top = sortByValue(top);
-	
-		//Redundant double check
-		ArrayList<Integer> toRemoveInts = new ArrayList<>();
-		for (int i = 0; i < top.size(); i++) {
-			int counterFound = 0;
-			for (int j = 0; j < top.size(); j++) {
-				if (((OrionMap)top.keySet().toArray()[i]).getMapName().equalsIgnoreCase(((OrionMap)top.keySet().toArray()[j]).getMapName())) {
-					counterFound++;
-					if (counterFound == 2) {
-						toRemoveInts.add(j);
-						counterFound = 0;
-						break;
-					}
-				}
-			}
-		}
-		
-		for (int i = 0; i < toRemoveInts.size(); i++) {
-			top.remove(top.keySet().toArray()[toRemoveInts.get(i)]);
-		}
-		
 		
 		for (int i = 0; i < votingMenu.getSize(); i++) {
 			if (votingMenu.getSlotItemAt(i) != null) {
@@ -201,26 +197,51 @@ public class Lobby extends OrionSegment {
 			setTime(30);
 		}
 		
-		if (getTime() % 10 == 0) {
+		if (getTime() % 30 == 0 && top.size() > 0) {
 			NetworkPlayer.getNetworkPlayerList().forEach(np -> {
+				int totalVotes = 0;
+				for (int j = 0; j < top.size(); j++) {
+					totalVotes += (int) top.values().toArray()[j];
+				}
 				np.getPlayer().sendMessage(NetworkCore.prefixStandard + "The following maps are available: ");
-				for (int i = 0; i < (top.size() >= 5 ? 5 : top.size()); i++) {
-					np.getPlayer().sendMessage(((OrionMap) top.keySet().toArray()[i]).getMapName() + " with " + top.values().toArray()[i]);
+				for (int i = (top.size() >= 5 ? 5 : top.size()) -1; i >= 0; i--) {
+					FancyMessage fm = new FancyMessage(ChatColor.DARK_GRAY + "[" + ChatColor.RESET + "" + top.values().toArray()[i] + "/" + totalVotes + ChatColor.DARK_GRAY + ']' + ChatColor.RESET + ": " + ChatColor.LIGHT_PURPLE + ((OrionMap) top.keySet().toArray()[i]).getMapName());
+					fm.tooltip(ChatColor.GOLD + "Click To Vote!", "", ChatColor.GOLD + "Author: " + ChatColor.RESET + ((OrionMap) top.keySet().toArray()[i]).getMapAuthor(), ChatColor.GOLD + "Link: " + ChatColor.RESET + ((OrionMap) top.keySet().toArray()[i]).getMapLink(), ChatColor.GOLD + "Size: " + ChatColor.RESET + ((OrionMap) top.keySet().toArray()[i]).getRadius());
+					fm.command("/vote " + ((OrionMap) top.keySet().toArray()[i]).getMapName());
+					fm.send(np.getPlayer());
 				}
 			});
 			
 		}
 		
-		if (getTime() > 0) {
+		if (getTime() > 1) {
 			setTime(getTime() - 1);
+			if (getTime() > 30) {
+				new ActionBar(ChatColor.LIGHT_PURPLE + "Time Remaining: " + ChatColor.RESET + "" + String.format("%02d:%02d", getTime() / 60, getTime() % 60)).sendToAll();				
+			} else {
+				if (getTime() > 3) {
+					new Title("", ChatColor.LIGHT_PURPLE + "Time Remaining: " + ChatColor.RESET + "" + getTime(), 5, 10, 5).sendToAll();
+				} else {
+					new Title(ChatColor.DARK_RED + "" + getTime(), "", 5, 10, 5).sendToAll();
+					NetworkPlayer.getOnlinePlayers().forEach(np -> {
+						np.getPlayer().playSound(np.getPlayer().getLocation(), Sound.BLOCK_NOTE_PLING, 1f, 1f);
+					});
+				}
+			}
 		} else {
-			if (NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() < 18) {
+			if (NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() < 18 && !UHCSGCommands.debugList.contains("playercount")) {
 				NetworkPlayer.getNetworkPlayerList().forEach(np -> {
 					np.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatManager.translateFor("en", np, "Not enough players to begin game. 18 required, current: " + NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() + ". "));
 					
 				});
+				NetworkPlayer.getOnlinePlayers().forEach(np -> {
+					np.getPlayer().playSound(np.getPlayer().getLocation(), Sound.ENTITY_DONKEY_HURT, 1f, 1f);
+				});
 				resetTimer();				
 			} else {
+				NetworkPlayer.getOnlinePlayers().forEach(np -> {
+					np.getPlayer().playSound(np.getPlayer().getLocation(), Sound.BLOCK_NOTE_SNARE, 1f, 1f);
+				});
 				nextSegment();
 			}
 		}
@@ -257,6 +278,14 @@ public class Lobby extends OrionSegment {
 
 	}
 	
+	public LinkedHashMap<OrionMap, HashMap<UUID, Integer>> getVotes() {
+		return votes;
+	}
+
+	public Map<OrionMap, Integer> getTop() {
+		return top;
+	}
+
 	@EventHandler
 	public void onDropItem(PlayerDropItemEvent event) {
 		event.setCancelled(true);

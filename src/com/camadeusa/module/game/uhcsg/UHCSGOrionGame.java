@@ -16,6 +16,7 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
@@ -29,6 +30,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -44,6 +46,7 @@ import org.bukkit.potion.PotionEffectType;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.game.Gamemode;
 import com.camadeusa.module.game.GoldenHead;
+import com.camadeusa.module.game.LeaderboardToken;
 import com.camadeusa.module.game.OrionGame;
 import com.camadeusa.module.game.OrionSegment;
 import com.camadeusa.module.game.uhcsg.segments.Deathmatch;
@@ -66,11 +69,10 @@ import com.camadeusa.world.OrionMap.SoftLocation;
 import com.camadeusa.world.WorldManager;
 
 public class UHCSGOrionGame extends OrionGame {
-	XoreBoard xb;
-	String scoreboardTitle = ChatColor.GRAY + "" + ChatColor.BOLD + "--- " + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + " ---";
 	ArrayList<OrionMap> availableMaps = new ArrayList<>();
 	ArrayList<SoftLocation> placedBlocks = new ArrayList<>();
 	public Map<SoftLocation, Boolean> chests = new LinkedHashMap<>();
+	private static LeaderboardToken lb;
 		
 	int LOBBYTIME = 120;
 	int PREGAMETIME = 10;
@@ -86,19 +88,16 @@ public class UHCSGOrionGame extends OrionGame {
 	Deathmatch dm;
 	Endgame endgame;
 
-	OrionMap lobbyMap = new OrionMap();
+	public OrionMap lobbyMap = new OrionMap();
 	
 	private static UHCSGOrionGame instance;
 	private OrionSegment currentSegment;
 	
 	public void initializeGame() {
-		this.activateModule();
-		NetworkCore.getInstance().getServer().addRecipe(GoldenHead.getRecipe());
 		Bukkit.setSpawnRadius(0);
 		loadMaps();
 		
-		xb = XoreBoardUtil.getNextXoreBoard();
-
+		lb = new LeaderboardToken();
 
 		lobby = new Lobby();
 		lobby.setTime(LOBBYTIME);
@@ -148,6 +147,7 @@ public class UHCSGOrionGame extends OrionGame {
 	
 	//Loads only maps for this specific gamemode
 	public void loadMaps() {
+		availableMaps.clear();
 		for (File map : WorldManager.worldFolder.listFiles()) {
 			if (map.isDirectory()) {
 				OrionMap temp = WorldManager.loadWorld(map.getName());
@@ -167,35 +167,26 @@ public class UHCSGOrionGame extends OrionGame {
 				}
 			}
 		}
-		Collections.shuffle(availableMaps);
-		getAvailableMaps().forEach(m -> {
-			if (Lobby.votes.size() <= 5) {
-				Lobby.votes.put(m, new HashMap<UUID, Integer>());
-			}
-		});
 	}
 	
+	public LinkedHashMap<OrionMap, HashMap<UUID, Integer>> gatherMaps() {
+		LinkedHashMap<OrionMap, HashMap<UUID, Integer>> votes = new LinkedHashMap<>();
+		Collections.shuffle(availableMaps);
+		availableMaps.forEach(m -> {
+			if (votes.size() <= 5) {
+				votes.put(m, new HashMap<UUID, Integer>());
+			}
+		});
+		return votes;
+	}
+	
+	public static LeaderboardToken getLeaderboardToken() {
+		return lb;
+	}
+
 	@EventHandler
-	public void onTickSecond(TickSecondEvent event) {
-		
-		for (NetworkPlayer np : NetworkPlayer.getNetworkPlayerList()) {
-			XoreBoardPlayerSidebar xbps = xb.getSidebar(np.getPlayer());
-			xbps.setDisplayName(scoreboardTitle);
-			HashMap<String, Integer> lines = new HashMap<>();
-			lines.put(ChatColor.GOLD + "Name: ", 20);
-			lines.put(StringUtils.abbreviate(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(np.getPlayer().getUniqueId().toString())), 40), 19);
-			lines.put(" ", 18);
-			lines.put(ChatColor.GOLD + "Rank: ", 17);
-			lines.put(StringUtils.abbreviate(ChatColor.BLUE + NetworkPlayer.getNetworkPlayerByUUID(np.getPlayer().getUniqueId().toString()).getPlayerRank().toString(), 40), 16);
-			lines.put("  ", 15);
-			lines.put(currentSegment.getTag() + ": " + currentSegment.getTime(), 14);
-			lines.put(ChatColor.GOLD + "orionmc.net", -1);
-			xbps.rewriteLines(lines);
-			
-			xbps.showSidebar();
-		}
-		
-		//Player visability managment
+	public void onTickSecond(TickSecondEvent event) {	
+	//Player visability managment
 		NetworkPlayer.getOnlinePlayers().forEach(p1 -> {
 			NetworkPlayer.getOnlinePlayers().forEach(p2 -> {
 				if (PlayerState.canSee(p1.getPlayerState(), p2.getPlayerState())) {
@@ -211,22 +202,6 @@ public class UHCSGOrionGame extends OrionGame {
 	@EventHandler
 	public void onJoin(PlayerJoinEvent event) {
 		
-		
-		xb.addPlayer(event.getPlayer());
-		XoreBoardPlayerSidebar xbps = xb.getSidebar(event.getPlayer());
-		xbps.setDisplayName(scoreboardTitle);
-		HashMap<String, Integer> lines = new HashMap<>();
-		lines.put(ChatColor.GOLD + "Name: ", 20);
-		lines.put(StringUtils.abbreviate(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())), 40), 19);
-		lines.put(" ", 18);
-		lines.put(ChatColor.GOLD + "Rank: ", 17);
-		lines.put(StringUtils.abbreviate(ChatColor.BLUE + NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerRank().toString(), 40), 16);
-		lines.put("  ", 15);
-		lines.put(currentSegment.getTag() + ": " + currentSegment.getTime(), 14);
-		lines.put(ChatColor.GOLD + "orionmc.net", -1);
-		xbps.rewriteLines(lines);
-		
-		xbps.showSidebar();
 		
 		event.getPlayer().spigot().setCollidesWithEntities(true);
 		
@@ -401,11 +376,13 @@ public class UHCSGOrionGame extends OrionGame {
 	@EventHandler
 	public void onLeave(PlayerQuitEvent event) {
 		event.setQuitMessage("");
+		UHCSGScoreboard.getInstance().removeFromLog(event.getPlayer().getUniqueId());
 	}
 	
 	@EventHandler
-	public void onLeave(PlayerKickEvent event) {
+	public void onKick(PlayerKickEvent event) {
 		event.setLeaveMessage("");
+		UHCSGScoreboard.getInstance().removeFromLog(event.getPlayer().getUniqueId());
 	}
 	
 	@EventHandler
@@ -416,8 +393,32 @@ public class UHCSGOrionGame extends OrionGame {
 			((Player) event.getEntity()).setExp(0);
 			event.getEntity().getLocation().getWorld().strikeLightningEffect(event.getEntity().getLocation());
 			event.setDeathMessage("");
-			Bukkit.broadcastMessage(NetworkCore.prefixStandard + event.getEntity().getDisplayName() + " has been slain. There are now " + NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() + " players left. ");
-
+			if (event.getEntity().getKiller() instanceof Arrow) {
+				Bukkit.broadcastMessage(NetworkCore.prefixStandard + event.getEntity().getDisplayName() + " has been slain by " + ((Player) ((Arrow) event.getEntity().getKiller()).getShooter()).getDisplayName() + ". There are now " + (NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size()-1) + " players left. ");
+				lb.registerKill(((Player) ((Arrow) event.getEntity().getKiller()).getShooter()).getUniqueId(), event.getEntity().getUniqueId());										
+			} else if (event.getEntity().getKiller() instanceof Player) {
+				Bukkit.broadcastMessage(NetworkCore.prefixStandard + event.getEntity().getDisplayName() + " has been slain by " + event.getEntity().getKiller().getDisplayName() + ". There are now " + (NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size()-1) + " players left. ");
+				lb.registerKill(event.getEntity().getKiller().getUniqueId(), event.getEntity().getUniqueId());						
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onProjectileHitEvent(ProjectileHitEvent event) {
+		if (getCurrentSegment() == livegame || getCurrentSegment() == dm) {
+			if (event.getEntityType() == EntityType.ARROW) {
+				if (event.getHitEntity() != null) {
+					if (event.getHitEntity().getType() == EntityType.PLAYER) {
+						if (((Arrow) event.getEntity()).getShooter() instanceof Player) {
+							lb.registerBow(((Player) ((Arrow) event.getEntity()).getShooter()).getUniqueId(), true);
+						}
+					}
+				} else if (event.getHitBlock() != null) {
+					if (((Arrow) event.getEntity()).getShooter() instanceof Player) {
+						lb.registerBow(((Player) ((Arrow) event.getEntity()).getShooter()).getUniqueId(), false);
+					}				
+				}
+			}
 		}
 	}
 	

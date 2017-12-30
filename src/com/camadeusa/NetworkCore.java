@@ -17,7 +17,6 @@ import com.camadeusa.network.event.NetworkServerInfoEvents;
 import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.timing.CoreLoop;
 import com.camadeusa.utility.ConfigUtil;
-import com.camadeusa.utility.GSheetDBUtil;
 import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.command.prompt.listener.CommandListener;
 import com.camadeusa.utility.subservers.event.SubserversEvents;
@@ -26,6 +25,7 @@ import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketLogChatMessage;
+import com.camadeusa.utility.subservers.packet.PacketLogLeaderboardStats;
 import com.camadeusa.utility.subservers.packet.PacketPunishPlayer;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.utility.xoreboard.XoreBoardUtil;
@@ -41,11 +41,12 @@ public class NetworkCore extends JavaPlugin {
 	static NetworkCore instance;
 	static ConfigUtil configManager;
 	static GamemodeManager gamemodeManager;
-	public static String prefixStandard = ChatColor.BOLD + "" + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + ">> " + ChatColor.RESET;
-	public static String prefixError = ChatColor.BOLD + "" + ChatColor.RED + "Orion" + ChatColor.GRAY + ">> " + ChatColor.RESET;
-	public GSheetDBUtil playersDB;
+	public static String prefixStandard = ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Orion" + ChatColor.DARK_GRAY + ">> " + ChatColor.RESET;
+	public static String prefixError = ChatColor.RED + "" + ChatColor.BOLD + "Orion" + ChatColor.GRAY + ">> " + ChatColor.RESET;
 	XoreBoardUtil xbu;
 	Connection con;
+	
+	int totalNetworkPlayers = 0;
 
 	
 	@Override
@@ -56,7 +57,7 @@ public class NetworkCore extends JavaPlugin {
 		new AnticheatCore();
 		Profanity.loadConfigs();
 		
-		con = RethinkDB.r.connection().hostname("camadeusa.ydns.eu").db("Orion_Network").user("orion", "B1EEADCD32176C3644C63F9664CD549799E6041FB351C4A7BEEB86361DE3C3FF").connect();
+		con = RethinkDB.r.connection().hostname("na-central.orionmc.net").db("Orion_Network").connect();
 		con.use("Orion_Network");
 		xbu = new XoreBoardUtil();
 		xbu.init();
@@ -73,7 +74,7 @@ public class NetworkCore extends JavaPlugin {
 	public void initializePlugin() {
 		CoreLoop coreloop = new CoreLoop();
 		coreloop.init();
-		playersDB = new GSheetDBUtil("archrplayers", "players");
+		
 		CommandFramework frameWork = new CommandFramework(this);
 		frameWork.registerCommands(new StaffCommands());
 		frameWork.registerCommands(new NetworkCommands());
@@ -103,6 +104,7 @@ public class NetworkCore extends JavaPlugin {
 		SubDataClient.registerPacket(PacketDownloadNetworkSettings.class, "PacketDownloadNetworkSettings");
 		SubDataClient.registerPacket(new PacketLogChatMessage(), "PacketLogChatMessage");
 		SubDataClient.registerPacket(PacketLogChatMessage.class, "PacketLogChatMessage");
+		SubDataClient.registerPacket(PacketLogLeaderboardStats.class, "PacketLogLeaderboardStats");
 			
 	}
 	
@@ -147,6 +149,16 @@ public class NetworkCore extends JavaPlugin {
 
 	public void setCon(Connection con) {
 		this.con = con;
+	}
+
+
+	public int getTotalNetworkPlayers() {
+		return totalNetworkPlayers;
+	}
+
+
+	public void setTotalNetworkPlayers(int totalNetworkPlayers) {
+		this.totalNetworkPlayers = totalNetworkPlayers;
 	}
 	
 }

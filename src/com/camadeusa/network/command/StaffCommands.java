@@ -5,10 +5,12 @@ import java.text.SimpleDateFormat;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.json.JSONException;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.player.PlayerRank;
+import com.camadeusa.utility.Encryption;
 import com.camadeusa.utility.MD5;
 import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
@@ -37,13 +39,13 @@ public class StaffCommands {
 	 */
 	
 	@Command(name = "punish", usage = "/punish")
-	public void punishPlayer(CommandArgs args) {
+	public void punishPlayer(CommandArgs args) throws NumberFormatException, JSONException, Exception {
 		if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Helper.getValue()) {
 
 			if (args.getArgs().length < 1) {
 				args.getPlayer().chat("/punish <What is your password?: (This is secure and will not be shared) > <Who would you like to punish?: (Player Name) > <For what type of punishment?: (kick/ban/mute) > <How Long?: (1-permanent) > <Units of time? (minutes/hours/days/weeks/months/permanent): > <For what reason?: >");
 			} else if (args.getArgs().length > 1) {
-				if (MD5.getMD5(args.getArgs(0)).equals(args.getNetworkPlayer().getData().getString("password"))) {
+				if (Encryption.decrypt(MD5.getMD5(args.getArgs(0)), Encryption.getKey()).equals(args.getNetworkPlayer().getData().getString("password"))) {
 					String uuid = "";
 					if (Bukkit.getPlayer(args.getArgs(1)).isOnline()) {
 						uuid = Bukkit.getPlayer(args.getArgs(1)).getUniqueId().toString();

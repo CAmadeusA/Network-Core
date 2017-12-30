@@ -1,8 +1,5 @@
 package com.camadeusa.module.hub;
 
-import java.util.HashMap;
-
-import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Difficulty;
@@ -15,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
@@ -34,17 +32,14 @@ import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.utility.MathUtil;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
-import com.camadeusa.utility.xoreboard.XoreBoard;
-import com.camadeusa.utility.xoreboard.XoreBoardPlayerSidebar;
-import com.camadeusa.utility.xoreboard.XoreBoardUtil;
 import com.camadeusa.world.OrionMap;
 import com.camadeusa.world.WorldManager;
 
+import io.github.theluca98.textapi.Title;
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 
 
 public class HubModule extends Module {
-	XoreBoard xb;
 	String scoreboardTitle = ChatColor.GRAY + "" + ChatColor.BOLD + "--- " + ChatColor.LIGHT_PURPLE + "Orion" + ChatColor.GRAY + " ---";
 	OrionMap hubConfig;
 	
@@ -54,8 +49,6 @@ public class HubModule extends Module {
 	public void activateModule() {
 		this.setTag(Gamemode.Hub.getValue());
 		Bukkit.getLogger().info("Activated");
-		xb = XoreBoardUtil.getNextXoreBoard();
-		Bukkit.getLogger().info(xb.getBukkitScoreboard().toString());
 		
 		hubConfig = WorldManager.loadWorld("Hub");
 		
@@ -70,7 +63,7 @@ public class HubModule extends Module {
 	}
 	
 	@SuppressWarnings("deprecation")
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler
 	public void onJoin(PlayerJoinEvent event) {
 		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		event.setJoinMessage("");
@@ -82,20 +75,7 @@ public class HubModule extends Module {
 		aP.getPlayer().getActivePotionEffects().forEach(pe -> {
 			aP.getPlayer().removePotionEffect(pe.getType());
 		});
-		xb.addPlayer(event.getPlayer());
-		XoreBoardPlayerSidebar xbps = xb.getSidebar(event.getPlayer());
-		xbps.setDisplayName(scoreboardTitle);
-		HashMap<String, Integer> lines = new HashMap<>();
-		lines.put(ChatColor.GOLD + "Name: ", 20);
-		lines.put(StringUtils.abbreviate(PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString())), 40), 19);
-		lines.put(" ", 18);
-		lines.put(ChatColor.GOLD + "Rank: ", 17);
-		lines.put(StringUtils.abbreviate(ChatColor.BLUE + NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).getPlayerRank().toString(), 40), 16);
-		lines.put("  ", 15);
-		lines.put(ChatColor.GOLD + "orionmc.net", -1);
-		xbps.rewriteLines(lines);
 		
-		xbps.showSidebar();
 		NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).updatePlayerstate(PlayerState.NORMAL);
 		Bukkit.getScheduler().scheduleAsyncDelayedTask(NetworkCore.getInstance(), new Runnable() {
 			@Override
@@ -120,7 +100,8 @@ public class HubModule extends Module {
 	public void onPlayerMoveOutOfBounds(PlayerMoveEvent event) {
 		// 100 is arbitrary hub size. 
 		if ((MathUtil.distance(hubConfig.getWorldSpawn().toLocation().getX(), event.getTo().getX(), hubConfig.getWorldSpawn().toLocation().getZ(), event.getTo().getZ())) > hubConfig.getRadius()) {
-			event.setCancelled(true);
+			event.getPlayer().teleport(hubConfig.getWorldSpawn().toLocation());
+			new Title("", ChatColor.DARK_RED + "You cannot go past the hub boundary.", 10, 20, 10).send(event.getPlayer());
 		}
 	}
 	
@@ -173,6 +154,10 @@ public class HubModule extends Module {
             }
         }
     }
+	@EventHandler
+	public void onBlockGrow(BlockGrowEvent event) {
+		event.setCancelled(true);
+	}
 	
 	@EventHandler
 	public void onLeave(PlayerQuitEvent event) {

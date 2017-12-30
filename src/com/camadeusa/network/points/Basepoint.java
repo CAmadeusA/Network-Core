@@ -17,7 +17,13 @@ public class Basepoint implements Eloable {
 	@Override
 	public void deltaElo(int elo) {
 		lastElo = currentElo;
-		currentElo = elo;
+		currentElo += elo;
+		if (currentElo > 3500) {
+			currentElo = 3500;
+		}
+		if (currentElo < 0) {
+			currentElo = 0;
+		}
 		
 	}
 	

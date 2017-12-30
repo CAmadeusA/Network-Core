@@ -50,7 +50,7 @@ public class PacketGetServerConfigInfo implements PacketIn, PacketOut {
 
 	@Override
 	public void execute(JSONObject data) throws Throwable {
-	
+		NetworkCore.getInstance().setTotalNetworkPlayers(data.getInt("onlinePlayers"));
 	}
 	
 	

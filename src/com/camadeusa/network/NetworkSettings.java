@@ -30,11 +30,9 @@ public class NetworkSettings {
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
-				Connection con = RethinkDB.r.connection().hostname("192.168.1.100").db("Orion_Network")
-						.user("admin", "61797Caa").connect();
-				con.use("Orion_Network");
 
-				Cursor<JSONObject> cur = RethinkDB.r.db("Orion_Network").table("networksettings").get("settings").changes().run(con);
+
+				Cursor<JSONObject> cur = RethinkDB.r.db("Orion_Network").table("networksettings").get("settings").changes().run(NetworkCore.getInstance().getCon());
 				for (JSONObject change : cur) {
 					if (settings.containsKey(change.getString("id"))) {
 						settings.replace(change.getString("id"), change);

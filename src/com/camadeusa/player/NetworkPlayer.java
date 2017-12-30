@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,13 +22,13 @@ import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
+import com.camadeusa.module.anticheat.CheckType;
 import com.camadeusa.network.ServerMode;
 import com.camadeusa.utility.Random;
 import com.camadeusa.utility.subservers.event.SubserversEvents;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.rethinkdb.RethinkDB;
-import com.rethinkdb.net.Connection;
 import com.rethinkdb.net.Cursor;
 
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
@@ -40,6 +41,7 @@ public class NetworkPlayer implements Listener {
 	private HashMap<String, JSONObject> datacache = new HashMap<>();
 	String playeruuid;
 	JSONObject data;
+	HashMap<CheckType, Integer> violationLevels = new HashMap<>();
 	
 	ArrayList<Cursor> cursors = new ArrayList<>();
 
@@ -150,6 +152,14 @@ public class NetworkPlayer implements Listener {
 		this.playerSettings = playerSettings;
 	}
 
+	public HashMap<CheckType, Integer> getViolationLevels() {
+		return violationLevels;
+	}
+
+	public void setViolationLevels(HashMap<CheckType, Integer> violationLevels) {
+		this.violationLevels = violationLevels;
+	}
+
 	public static ArrayList<NetworkPlayer> getOnlinePlayers() {
 		ArrayList<NetworkPlayer> aList = new ArrayList<>();
 		for (NetworkPlayer ap : getNetworkPlayerList()) {
@@ -219,11 +229,13 @@ public class NetworkPlayer implements Listener {
 					if (jsoninfo.getJSONObject("data").has("bans")) {
 						long bl = 0;
 						for (String key : jsoninfo.getJSONObject("data").getJSONObject("bans").keySet()) {
-							long lk = jsoninfo.getJSONObject("data").getJSONObject("bans").getJSONObject(key).getLong("banexpiredate");
-							bl = bl > lk ? bl : lk; 
+							if (!key.equals("id")) {
+								long lk = jsoninfo.getJSONObject("data").getJSONObject("bans").getJSONObject(key).getLong("banexpiredate");
+								bl = bl > lk ? bl : lk; 
+							}							
 						}	
 						if (bl > System.currentTimeMillis()) {
-							event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until: " ) + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
+							event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until:\n" ) + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
 						} else {
 							if (!ServerMode.canJoin(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")))) {
 								event.disallow(Result.KICK_OTHER, NetworkCore.prefixError + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You are unable to join this server. Please try again later."));
@@ -341,21 +353,22 @@ public class NetworkPlayer implements Listener {
 	}
 	
 	public void reloadPlayerData() {
-		if (getPlayer() != null) {
-			Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-				@Override 
-				public void run() {
-					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(playeruuid, getPlayer().getName(), getPlayer().getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
-						setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
-						setPlayerstate(PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
-						getPlayer().setDisplayName(PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));					
-						setData(jsoninfo.getJSONObject("data"));
-						
-					}));				
-				}
-			});
+		if (getPlayer() != null && getPlayer().isOnline()) {
+
+			SubAPI.getInstance().getSubDataNetwork()
+					.sendPacket(new PacketDownloadPlayerInfo(playeruuid, getPlayer().getName(),
+							getPlayer().getAddress().getAddress().toString().replace("/", ""), jsoninfo -> {
+								setRank(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")));
+								setPlayerstate(
+										PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
+								getPlayer().setDisplayName(
+										PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));
+								setData(jsoninfo.getJSONObject("data"));
+
+							}));
+
 		}
-		
+
 	}
 
 }

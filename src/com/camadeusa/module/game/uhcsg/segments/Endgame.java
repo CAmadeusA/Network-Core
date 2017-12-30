@@ -19,7 +19,11 @@ import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.GameTime;
 import com.camadeusa.module.game.OrionSegment;
+import com.camadeusa.module.game.uhcsg.UHCSGCommands;
 import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
+import com.camadeusa.module.game.uhcsg.UHCSGScoreboard;
+import com.camadeusa.network.ServerMode;
+import com.camadeusa.network.ServerMode.ServerJoinMode;
 import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
@@ -32,10 +36,13 @@ public class Endgame extends OrionSegment {
 		UHCSGOrionGame.getInstance().setCurrentSegment(this);
 		this.activateModule();
 		
+		ServerMode.setMode(ServerJoinMode.ADMIN);
+		
 		Bukkit.getOnlinePlayers().forEach(p -> {
 			p.getInventory().clear();
 		});
-		
+		UHCSGScoreboard.getInstance().resetEloLog();
+		UHCSGCommands.debugList.clear();
 		GameTime.getInstance().setFrozen(true);
 		
 	}
@@ -45,15 +52,16 @@ public class Endgame extends OrionSegment {
 		this.deactivateModule();
 	
 		for (World w : Bukkit.getWorlds()) {
-			if (!w.getName().contains("world")) {
+			if (!w.getName().contains("world") && !w.getName().equalsIgnoreCase("uhcsg_lobby")) {
+				Bukkit.unloadWorld(w, true);
 				WorldManager.unloadWorld(w.getName(), false);
-				Bukkit.unloadWorld(w, false);
 			}
 		}
-		Lobby.votes = new LinkedHashMap<>();
-		Lobby.top = new LinkedHashMap<>();
-		UHCSGOrionGame.getInstance().chests = new LinkedHashMap<>();
+		Lobby.instance.top.clear();
+		Lobby.instance.votes.clear();
+		UHCSGOrionGame.getInstance().chests.clear();
 		UHCSGOrionGame.getInstance().loadMaps();
+		Lobby.instance.setOrionMap(UHCSGOrionGame.getInstance().lobbyMap);
 	}
 	
 	@EventHandler

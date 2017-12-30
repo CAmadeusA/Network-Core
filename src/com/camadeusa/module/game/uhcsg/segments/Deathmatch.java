@@ -1,6 +1,7 @@
 package com.camadeusa.module.game.uhcsg.segments;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -12,6 +13,8 @@ import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.utility.MathUtil;
+
+import io.github.theluca98.textapi.ActionBar;
 
 public class Deathmatch extends OrionSegment {
 	@Override
@@ -40,13 +43,16 @@ public class Deathmatch extends OrionSegment {
 			}
 			if (getTime() > 0) {
 				setTime(getTime() - 1);
+				new ActionBar(ChatColor.LIGHT_PURPLE + "Time Remaining: " + ChatColor.RESET + "" + String.format("%02d:%02d", getTime() / 60, getTime() % 60)).sendToAll();				
 			} else {
 				resetTimer();
 			}			
 		} else {
 			if (NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).size() == 1) {
 				NetworkPlayer.getOnlinePlayersByState(PlayerState.NORMAL).forEach(xp -> {
-					Bukkit.broadcastMessage(NetworkCore.prefixStandard +  xp.getPlayer().getDisplayName() + " has won the game!");					
+					Bukkit.broadcastMessage(NetworkCore.prefixStandard +  xp.getPlayer().getDisplayName() + " has won the game!");		
+					UHCSGOrionGame.getLeaderboardToken().endGame(true, xp.getPlayer().getUniqueId());
+
 				});
 			}
 			nextSegment();

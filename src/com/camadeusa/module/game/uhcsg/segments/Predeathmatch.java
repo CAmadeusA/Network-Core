@@ -1,7 +1,9 @@
 package com.camadeusa.module.game.uhcsg.segments;
 
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -18,6 +20,8 @@ import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.utility.MathUtil;
+
+import io.github.theluca98.textapi.Title;
 
 public class Predeathmatch extends OrionSegment {
 	@Override
@@ -56,8 +60,15 @@ public class Predeathmatch extends OrionSegment {
 	public void onTickSecond(TickSecondEvent event) {
 		if (getTime() > 0) {
 			setTime(getTime() - 1);
+			new Title(ChatColor.DARK_RED + "" + getTime(), "", 5, 10, 5).sendToAll();
+			NetworkPlayer.getOnlinePlayers().forEach(np -> {
+				np.getPlayer().playSound(np.getPlayer().getLocation(), Sound.BLOCK_NOTE_PLING, 1f, 1f);
+			});
 		} else {
 			nextSegment();
+			NetworkPlayer.getOnlinePlayers().forEach(np -> {
+				np.getPlayer().playSound(np.getPlayer().getLocation(), Sound.BLOCK_NOTE_SNARE, 1f, 1f);
+			});
 		}
 	}
 	

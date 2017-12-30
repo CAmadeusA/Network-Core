@@ -90,7 +90,6 @@ public class WorldManager {
 			});			
 			
 		}
-		Bukkit.unloadWorld(Bukkit.getWorld(name), false);
 		FileUtil.recursiveDelete(new File(new File("").getAbsolutePath() + "/" + name));
 	}
 }

@@ -40,6 +40,69 @@ public enum PlayerRank {
 		return value;
 	}
 	
+	public static String formatTextByRank(PlayerRank r, String s) {
+		String colorPrefix = ChatColor.RESET + "";
+		switch (r) {
+		case Owner:
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
+			break;
+		case Developer:
+			colorPrefix = TextUtil.toRainbow(s);
+			break;
+		case Manager: 
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
+			break;
+		case Admin: 
+			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
+			break;
+		case SrMod: 
+			colorPrefix = ChatColor.DARK_RED + "";
+			break;
+		case Mod:
+			colorPrefix = ChatColor.RED + "";
+			break;
+		case Helper:
+			colorPrefix = ChatColor.RED + "" + ChatColor.ITALIC;
+			break;
+		case Vip:
+			colorPrefix = ChatColor.DARK_PURPLE + "";
+			break;
+		case Contributer:
+			colorPrefix = ChatColor.LIGHT_PURPLE + "";
+			break;
+		case Donator7:
+			colorPrefix = ChatColor.AQUA + "";
+			break;
+		case Donator6:
+			colorPrefix = ChatColor.AQUA + "";
+			break;
+		case Donator5:
+			colorPrefix = ChatColor.AQUA + "";
+			break;
+		case Emerald:
+			colorPrefix = ChatColor.GREEN + "";
+			break;
+		case Diamond:
+			colorPrefix = ChatColor.AQUA + "";
+			break;
+		case Gold:
+			colorPrefix = ChatColor.GOLD + "";
+			break;
+		case Iron:
+			colorPrefix = ChatColor.GRAY + "";
+			break;
+		case Player:
+			colorPrefix = ChatColor.DARK_GREEN + "";
+			break;
+		case Banned:
+			colorPrefix = ChatColor.BLACK + "";
+			break;
+		default:
+			break;
+		}
+		return r == PlayerRank.Developer ? (colorPrefix + ChatColor.RESET):(colorPrefix + s + ChatColor.RESET);
+	}
+
 	public static String formatNameByRank(NetworkPlayer a) {
 		String icon = "•";
 		String colorPrefix = ChatColor.RESET + "";
@@ -103,9 +166,11 @@ public enum PlayerRank {
 		case Gold:
 			colorPrefix = ChatColor.GOLD + "";
 			icon = "\u2161";
+			break;
 		case Iron:
 			colorPrefix = ChatColor.GRAY + "";
 			icon = "\u2160";
+			break;
 		case Player:
 			colorPrefix = ChatColor.DARK_GREEN + "";
 			break;
@@ -173,8 +238,10 @@ public enum PlayerRank {
 			break;
 		case Gold:
 			colorPrefix = ChatColor.GOLD + "";
+			break;
 		case Iron:
 			colorPrefix = ChatColor.GRAY + "";
+			break;
 		case Player:
 			colorPrefix = ChatColor.DARK_GREEN + "";
 			break;
@@ -300,6 +367,9 @@ public enum PlayerRank {
 			commandsp.add("authenticate");
 			commandsp.add("setpasswordpromptonlogin");
 			commandsp.add("changepassword");
+			if (GamemodeManager.getInstance().getGamemode() == Gamemode.UHCSG) {
+				commandsp.add("vote");
+			}
 			return commandsp;
 		case Iron:
 			ArrayList<String> commandsd1 = getCommandsAvailable(PlayerRank.Player);

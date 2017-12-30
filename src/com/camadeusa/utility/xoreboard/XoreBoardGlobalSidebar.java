@@ -18,7 +18,7 @@ public class XoreBoardGlobalSidebar {
     }
 
     public void setDisplayName(String displayName) {
-        displayName = ChatColor.translateAlternateColorCodes('&', displayName);
+        displayName = displayName.replaceAll("&([0-9a-fk-or])", ChatColor.COLOR_CHAR + "$1");
         if(displayName.length() > 32) {
             System.out.println("[XoreBoardUtil] Error! DisplayName is longer than 32 characters (" + displayName + ")");
             return;
