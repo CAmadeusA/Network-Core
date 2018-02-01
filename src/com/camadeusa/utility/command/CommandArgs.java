@@ -109,12 +109,7 @@ public class CommandArgs {
 	}
 	
 	public NetworkPlayer getNetworkPlayer() {
-		for (NetworkPlayer ap : NetworkPlayer.getNetworkPlayerList()) {
-			if (ap.getPlayer().getUniqueId().equals(getPlayer().getUniqueId())) {
-				return ap;
-			}
-		}
-		return null;
+		return NetworkPlayer.getNetworkPlayerByUUID(getPlayer().getUniqueId().toString());
 	}
 
 }

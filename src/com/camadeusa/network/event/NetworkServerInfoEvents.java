@@ -23,22 +23,14 @@ public class NetworkServerInfoEvents implements Listener {
 	public static Map<String, Map<String, Object>> serverInfoCache = new HashMap<>();
 
 	@EventHandler
-	public void onTickSecondEvent(TickThreeSecondEvent event) {
-		GamemodeManager.currentplayers = NetworkPlayer.getOnlinePlayers().size();
-	}
-
-	@EventHandler
-	public void onTickSecond(TickSecondEvent event) {
-		NetworkPlayer.correctArchrPlayerList();
-
-	}
-
-	@EventHandler
 	public void onTickQuarterSecond(TickQuarterSecondEvent event) {
 		if (SubserversEvents.connected) {
+			//NetworkPlayer.correctArchrPlayerList();
+			GamemodeManager.currentplayers = NetworkPlayer.getOnlinePlayers().size();
 			SubAPI.getInstance().getSubDataNetwork().sendPacket(
 					new PacketGetServerConfigInfo(SubAPI.getInstance().getSubDataNetwork().getName(), json -> {
 					}));
+
 		}
 
 	}

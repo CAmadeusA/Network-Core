@@ -23,7 +23,7 @@ import protocolsupport.api.ProtocolSupportAPI;
 
 public class ChatManager implements Listener {
 	
-	Sentiment sentiment = new Sentiment();
+	//Sentiment sentiment = new Sentiment();
 	
 	@EventHandler
 	public void onChat(AsyncPlayerChatEvent event) {
@@ -50,10 +50,10 @@ public class ChatManager implements Listener {
 								"You are muted until:") + " " + myDateStr);
 			} else {
 				
-				Classification<String, String> classif = sentiment.evaluate(event.getMessage());
+				/*Classification<String, String> classif = sentiment.evaluate(event.getMessage());
 				if (classif.getCategory().equals("Negative")) {
 					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketLogChatMessage(event.getPlayer().getUniqueId(), System.currentTimeMillis(), event.getMessage()));
-				}
+				}*/
 				event.setMessage(Profanity.filterText(event.getMessage()));
 				
 				NetworkPlayer.getNetworkPlayerList().forEach(aP -> {
@@ -98,8 +98,8 @@ public class ChatManager implements Listener {
 		if (sender != null) {
 			if (PlayerState.canSee(sender.getPlayerState(), reciever.getPlayerState())) {
 				ArrayList<FancyMessage> info = new ArrayList<>();
-				FancyMessage fm = new FancyMessage().text(PlayerRank.formatNameByRankWOIcon(sender) + ": ");
-				info.add(new FancyMessage().text("Name: ").color(ChatColor.GOLD).then(PlayerRank.formatNameByRankWOIcon(sender)));
+				FancyMessage fm = new FancyMessage().text(PlayerRank.formatNameByRank(sender) + ": ");
+				info.add(new FancyMessage().text("Name: ").color(ChatColor.GOLD).then(PlayerRank.formatNameByRank(sender)));
 				info.add(new FancyMessage().text("UUID: ").color(ChatColor.GOLD).then(sender.getPlayer().getUniqueId().toString()));
 				info.add(new FancyMessage().text("Rank: ").color(ChatColor.GOLD).then(sender.getPlayerRank().toString()));
 				info.add(new FancyMessage().text("First Login: ").color(ChatColor.GOLD).then(new SimpleDateFormat("dd/MM/yy").format(Long.parseLong(sender.getData().get("firstlogin").toString()))));

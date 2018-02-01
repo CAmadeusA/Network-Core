@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -16,6 +16,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.json.JSONObject;
 
@@ -40,6 +41,7 @@ public class NetworkPlayer implements Listener {
 	String playeruuid;
 	JSONObject data;
 	HashMap<CheckType, Integer> violationLevels = new HashMap<>();
+	boolean finishedJoining;
 	
 	ArrayList<Cursor> cursors = new ArrayList<>();
 
@@ -92,9 +94,65 @@ public class NetworkPlayer implements Listener {
 		});
 		
 	}
+	public NetworkPlayer(String uuid) {
+		playeruuid = uuid;
+		playerstate = PlayerState.NORMAL;
+		rank = PlayerRank.Player;
+		
+		//Track Changes to the accrued data across the multiple tables that are combined here.
+		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+			@Override
+			public void run() {
+				Cursor cur = RethinkDB.r.db("Orion_Network").table("playerdata").get(uuid)
+						.changes().run(NetworkCore.getInstance().getCon());
+				for (Object change : cur) {
+					reloadPlayerData();
+				}
+				cursors.add(cur);
+				Cursor curk = RethinkDB.r.db("Orion_Network").table("kicks").get(uuid).changes()
+						.run(NetworkCore.getInstance().getCon());
+				for (Object change : curk) {
+					reloadPlayerData();
+				}
+				cursors.add(curk);
+				Cursor curb = RethinkDB.r.db("Orion_Network").table("bans").get(uuid).changes()
+						.run(NetworkCore.getInstance().getCon());
+				for (Object change : curb) {
+					reloadPlayerData();
+				}
+				cursors.add(curb);
+				Cursor curm = RethinkDB.r.db("Orion_Network").table("mutes").get(uuid).changes()
+						.run(NetworkCore.getInstance().getCon());
+				for (Object change : curm) {
+					reloadPlayerData();
+				}
+				cursors.add(curm);
+				Cursor curs = RethinkDB.r.db("Orion_Network").table("playersettings").get(uuid)
+						.changes().run(NetworkCore.getInstance().getCon());
+				for (Object change : curs) {
+					reloadPlayerData();
+				}
+				cursors.add(curs);
+				
+			}
+		});
+		
+	}
 
 	public Player getPlayer() {
 		return Bukkit.getPlayer(UUID.fromString(playeruuid));
+	}
+	
+	public UUID getUUID() {
+		return UUID.fromString(playeruuid);
+	}
+	
+	public boolean getIsFinishedJoining() {
+		return finishedJoining;
+	}
+	
+	public void setFinishedJoining(boolean b) {
+		this.finishedJoining = b;
 	}
 
 	public PlayerState getPlayerState() {
@@ -111,7 +169,7 @@ public class NetworkPlayer implements Listener {
 
 	public static NetworkPlayer getNetworkPlayerByUUID(String uuid) {
 		for (NetworkPlayer ap : archrPlayerList) {
-			if (uuid.equals(ap.getPlayer().getUniqueId().toString())) {
+			if (uuid.equals(ap.getUUID().toString())) {
 				return ap;
 			}
 		}
@@ -191,90 +249,119 @@ public class NetworkPlayer implements Listener {
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {
 		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
-		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
-			aP.getPlayer().setOp(false);
+		if (aP != null) {
+			if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
+				aP.getPlayer().setOp(false);
+			}
+			if (cursors.size() > 0) {
+				aP.cursors.forEach(c -> {
+					c.close();
+				});
+			}
 		}
 		if (archrPlayerList.contains(aP)) {
 			archrPlayerList.remove(aP);
 		}
-		aP.cursors.forEach(c -> {
-			c.close();
-		});
+	}
+
+	@EventHandler
+	public void onPlayerKick(PlayerKickEvent event) {
+		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
+		if (aP != null) {
+			if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
+				aP.getPlayer().setOp(false);
+			}
+			if (cursors.size() > 0) {
+				aP.cursors.forEach(c -> {
+					c.close();
+				});
+			}
+		}
+		if (archrPlayerList.contains(aP)) {
+			archrPlayerList.remove(aP);
+		}
 	}
 
 	@EventHandler
 	public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
-		AtomicInteger intA = new AtomicInteger();
-		intA.set(1);
-		
 		if (!SubserversEvents.connected) {
-			event.disallow(Result.KICK_OTHER, "This server is not online yet.");
+			event.disallow(Result.KICK_OTHER, "This server is not available yet. Please try again momentarily.");
 			return;
 		}
-		
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override 
-			public void run() {
-				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), event.getAddress().toString().replace("/", ""), jsoninfo -> {
-					if (jsoninfo.getJSONObject("data").has("bans")) {
+		AtomicBoolean bool = new AtomicBoolean(false);
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadPlayerInfo(event.getUniqueId().toString(), event.getName(), event.getAddress().toString().replace("/", ""), jsoninfo -> {
+					if (!ServerMode.canJoin(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")))) {
+						event.disallow(Result.KICK_OTHER,
+								NetworkCore.prefixError + ChatManager.translateFor("en",
+										jsoninfo.getJSONObject("data").getString("locale"),
+										"You are unable to join this server. It is for "
+												+ ServerMode.getMode().getValue() + " only. Please try again later."));
+					} else if (jsoninfo.getJSONObject("data").has("bans")) {
 						long bl = 0;
 						for (String key : jsoninfo.getJSONObject("data").getJSONObject("bans").keySet()) {
 							if (!key.equals("id")) {
-								long lk = jsoninfo.getJSONObject("data").getJSONObject("bans").getJSONObject(key).getLong("banexpiredate");
-								bl = bl > lk ? bl : lk; 
-							}							
-						}	
-						if (bl > System.currentTimeMillis()) {
-							event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until:\n" ) + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
-						} else {
-							if (!ServerMode.canJoin(PlayerRank.fromString(jsoninfo.getJSONObject("data").getString("rank")))) {
-								event.disallow(Result.KICK_OTHER, NetworkCore.prefixError + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "You are unable to join this server. Please try again later."));
-							} else {								
-								Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-									@Override
-									public void run() {
-										if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
-											event.disallow(Result.KICK_FULL, NetworkCore.prefixStandard + ChatManager.translateFor("en", jsoninfo.getJSONObject("data").getString("locale"), "This server is full, sorry for the inconvienence."));
-										}								
-									}
-								});
+								long lk = jsoninfo.getJSONObject("data").getJSONObject("bans").getJSONObject(key)
+										.getLong("banexpiredate");
+								bl = bl > lk ? bl : lk;
 							}
-						}	
+						}
+						if (bl > System.currentTimeMillis()) {
+							event.disallow(Result.KICK_BANNED, NetworkCore.prefixStandard + ChatManager.translateFor(
+									"en", jsoninfo.getJSONObject("data").getString("locale"),
+									"You have been banned... \nIf you believe this is an error, please post a dispute on our website.\n You are banned until:\n")
+									+ new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(bl)));
+						} else {
+							if (NetworkPlayer.getOnlinePlayers().size() >= NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
+								if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
+									event.disallow(Result.KICK_FULL,
+											NetworkCore.prefixStandard + ChatManager.translateFor("en",
+													jsoninfo.getJSONObject("data").getString("locale"),
+													"This server is full, sorry for the inconvienence."));
+									return;
+								}
+							}							
+						}
+					} else if (NetworkPlayer.getOnlinePlayers().size() >= NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
+						if (!kickPlayerForRoom(jsoninfo.getJSONObject("data"))) {
+							event.disallow(Result.KICK_FULL,
+									NetworkCore.prefixStandard + ChatManager.translateFor("en",
+											jsoninfo.getJSONObject("data").getString("locale"),
+											"This server is full, sorry for the inconvienence."));
+							return;
+						}
 					}
-					intA.set(0);
-					
-					datacache.put(event.getUniqueId().toString(), jsoninfo.getJSONObject("data"));
-				}));				
+				
+				
+				NetworkPlayer aP = new NetworkPlayer(event.getUniqueId().toString());
+				aP.setData(jsoninfo.getJSONObject("data"));
+				aP.setRank(PlayerRank.fromString(aP.getData().getString("rank")));
+				aP.setPlayerstate(
+						PlayerState.fromString(aP.getData().getString("state")));
+				
+				archrPlayerList.add(aP);
+				aP.setFinishedJoining(false);
+				bool.set(true);
+			}));	
+			
+		long current = System.currentTimeMillis();
+			while (System.currentTimeMillis() - current < 3000) {
+				if (bool.get()) {
+					break;
+				}
 			}
-		});
 
-		// Holds event from finishing while async (only to not lag main game thread) fetch finishes.
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis()-start < 9999999999999L) {
-			if (intA.get() == 0) {
-				break;
-			}
-		}
 	}
 
 	// Database data pulling and updating on login/join.
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		NetworkPlayer aP = new NetworkPlayer(event.getPlayer());
-		aP.setRank(PlayerRank.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("rank")));
-		aP.setPlayerstate(
-				PlayerState.fromString(datacache.get(event.getPlayer().getUniqueId().toString()).getString("state")));
-		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRankWOIcon(aP));
+		event.setJoinMessage("");
+		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
+		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
 		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(true);
 		}
-		
-		aP.setData(datacache.get(event.getPlayer().getUniqueId().toString()));
-		archrPlayerList.add(aP);
-		datacache.remove(event.getPlayer().getUniqueId().toString());	
-		
-
-		event.setJoinMessage("");
+		aP.setFinishedJoining(true);
 		
 	}
 	
@@ -284,7 +371,7 @@ public class NetworkPlayer implements Listener {
 		if (Bukkit.getOnlinePlayers().size() != getNetworkPlayerList().size()) {
 			ArrayList<NetworkPlayer> toRemove = new ArrayList<>();
 			for (NetworkPlayer ap : getNetworkPlayerList()) {
-				if (!ap.getPlayer().isOnline()) {
+				if (ap.getIsFinishedJoining() && !ap.getPlayer().isOnline()) {
 					toRemove.add(ap);
 					ap.cursors.forEach(c -> {
 						c.close();
@@ -296,7 +383,6 @@ public class NetworkPlayer implements Listener {
 	}
 	
 	public static boolean kickPlayerForRoom(JSONObject playerData) {
-		if (getOnlinePlayers().size() == NetworkCore.getConfigManger().getConfig("server", NetworkCore.getInstance()).getInt("maxplayers")) {
 			ArrayList<NetworkPlayer> poolToKickFrom = new ArrayList<>();
 			NetworkPlayer playerToKick = null;
 			for (PlayerState ps : PlayerState.valuesOrderedForKickOrder()) {
@@ -318,25 +404,19 @@ public class NetworkPlayer implements Listener {
 
 				}
 				if (playerToKick != null) {
-					break;
+					final NetworkPlayer pp = playerToKick;
+					Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
+						@Override
+						public void run() {
+							pp.getPlayer().kickPlayer(NetworkCore.prefixStandard + ChatManager.translateFor("en", pp, "You were kicked to make room for a player with a higher rank."));
+						}
+					});
+					return true;
 				}
 			}
-			if (playerToKick != null) {
-				final NetworkPlayer pp = playerToKick;
-				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						pp.getPlayer().kickPlayer(NetworkCore.prefixStandard + ChatManager.translateFor("en", pp, "You were kicked to make room for a player with a higher rank. We appologize for the inconvienence."));
-					}
-				});
-				return true;
-			} else {
-				return false;
-			}
+			
+			return false;
 
-		} else {
-			return true;			
-		}
 	}
 	
 	public void reloadPlayerData() {
@@ -348,7 +428,7 @@ public class NetworkPlayer implements Listener {
 								setPlayerstate(
 										PlayerState.fromString(jsoninfo.getJSONObject("data").getString("state")));
 								getPlayer().setDisplayName(
-										PlayerRank.formatNameByRankWOIcon(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));
+										PlayerRank.formatNameByRank(NetworkPlayer.getNetworkPlayerByUUID(playeruuid)));
 								setData(jsoninfo.getJSONObject("data"));
 
 							}));

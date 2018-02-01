@@ -3,6 +3,7 @@ package com.camadeusa.module.anticheat;
 public enum CheckType {
 	SPEED(false),
 	FORCEFIELD(true),
+	INVENTORYMOVEMENT(true),
 	VAPE(true);
 	
 	

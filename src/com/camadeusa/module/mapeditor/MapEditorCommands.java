@@ -32,32 +32,29 @@ public class MapEditorCommands {
 	
 	@Command(name = "loadMap", usage = "/loadMap", description = "Loads the map by the world folder name...Generally use on first time setup.")
 	public void loadMap(CommandArgs args) {
-		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
-			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
-				if (args.getArgs().length == 0) {
-					args.getPlayer().chat("/loadmap <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");
-				} else if (args.getArgs().length == 2) {
-					activeWorldName = args.getArgs(0);
-					gamemode = Gamemode.valueof(args.getArgs(1).toUpperCase());
-
-					om = WorldManager.loadWorld(activeWorldName);
-					if (om == null) {
-						om = new OrionMap();						
-					}
-					om.setGamemode(gamemode);
-					Bukkit.getOnlinePlayers().forEach(p -> {
-						p.teleport(Bukkit.getWorld(activeWorldName).getSpawnLocation());
-					});					
-					
-					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Loaded world: " + activeWorldName + " with gamemode: " + gamemode.getValue());
-				} else {
-					args.getPlayer().chat("/loadmap <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");					
+		try {
+			if (args.getArgs().length == 0) {
+				args.getPlayer().chat("/loadmap <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");
+			} else if (args.getArgs().length == 2) {
+				activeWorldName = args.getArgs(0);
+				gamemode = Gamemode.valueof(args.getArgs(1).toUpperCase());
+				
+				om = WorldManager.loadWorld(activeWorldName);
+				om.createWorld();
+				if (om == null) {
+					om = new OrionMap();						
 				}
+				om.setGamemode(gamemode);
+				Bukkit.getOnlinePlayers().forEach(p -> {
+					p.teleport(Bukkit.getWorld(activeWorldName).getSpawnLocation());
+				});					
+				
+				args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Loaded world: " + activeWorldName + " with gamemode: " + gamemode.getValue());
 			} else {
-				args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to run this command. How did you get here?"));
-			}
-		} else {
-			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "This server is not configured to edit maps. Please contact a developer if you think this is an error."));
+				args.getPlayer().chat("/loadmap <What is the world name (Case sensitive)> <What is the gamemode? (Case Sensitive)>");					
+			}			
+		} catch (NullPointerException ex) {
+			args.getPlayer().sendMessage(NetworkCore.prefixError + "The config has an error and could not load. Please examine the config and please try again.");
 		}
 	}
 	
@@ -210,7 +207,7 @@ public class MapEditorCommands {
 		
 	}
 
-	@Command(name = "ToggleSelectable", usage = "/toggleSelectable", description = "Toggles wether a map is selectable or not.")
+	@Command(name = "toggleSelectable", usage = "/toggleSelectable", description = "Toggles wether a map is selectable or not.")
 	public void toggleSelectable(CommandArgs args) {
 		if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
 			if (args.getNetworkPlayer().getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {

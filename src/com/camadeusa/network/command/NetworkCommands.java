@@ -2,31 +2,27 @@ package com.camadeusa.network.command;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.json.JSONObject;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
 import com.camadeusa.module.game.Gamemode;
-import com.camadeusa.network.ServerMode;
-import com.camadeusa.network.ServerMode.ServerJoinMode;
+import com.camadeusa.module.game.GamemodeManager;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.utility.Encryption;
 import com.camadeusa.utility.MD5;
 import com.camadeusa.utility.command.Command;
 import com.camadeusa.utility.command.CommandArgs;
 import com.camadeusa.utility.command.CommandFramework;
-import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
+import com.camadeusa.utility.subservers.packet.PacketDownloadOrionServerList;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 
 import mkremins.fanciful.FancyMessage;
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
-import net.ME1312.SubServers.Client.Bukkit.Network.Packet.PacketDownloadServerList;
+import net.ME1312.SubServers.Client.Bukkit.Library.JSONCallback;
 
 public class NetworkCommands {
 	@Command(name = "help", aliases = { "h", "?" }, usage = "/help")
@@ -81,11 +77,11 @@ public class NetworkCommands {
 	}
 
 	@SuppressWarnings("deprecation")
-	@Command(name = "join", aliases = { "server" }, usage = "/join {hub/uhcsg/etc}")
+	@Command(name = "join", aliases = { "server" }, usage = "/join {hub/usg/etc}")
 	public void join(CommandArgs args) {
 		
 		if (args.getArgs().length != 1) {
-			args.getPlayer().chat("/join <What Kind of server would you like to join? (Hub/UHCSG): >");
+			args.getPlayer().chat("/join <What Kind of server would you like to join? (Hub/USG): >");
 		}
 		
 		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
@@ -101,61 +97,56 @@ public class NetworkCommands {
 				if (selected != null) {
 					args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(),
 							NetworkCore.prefixStandard + "Searching for servers of type: " + selected.getValue()));
-					Gamemode seltemp = selected;
-					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadServerList(null, null, json -> {
-						ArrayList<JSONObject> list = new ArrayList<>();
-						AtomicLong timeSinceLast = new AtomicLong(System.currentTimeMillis());
-						
-
-						AtomicInteger ii = new AtomicInteger(0);
-						for (int i = 0; i < json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().size(); i++) {	
-							ii.set(i);
-							if (((String) json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().toArray()[i]).replaceAll("[-+]?[0-9]*\\.?[0-9]+", "").equalsIgnoreCase(seltemp.getValue())) {
-								SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadServerConfigInfo(((String) json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().toArray()[i]), infojson -> {
-									if (infojson.has("serverdata")) {
-										if (ServerMode.canJoin(ServerJoinMode.fromString(infojson.getJSONObject("serverdata").getString("servermode")), args.getNetworkPlayer().getPlayerRank())) {
-											if (infojson.getJSONObject("serverdata").getInt("onlineplayers") < infojson.getJSONObject("serverdata").getInt("maxplayers")) {
-												if (list.size() == 0) {
-													list.add(infojson);
-												} else {
-													if (list.get(0).getJSONObject("serverdata").getInt("onlineplayers") < infojson.getJSONObject("serverdata").getInt("onlineplayers")) {
-														list.set(0, infojson);													
-													}
-												}
-											} else {
-												if (list.size() == 0) {
-													list.set(0, infojson);
-												}
-											}											
-										}
-									} else {
-										args.getPlayer().sendMessage(NetworkCore.prefixError + "No servers of that type are available or there is no data for that kind of server available. Please try again later.");
+					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadOrionServerList(selected.getValue(), args.getNetworkPlayer().getPlayerRank().getValue(), json -> {
+						String mostFullServer = "";
+						for (String key : json.keySet()) {
+							if (!key.equals("id")) {
+								if (mostFullServer.equals("")) {
+									mostFullServer = key;
+								} else {
+									if (json.getJSONObject(mostFullServer).getInt("onlineplayers") < json.getJSONObject(key).getInt("onlineplayers")) {
+										mostFullServer = key;										
+									} else if (json.getJSONObject(mostFullServer).getInt("maxplayers") == json.getJSONObject(key).getInt("maxplayers") && json.getJSONObject(mostFullServer).getInt("onlineplayers") == json.getJSONObject(mostFullServer).getInt("maxplayers") && json.getJSONObject(key).getInt("onlineplayers") == json.getJSONObject(key).getInt("maxplayers")) {
+										mostFullServer = key;										
 									}
-									//Bukkit.broadcastMessage(ii.get() + " ||| " + json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().size());
-									if (ii.get() + 1 == json.getJSONObject("hosts").getJSONObject("~").getJSONObject("servers").keySet().size()) {
-										if (list.size() > 0) {
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Sending you to server: " + list.get(0).getJSONObject("serverdata").getString("server") + ".");
-											Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
-													"sub teleport " + list.get(0).getJSONObject("serverdata").getString("server") + " " + args.getPlayer().getName());
-											
-										} else {
-											args.getPlayer().sendMessage(NetworkCore.prefixStandard + "No servers of that type found.");
-											
-										}										
-									}
-								}));
-							} else {
-								timeSinceLast.set(System.currentTimeMillis());
+								}
 							}
-						}														
+						}
+						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Found server " + mostFullServer + ". Teleporting...");
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
+								"sub teleport " + mostFullServer + " " + args.getPlayer().getName());
 					}));				
 				} else {
-					args.getPlayer().sendMessage(ChatManager.translateFor("en", args.getNetworkPlayer(), "That is not a kind of server we support. Please try again."));
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + ChatManager.translateFor("en", args.getNetworkPlayer(), "That is not a kind of server we support. Please try again."));
 				}				
 			}
 		});
 		
 		
+	}
+	
+	@Command(name = "directserver", usage = "/directserver {server name}")
+	public void directServer(CommandArgs args) {
+		if (args.getArgs().length == 1) {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketDownloadOrionServerList("null", args.getNetworkPlayer().getPlayerRank().getValue(), json -> {
+				Bukkit.broadcastMessage(json.toString());
+				boolean found = false;
+				for (String key : json.keySet()) {
+					if (key.equalsIgnoreCase(args.getArgs(0)) && !key.equals("id")) {
+						args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Found server " + key + ". Teleporting...");
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
+								"sub teleport " + key + " " + args.getPlayer().getName());
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "The server you requested could not be found, or you cannot access this server at this time. Please try again later.");					
+				}
+			}));				
+		} else {
+			args.getPlayer().chat("/directserver <" + NetworkCore.prefixStandard + "What is the server id?>");
+		}
 	}
 	
 	@Command(name = "hub", aliases = { "lobby" }, usage = "/hub")

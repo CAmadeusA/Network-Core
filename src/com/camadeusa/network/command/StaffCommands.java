@@ -9,6 +9,7 @@ import org.json.JSONException;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.chat.ChatManager;
+import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.player.PlayerRank;
 import com.camadeusa.utility.Encryption;
 import com.camadeusa.utility.MD5;
@@ -45,7 +46,7 @@ public class StaffCommands {
 			if (args.getArgs().length < 1) {
 				args.getPlayer().chat("/punish <What is your password?: (This is secure and will not be shared) > <Who would you like to punish?: (Player Name) > <For what type of punishment?: (kick/ban/mute) > <How Long?: (1-permanent) > <Units of time? (minutes/hours/days/weeks/months/permanent): > <For what reason?: >");
 			} else if (args.getArgs().length > 1) {
-				if (Encryption.decrypt(MD5.getMD5(args.getArgs(0)), Encryption.getKey()).equals(args.getNetworkPlayer().getData().getString("password"))) {
+				if (args.getNetworkPlayer().getData().has("password") && MD5.getMD5(args.getArgs(0)).equals(Encryption.decrypt(args.getNetworkPlayer().getData().getString("password"), Encryption.getKey()))) {
 					String uuid = "";
 					if (Bukkit.getPlayer(args.getArgs(1)).isOnline()) {
 						uuid = Bukkit.getPlayer(args.getArgs(1)).getUniqueId().toString();
@@ -122,7 +123,7 @@ public class StaffCommands {
 										SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketPunishPlayer(uuid, modifier, (long) (System.currentTimeMillis() + (amount * mult)), reason, args.getPlayer().getUniqueId().toString()));										
 									}
 									
-									args.getPlayer().sendMessage("Player " + args.getArgs(1) + " has been given action " + modifier + " until " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(Long.MAX_VALUE));
+									args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Player " + args.getArgs(1) + " has been given action " + modifier + " until " + new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format((long) (System.currentTimeMillis() + (amount * mult))));
 									
 								} else {
 									args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You must supply a reason."));																								
@@ -147,6 +148,33 @@ public class StaffCommands {
 
 		} else {
 			args.getPlayer().sendMessage(NetworkCore.prefixError + ChatManager.translateFor("en", args.getNetworkPlayer(), "You do not have permission to use this command."));			
+		}
+	}
+	
+	@Command(name = "setRank", usage = "/setRank {Player Name} {Player Rank}")
+	public void setRank(CommandArgs args) {
+		if (args.getArgs().length != 2) {
+			args.getPlayer().chat("/setRank <" + NetworkCore.prefixStandard + "What is the name of the player you wish to set?> <" + NetworkCore.prefixStandard + "What Rank?>");
+		} else {
+			NetworkPlayer target = null;
+			if (Bukkit.getPlayer(args.getArgs(0)).isOnline()) {
+				target = NetworkPlayer.getNetworkPlayerByUUID(Bukkit.getPlayer(args.getArgs(0)).getUniqueId().toString());
+				PlayerRank selected = null;
+				for (PlayerRank pr : PlayerRank.valuesordered()) {
+					if (args.getArgs(1).equalsIgnoreCase(pr.toString()) && args.getNetworkPlayer().getPlayerRank().getValue() > pr.getValue()) {
+						selected = pr;
+						break;
+					}
+				}
+				if (selected != null) {
+					target.updateRank(selected);
+					args.getPlayer().sendMessage(NetworkCore.prefixStandard + "Rank Updated!");
+				} else {
+					args.getPlayer().sendMessage(NetworkCore.prefixError + "That rank could not be found or you do not have permission to set an equal or higher rank. Please try again.");
+				}
+			} else {
+				args.getPlayer().sendMessage(NetworkCore.prefixError + "Setting the ranks of offline players has yet to be implemented. Please contact a developer if this is urgent, or try again later.");
+			}
 		}
 	}
 	

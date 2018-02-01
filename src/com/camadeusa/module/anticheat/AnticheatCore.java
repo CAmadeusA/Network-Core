@@ -8,6 +8,7 @@ import org.bukkit.ChatColor;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.anticheat.checks.ForcefieldCheck;
+import com.camadeusa.module.anticheat.checks.InventoryMovementCheck;
 import com.camadeusa.module.anticheat.checks.SpeedCheck;
 import com.camadeusa.module.anticheat.checks.VapeCheck;
 
@@ -31,6 +32,7 @@ public class AnticheatCore {
 		registerCheck(new SpeedCheck());
 		registerCheck(new VapeCheck());
 		registerCheck(new ForcefieldCheck());
+		registerCheck(new InventoryMovementCheck());
 		
 		
 		//Activates all the necessary checks

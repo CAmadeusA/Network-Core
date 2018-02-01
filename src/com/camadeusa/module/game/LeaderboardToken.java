@@ -1,8 +1,10 @@
 package com.camadeusa.module.game;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.json.JSONObject;
 
@@ -13,11 +15,14 @@ import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.utility.Eloable;
 import com.camadeusa.utility.Eloable.Outcome;
 import com.camadeusa.utility.subservers.packet.PacketLogLeaderboardStats;
+import com.rethinkdb.RethinkDB;
+import com.rethinkdb.net.Cursor;
 
 import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 
 public class LeaderboardToken {
 	LinkedHashMap<UUID, LeaderboardPlayerStatToken> stats = new LinkedHashMap<>();
+	boolean beta = true;
 	
 	public void addPlayer(NetworkPlayer np) {
 		if (np.getData().has(GamemodeManager.getInstance().getGamemode().getValue().toLowerCase() + "Stats")) {
@@ -26,6 +31,36 @@ public class LeaderboardToken {
 			stats.put(np.getPlayer().getUniqueId(), new LeaderboardPlayerStatToken(np.getPlayer().getUniqueId(), 0, 0, 0, 0, 0f, 0, Basepoint.DEFAULT_INITIAL, Basepoint.DEFAULT_INITIAL, 0, 0));
 		}
 		stats.get(np.getPlayer().getUniqueId()).setGames(stats.get(np.getPlayer().getUniqueId()).getGames() + 1);
+		
+		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
+			@Override
+			public void run() {
+				UUID uuid = np.getPlayer().getUniqueId();
+				Cursor cur = RethinkDB.r.db("Orion_Network").table(GamemodeManager.getInstance().getGamemode().getValue().toLowerCase() + "Stats" + (beta ? "Beta":"")).get(uuid.toString())
+						.changes().run(NetworkCore.getInstance().getCon());
+				
+				for (Object change : cur) {
+					if (stats.containsKey(uuid)) {
+						JSONObject changes = new JSONObject(((HashMap) change)).getJSONObject("new_val");
+						LeaderboardPlayerStatToken token = stats.get(uuid);
+						token.setWins(changes.getInt("wins"));
+						token.setGames(changes.getInt("games"));
+						token.setDeaths(changes.getInt("deaths"));
+						token.setKills(changes.getInt("kills"));
+						token.setArrowsFired(changes.getInt("arrowsFired"));
+						token.setArrowsLanded(changes.getInt("arrowsLanded"));
+						token.setCoins(changes.getInt("coins"));
+						token.setElo(changes.getInt("elo"));
+						token.setLastelo(changes.getInt("lastelo"));
+						token.setAverageKillsPerGame((float) changes.getDouble("averageKillsPerGame"));
+						stats.put(uuid, token);
+						
+					} else {
+						cur.close();
+					}
+				}	
+			}
+		});
 	}
 	
 	public void registerKill(UUID killer, UUID killed) {
@@ -54,17 +89,25 @@ public class LeaderboardToken {
 		stats.get(killer).setElo(killerPoint.getElo());
 		stats.get(killed).setElo(killedPoint.getElo());
 		
+		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketLogLeaderboardStats(GamemodeManager.getInstance().getGamemode().getValue().toLowerCase() + "Stats" + (beta ? "Beta":""), killer.toString(), stats.get(killer).toString()));
+		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketLogLeaderboardStats(GamemodeManager.getInstance().getGamemode().getValue().toLowerCase() + "Stats" + (beta ? "Beta":""), killed.toString(), stats.get(killed).toString()));
+	}
+	
+	public void deltaCoins(UUID changer, int amount) {
+		stats.get(changer).setCoins(stats.get(changer).getCoins() + amount);
+		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketLogLeaderboardStats(GamemodeManager.getInstance().getGamemode().getValue().toLowerCase() + "Stats" + (beta ? "Beta":""), changer.toString(), stats.get(changer).toString()));
+		
 	}
 	
 	public void registerBow(UUID shooter, boolean hit) {
-		// Use projectile hit event later.
 		stats.get(shooter).setArrowsFired(stats.get(shooter).getArrowsFired() + 1);
 		if (hit) {
 			stats.get(shooter).setArrowsLanded(stats.get(shooter).getArrowsLanded() + 1);
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketLogLeaderboardStats(GamemodeManager.getInstance().getGamemode().getValue().toLowerCase() + "Stats" + (beta ? "Beta":""), shooter.toString(), stats.get(shooter).toString()));
 		}
 	}
 	
-	public void endGame(boolean beta, UUID ...winner) {
+	public void endGame(UUID ...winner) {
 		for (UUID uuid : winner) {
 			stats.get(uuid).setCoins(stats.get(uuid).getCoins() + 100);
 			stats.get(uuid).setWins(stats.get(uuid).getWins() + 1);
@@ -73,6 +116,7 @@ public class LeaderboardToken {
 		for (UUID uuid : stats.keySet()) {
 			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketLogLeaderboardStats(GamemodeManager.getInstance().getGamemode().getValue().toLowerCase() + "Stats" + (beta ? "Beta":""), uuid.toString(), stats.get(uuid).toString()));
 		}
+		stats.clear();
 	}
 	
 	//https://www.rethinkdb.com/api/java/offsets_of/ for leaderboard notation

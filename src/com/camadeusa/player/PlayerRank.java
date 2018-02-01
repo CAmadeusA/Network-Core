@@ -11,6 +11,7 @@ import com.camadeusa.utility.TextUtil;
 
 public enum PlayerRank {
 	Owner(Integer.MAX_VALUE),
+	Pikachu(Integer.MAX_VALUE),
 	Developer(Integer.MAX_VALUE - 1),
 	Manager(500),
 	Admin(450),
@@ -45,6 +46,9 @@ public enum PlayerRank {
 		switch (r) {
 		case Owner:
 			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
+			break;
+		case Pikachu:
+			colorPrefix = ChatColor.DARK_PURPLE + "";
 			break;
 		case Developer:
 			colorPrefix = TextUtil.toRainbow(s);
@@ -103,99 +107,15 @@ public enum PlayerRank {
 		return r == PlayerRank.Developer ? (colorPrefix + ChatColor.RESET):(colorPrefix + s + ChatColor.RESET);
 	}
 
+	
 	public static String formatNameByRank(NetworkPlayer a) {
-		String icon = "•";
-		String colorPrefix = ChatColor.RESET + "";
-		switch (a.getPlayerRank()) {
-		case Owner:
-			icon = "\u2654";
-			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
-			break;
-		case Developer:
-			colorPrefix = TextUtil.toRainbow(a.getPlayer().getName());
-			icon = "\u2328";
-			break;
-		case Manager: 
-			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
-			icon = "\u2658";
-			break;
-		case Admin: 
-			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.BOLD;
-			icon = "\u2658";
-			break;
-		case SrMod: 
-			colorPrefix = ChatColor.DARK_RED + "";
-			icon = "\u2656";
-			break;
-		case Mod:
-			colorPrefix = ChatColor.RED + "";
-			icon = "\u2657";
-			break;
-		case Helper:
-			colorPrefix = ChatColor.RED + "" + ChatColor.ITALIC;
-			icon = "\u2659";
-			break;
-		case Vip:
-			colorPrefix = ChatColor.DARK_PURPLE + "";
-			icon = "\u2023";
-			break;
-		case Contributer:
-			colorPrefix = ChatColor.LIGHT_PURPLE + "";
-			icon = "\u221E";
-			break;
-		case Donator7:
-			colorPrefix = ChatColor.AQUA + "";
-			icon = "\u2166";
-			break;
-		case Donator6:
-			colorPrefix = ChatColor.AQUA + "";
-			icon = "\u2165";
-			break;
-		case Donator5:
-			colorPrefix = ChatColor.AQUA + "";
-			icon = "\u2164";
-			break;
-		case Emerald:
-			colorPrefix = ChatColor.GREEN + "";
-			icon = "\u2163";
-			break;
-		case Diamond:
-			colorPrefix = ChatColor.AQUA + "";
-			icon = "\u2162";
-			break;
-		case Gold:
-			colorPrefix = ChatColor.GOLD + "";
-			icon = "\u2161";
-			break;
-		case Iron:
-			colorPrefix = ChatColor.GRAY + "";
-			icon = "\u2160";
-			break;
-		case Player:
-			colorPrefix = ChatColor.DARK_GREEN + "";
-			break;
-		case Banned:
-			colorPrefix = ChatColor.BLACK + "";
-			break;
-		default:
-			break;
-		}
-		if (a.getPlayerRank().getValue() > PlayerRank.Player.getValue()) {
-			if (a.getPlayerRank().getValue() > PlayerRank.Manager.getValue()) {
-				return (ChatColor.DARK_GRAY + "[" + ChatColor.RESET + icon + ChatColor.DARK_GRAY + "]" + ChatColor.RESET + " " + colorPrefix + ChatColor.RESET);			
-				
-			}
-			return (ChatColor.DARK_GRAY + "[" + ChatColor.RESET + icon + ChatColor.DARK_GRAY + "]" + ChatColor.RESET + " " + colorPrefix + a.getPlayer().getName() + ChatColor.RESET);			
-		} else {
-			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);
-		}
-		
-	}
-	public static String formatNameByRankWOIcon(NetworkPlayer a) {
 		String colorPrefix = ChatColor.RESET + "";
 		switch (a.getPlayerRank()) {
 		case Owner:
 			colorPrefix = ChatColor.BOLD + "" + ChatColor.DARK_RED;
+			break;
+		case Pikachu:
+			colorPrefix = ChatColor.DARK_PURPLE + "";
 			break;
 		case Developer:
 			colorPrefix = TextUtil.toRainbow(a.getPlayer().getName());
@@ -262,6 +182,8 @@ public enum PlayerRank {
 		switch (this) {
 		case Owner:
 			return "Owner";
+		case Pikachu:
+			return "Pikachu";
 		case Developer:
 			return "Developer";
 		case Manager:
@@ -305,6 +227,8 @@ public enum PlayerRank {
 		switch (s) {
 		case "Owner":
 			return PlayerRank.Owner;
+		case "Pikachu":
+			return PlayerRank.Pikachu;
 		case "Developer":
 			return PlayerRank.Developer;
 		case "Manager":
@@ -367,7 +291,8 @@ public enum PlayerRank {
 			commandsp.add("authenticate");
 			commandsp.add("setpasswordpromptonlogin");
 			commandsp.add("changepassword");
-			if (GamemodeManager.getInstance().getGamemode() == Gamemode.UHCSG) {
+			commandsp.add("directserver");
+			if (GamemodeManager.getInstance().getGamemode() == Gamemode.USG) {
 				commandsp.add("vote");
 			}
 			return commandsp;
@@ -401,48 +326,76 @@ public enum PlayerRank {
 			return commandsd7;
 		case Helper:
 			ArrayList<String> commandsH = getCommandsAvailable(PlayerRank.Donator7);
-			commandsH.add("kick");
-			commandsH.add("kik");
-			commandsH.add("boot");
-			commandsH.add("gtfo");
-			commandsH.add("bye");
-			commandsH.add("slap");
-			commandsH.add("lookup");
-			commandsH.add("punish");
-			commandsH.add("openplayermanagmentmenu");
-			commandsH.add("ban");
-			commandsH.add("banhammer");
-			commandsH.add("mute");
-			commandsH.add("gag");
+			if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
+				commandsH.add("loadmap");
+				commandsH.add("savemap");
+				commandsH.add("setmapname");
+				commandsH.add("setmapauthor");
+				commandsH.add("setmaplink");
+				commandsH.add("setradius");
+				commandsH.add("adddeathmatchspawn");
+				commandsH.add("addworldspawn");
+				commandsH.add("setoworldspawn");
+				commandsH.add("setodeathmatchspawn");	
+				commandsH.add("setwallpos1");
+				commandsH.add("setwallpos2");
+				commandsH.add("toggleselectable");
+				// World edit commands
+				commandsH.add("undo");				commandsH.add("redo");			commandsH.add("wand");
+				commandsH.add("toggleeditwand");		commandsH.add("sel");			commandsH.add("desel");
+				commandsH.add("pos1");				commandsH.add("pos2");			commandsH.add("hpos1");
+				commandsH.add("hpos2");				commandsH.add("chunk");			commandsH.add("expand");
+				commandsH.add("contract");			commandsH.add("outset");			commandsH.add("inset");
+				commandsH.add("shift");				commandsH.add("size");			commandsH.add("count");
+				commandsH.add("distr");				commandsH.add("set");			commandsH.add("replace");
+				commandsH.add("overlay");			commandsH.add("walls");			commandsH.add("outline");
+				commandsH.add("center");				commandsH.add("smooth");			commandsH.add("deform");
+				commandsH.add("hollow");				commandsH.add("regen");			commandsH.add("move");
+				commandsH.add("stack");				commandsH.add("naturalize");		commandsH.add("line");
+				commandsH.add("curve");				commandsH.add("forest");			commandsH.add("flora");
+				commandsH.add("copy");				commandsH.add("cut");			commandsH.add("paste");
+				commandsH.add("rotate");				commandsH.add("flip");			commandsH.add("schematic");
+				commandsH.add("schem");				commandsH.add("generate");		commandsH.add("generatebiome");
+				commandsH.add("hcyl");				commandsH.add("cyl");			commandsH.add("sphere");
+				commandsH.add("hsphere");			commandsH.add("pyramid");		commandsH.add("hpyramid");
+				commandsH.add("forestgen");			commandsH.add("pumpkins");		commandsH.add("toggleplace");
+				commandsH.add("fill");				commandsH.add("fillr");			commandsH.add("drain");
+				commandsH.add("fixwater");			commandsH.add("fixlava");		commandsH.add("removeabove");
+				commandsH.add("removebelow");		commandsH.add("replacenear");	commandsH.add("removenear");
+				commandsH.add("snow");				commandsH.add("thaw");			commandsH.add("ex");
+				commandsH.add("butcher");			commandsH.add("remove");			commandsH.add("green");
+				commandsH.add("calc");				commandsH.add("unstuck");		commandsH.add("ascend");
+				commandsH.add("descend");			commandsH.add("ceil");			commandsH.add("thru");
+				commandsH.add("jumpto");				commandsH.add("up");				commandsH.add("fast");				
+			}
 			return commandsH;
 		case Mod:
 			ArrayList<String> commandsM = getCommandsAvailable(PlayerRank.Helper);
+			commandsM.add("kick");
+			commandsM.add("kik");
+			commandsM.add("boot");
+			commandsM.add("gtfo");
+			commandsM.add("bye");
+			commandsM.add("slap");
+			commandsM.add("lookup");
+			commandsM.add("punish");
+			commandsM.add("openplayermanagmentmenu");
+			commandsM.add("ban");
+			commandsM.add("banhammer");
+			commandsM.add("mute");
+			commandsM.add("gag");
 			return commandsM;
 		case SrMod:
 			ArrayList<String> commandsSM = getCommandsAvailable(PlayerRank.Mod);
-			commandsSM.add("pardon");
 			return commandsSM;
 		case Admin:
 			ArrayList<String> commandsA = getCommandsAvailable(PlayerRank.SrMod);
-			if (GamemodeManager.getInstance().getGamemode() == Gamemode.MAPEDITOR) {
-				commandsA.add("loadmap");
-				commandsA.add("savemap");
-				commandsA.add("setmapname");
-				commandsA.add("setmapauthor");
-				commandsA.add("setmaplink");
-				commandsA.add("setradius");
-				commandsA.add("adddeathmatchspawn");
-				commandsA.add("addworldspawn");
-				commandsA.add("setoworldspawn");
-				commandsA.add("setodeathmatchspawn");	
-				commandsA.add("setwallpos1");
-				commandsA.add("setwallpos2");
-				commandsA.add("toggleselectable");
-			}
-			if (GamemodeManager.getInstance().getGamemode() == Gamemode.UHCSG) {
+			if (GamemodeManager.getInstance().getGamemode() == Gamemode.USG) {
 				commandsA.add("nextsegment");
 				commandsA.add("debug");
 			}
+			commandsA.add("setservermode");
+			commandsA.add("setrank");
 			return commandsA;
 		case Manager:
 			ArrayList<String> commandsD = getCommandsAvailable(PlayerRank.Admin);
@@ -481,6 +434,9 @@ public enum PlayerRank {
 			commandsDD.add("cmds");
 			commandsDD.add("sub");
 			return commandsDD;
+		case Pikachu:
+			ArrayList<String> commandsPikachu = getCommandsAvailable(PlayerRank.Developer);
+			return commandsPikachu;
 		case Owner:
 			ArrayList<String> commandsO = getCommandsAvailable(PlayerRank.Developer);
 			return commandsO;
@@ -509,6 +465,7 @@ public enum PlayerRank {
 		ll.add(Admin);
 		ll.add(Manager);
 		ll.add(Developer);
+		ll.add(Pikachu);
 		ll.add(Owner);
 		
 		return ll;

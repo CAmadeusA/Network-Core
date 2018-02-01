@@ -15,7 +15,6 @@ public class CoreLoop {
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(NetworkCore.getInstance(), new Runnable() {
 			@Override
 			public void run() {
-				update();
 				if (System.currentTimeMillis() > (lastQuarterTick + 250)) {
 					Bukkit.getServer().getPluginManager().callEvent(new TickQuarterSecondEvent("tick"));
 					lastQuarterTick = System.currentTimeMillis();
@@ -33,11 +32,6 @@ public class CoreLoop {
 					lastTenTick = System.currentTimeMillis();
 				}
 			}
-		}, 0, 1); 
-	}
-	
-	// Put tasks here: 
-	private void update() {
-		NetworkPlayer.correctArchrPlayerList();
+		}, 0L, 5L); 
 	}
 }

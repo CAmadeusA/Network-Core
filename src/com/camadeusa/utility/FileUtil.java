@@ -99,20 +99,30 @@ public class FileUtil {
                 FileUtil.recursiveCopy(srcFile, targFile);
             }
         } else {
+        	FileInputStream in = null;
+        	FileOutputStream out = null;
             try {
                 int length;
-                FileInputStream in = new FileInputStream(source);
-                FileOutputStream out = new FileOutputStream(target);
+                in = new FileInputStream(source);
+                out = new FileOutputStream(target);
                 byte[] buffer = new byte[1024];
                 while ((length = in.read(buffer)) > 0) {
                     out.write(buffer, 0, length);
                 }
-                in.close();
-                out.flush();
-                out.close();
             }
             catch (IOException e) {
                 throw new RuntimeException(String.format("Could not copy %s to %s!", source.getAbsolutePath(), target.getAbsolutePath()));
+            }
+            finally {
+            		try {
+					in.close();
+					out.flush();
+					out.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            	
             }
         }
     }

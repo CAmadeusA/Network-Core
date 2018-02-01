@@ -2,23 +2,26 @@ package com.camadeusa.world;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.bukkit.Bukkit;
 import org.bukkit.WorldCreator;
-import org.json.JSONObject;
-import org.json.JSONTokener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.module.game.Gamemode;
+import com.camadeusa.module.Module;
 import com.camadeusa.player.NetworkPlayer;
 import com.camadeusa.utility.FileUtil;
 
-public class WorldManager {
+public class WorldManager extends Module {
 	public static File worldFolder;
+	
+	@EventHandler(priority=EventPriority.HIGHEST)
+	public void worldInit(org.bukkit.event.world.WorldInitEvent e) {
+	     e.getWorld().setKeepSpawnInMemory(false);
+	}
 	
 	public WorldManager() {
 		String[] path = new File("").getAbsolutePath().split(File.separatorChar + "");
@@ -38,7 +41,6 @@ public class WorldManager {
 			File root = new File("");			
 			if (map.exists()) {
 				FileUtil.recursiveCopy(map, new File(root.getAbsolutePath() + "/" + name));
-				Bukkit.createWorld(new WorldCreator(name));
 				for (File f : map.listFiles()) {
 					if (f.isFile() && f.getName().equalsIgnoreCase("OrionMap.yml")) {
 						return new OrionMap(new String(Files.readAllBytes(Paths.get(f.getAbsolutePath()))));
@@ -90,6 +92,7 @@ public class WorldManager {
 			});			
 			
 		}
+		Bukkit.unloadWorld(Bukkit.getWorld(name), false);
 		FileUtil.recursiveDelete(new File(new File("").getAbsolutePath() + "/" + name));
 	}
 }

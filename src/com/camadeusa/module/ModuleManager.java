@@ -6,13 +6,13 @@ import java.util.HashMap;
 import org.bukkit.event.Listener;
 
 import com.camadeusa.NetworkCore;
-import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
-import com.camadeusa.module.game.uhcsg.segments.Deathmatch;
-import com.camadeusa.module.game.uhcsg.segments.Endgame;
-import com.camadeusa.module.game.uhcsg.segments.Livegame;
-import com.camadeusa.module.game.uhcsg.segments.Lobby;
-import com.camadeusa.module.game.uhcsg.segments.Predeathmatch;
-import com.camadeusa.module.game.uhcsg.segments.Pregame;
+import com.camadeusa.module.game.usg.USGOrionGame;
+import com.camadeusa.module.game.usg.segments.Deathmatch;
+import com.camadeusa.module.game.usg.segments.Endgame;
+import com.camadeusa.module.game.usg.segments.Livegame;
+import com.camadeusa.module.game.usg.segments.Lobby;
+import com.camadeusa.module.game.usg.segments.Predeathmatch;
+import com.camadeusa.module.game.usg.segments.Pregame;
 import com.camadeusa.module.hub.HubModule;
 
 public class ModuleManager {

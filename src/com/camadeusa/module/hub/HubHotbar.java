@@ -132,13 +132,13 @@ public class HubHotbar extends Module {
 	}
 	
 	private void setupNavigationItem() {
-		SlotItem joinUhcsg = new SlotItem(ChatColor.GOLD + "" + ChatColor.BOLD + "" + "Join USG", ChatColor.LIGHT_PURPLE + "Click Here!", 0, Material.DIAMOND_SWORD);
-		navInv.addSlotItem(4, joinUhcsg);
+		SlotItem joinUsg = new SlotItem(ChatColor.GOLD + "" + ChatColor.BOLD + "" + "Join USG", ChatColor.LIGHT_PURPLE + "Click Here!", 0, Material.DIAMOND_SWORD);
+		navInv.addSlotItem(4, joinUsg);
 		
-		joinUhcsg.setOnClick(new InventoryRunnable() {
+		joinUsg.setOnClick(new InventoryRunnable() {
 			@Override
 			public void runOnClick(InventoryClickEvent e) {
-				((Player) e.getWhoClicked()).chat("/join uhcsg");
+				((Player) e.getWhoClicked()).chat("/join usg");
 				((Player) e.getWhoClicked()).closeInventory();				
 			}
 		});
@@ -190,7 +190,7 @@ public class HubHotbar extends Module {
 		elo.setOnClick(new InventoryRunnable() {
 			@Override
 			public void runOnClick(InventoryClickEvent e) {
-				String str = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("elo")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
+				String str = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("elo")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
 				JSONArray top50Elo = new JSONArray(str.equals("null") ? ("[]"):(str));
 				
 				for (int i = 0; i < 50; i++) {
@@ -252,7 +252,7 @@ public class HubHotbar extends Module {
 		wins.setOnClick(new InventoryRunnable() {
 			@Override
 			public void runOnClick(InventoryClickEvent e) {
-				String str = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("wins")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
+				String str = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("wins")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
 				JSONArray top50Wins = new JSONArray(str.equals("null") ? ("[]"):(str));				
 				
 				for (int i = 0; i < 50; i++) {
@@ -314,7 +314,7 @@ public class HubHotbar extends Module {
 		kills.setOnClick(new InventoryRunnable() {
 			@Override
 			public void runOnClick(InventoryClickEvent e) {
-				String str = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("kills")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
+				String str = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("kills")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
 				JSONArray top50Kills = new JSONArray(str.equals("null") ? ("[]"):(str));				
 				
 				for (int i = 0; i < 50; i++) {
@@ -376,7 +376,7 @@ public class HubHotbar extends Module {
 		games.setOnClick(new InventoryRunnable() {
 			@Override
 			public void runOnClick(InventoryClickEvent e) {
-				String str = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("games")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
+				String str = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).eqJoin("id", RethinkDB.r.table("playerdata")).zip().orderBy(RethinkDB.r.desc("games")).limit(50).toJson().run(NetworkCore.getInstance().getCon());
 				JSONArray top50Games = new JSONArray(str.equals("null") ? ("[]"):(str));				
 				
 				for (int i = 0; i < 50; i++) {
@@ -442,16 +442,16 @@ public class HubHotbar extends Module {
 			public void runOnClick(InventoryClickEvent e) {
 				NetworkPlayer np = NetworkPlayer.getNetworkPlayerByUUID(e.getWhoClicked().getUniqueId().toString());
 				Player p = np.getPlayer();
-				String eloStr = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).orderBy(RethinkDB.r.desc("elo")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
+				String eloStr = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).orderBy(RethinkDB.r.desc("elo")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
 				int eloPos = Integer.parseInt(eloStr.replaceAll("[^0-9]", "").equals("") ? (-2 + ""):eloStr.replaceAll("[^0-9]", "")) + 1;
 				
-				String winsStr = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).orderBy(RethinkDB.r.desc("wins")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
+				String winsStr = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).orderBy(RethinkDB.r.desc("wins")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
 				int winsPos = Integer.parseInt(winsStr.replaceAll("[^0-9]", "").equals("") ? (-2 + ""):winsStr.replaceAll("[^0-9]", "")) + 1;
 				
-				String killsStr = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).orderBy(RethinkDB.r.desc("kills")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
+				String killsStr = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).orderBy(RethinkDB.r.desc("kills")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
 				int killsPos = Integer.parseInt(killsStr.replaceAll("[^0-9]", "").equals("") ? (-2 + ""):killsStr.replaceAll("[^0-9]", "")) + 1;
 				
-				String gamesStr = RethinkDB.r.table("uhcsgStatsBeta").union(RethinkDB.r.table("uhcsgStats")).orderBy(RethinkDB.r.desc("games")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
+				String gamesStr = RethinkDB.r.table("usgStatsBeta").union(RethinkDB.r.table("usgStats")).orderBy(RethinkDB.r.desc("games")).offsetsOf(row -> row.g("id").eq(p.getUniqueId().toString())).toJson().run(NetworkCore.getInstance().getCon());
 				int gamesPos = Integer.parseInt(gamesStr.replaceAll("[^0-9]", "").equals("") ? (-2 + ""):gamesStr.replaceAll("[^0-9]", "")) + 1;
 				
 				Inventory playersStats = new Inventory(p.getName() + "'s USG Stats", 1);
@@ -468,18 +468,18 @@ public class HubHotbar extends Module {
 				is.setItemMeta(meta);
 				
 				SlotItem head = new SlotItem(is);
-				SlotItem elo = new SlotItem(ChatColor.RED + "" + ChatColor.BOLD + "ELO", ChatColor.GOLD + "" + (np.getData().has("uhcsgStats") ? np.getData().getJSONObject("uhcsgStats").getInt("elo"):0), 0, Material.MAGMA_CREAM);
-				SlotItem wins = new SlotItem(ChatColor.AQUA + "" + ChatColor.BOLD + "Wins", ChatColor.GOLD + "" + (np.getData().has("uhcsgStats") ? np.getData().getJSONObject("uhcsgStats").getInt("wins"):0), 0, Material.DIAMOND);
-				SlotItem kills = new SlotItem(ChatColor.GRAY + "" + ChatColor.BOLD + "Kills", ChatColor.GOLD + "" + (np.getData().has("uhcsgStats") ? np.getData().getJSONObject("uhcsgStats").getInt("kills"):0), 0, Material.IRON_AXE);
-				SlotItem games = new SlotItem(ChatColor.GREEN + "" + ChatColor.BOLD + "Games", ChatColor.GOLD + "" + (np.getData().has("uhcsgStats") ? np.getData().getJSONObject("uhcsgStats").getInt("games"):0), 0, Material.SLIME_BALL);
+				SlotItem elo = new SlotItem(ChatColor.RED + "" + ChatColor.BOLD + "ELO", ChatColor.GOLD + "" + (np.getData().has("usgStats") ? np.getData().getJSONObject("usgStats").getInt("elo"):0), 0, Material.MAGMA_CREAM);
+				SlotItem wins = new SlotItem(ChatColor.AQUA + "" + ChatColor.BOLD + "Wins", ChatColor.GOLD + "" + (np.getData().has("usgStats") ? np.getData().getJSONObject("usgStats").getInt("wins"):0), 0, Material.DIAMOND);
+				SlotItem kills = new SlotItem(ChatColor.GRAY + "" + ChatColor.BOLD + "Kills", ChatColor.GOLD + "" + (np.getData().has("usgStats") ? np.getData().getJSONObject("usgStats").getInt("kills"):0), 0, Material.IRON_AXE);
+				SlotItem games = new SlotItem(ChatColor.GREEN + "" + ChatColor.BOLD + "Games", ChatColor.GOLD + "" + (np.getData().has("usgStats") ? np.getData().getJSONObject("usgStats").getInt("games"):0), 0, Material.SLIME_BALL);
 				SlotItem bowAccuracy = new SlotItem(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Bow Accuracy",
 						ChatColor.GOLD + ""
 								+ String.format("%6.4f",
-										(np.getData().has("uhcsgStats")
-												? (np.getData().getJSONObject("uhcsgStats").getDouble("arrowsLanded")
-														/ (np.getData().getJSONObject("uhcsgStats").getDouble("arrowsFired") == 0
+										(np.getData().has("usgStats")
+												? (np.getData().getJSONObject("usgStats").getDouble("arrowsLanded")
+														/ (np.getData().getJSONObject("usgStats").getDouble("arrowsFired") == 0
 																? (1)
-																: (np.getData().getJSONObject("uhcsgStats")
+																: (np.getData().getJSONObject("usgStats")
 																		.getDouble("arrowsFired"))))
 												: 0)),
 						0, Material.BOW);

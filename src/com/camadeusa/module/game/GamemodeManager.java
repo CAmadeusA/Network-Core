@@ -6,12 +6,13 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import com.camadeusa.NetworkCore;
 import com.camadeusa.module.ModuleManager;
-import com.camadeusa.module.game.uhcsg.UHCSGOrionGame;
-import com.camadeusa.module.game.uhcsg.UHCSGScoreboard;
+import com.camadeusa.module.game.usg.USGOrionGame;
+import com.camadeusa.module.game.usg.USGScoreboard;
 import com.camadeusa.module.hub.HubHotbar;
 import com.camadeusa.module.hub.HubModule;
 import com.camadeusa.module.hub.HubScoreboard;
 import com.camadeusa.module.mapeditor.MapEditorModule;
+import com.camadeusa.world.WorldManager;
 
 public class GamemodeManager {
 	ModuleManager modulemanager;
@@ -62,19 +63,22 @@ public class GamemodeManager {
 			modulemanager.modulesToRegister.add(new HubModule());
 			modulemanager.modulesToRegister.add(new HubScoreboard());
 			modulemanager.modulesToRegister.add(new HubHotbar());
+			modulemanager.modulesToRegister.add(NetworkCore.worldManager);
 			break;
-		case UHCSG:
-			UHCSGOrionGame game = new UHCSGOrionGame();
+		case USG:
+			USGOrionGame game = new USGOrionGame();
 			game.activateModule();
 			game.initializeGame();
 			NetworkCore.getInstance().getServer().addRecipe(GoldenHead.getRecipe());
 			currentGame = game;
 			modulemanager.modulesToRegister.add(new GoldenHead());
 			modulemanager.modulesToRegister.add(new GameTime());
-			modulemanager.modulesToRegister.add(new UHCSGScoreboard());
+			modulemanager.modulesToRegister.add(new USGScoreboard());
+			modulemanager.modulesToRegister.add(NetworkCore.worldManager);
 			break;
 		case MAPEDITOR:
 			modulemanager.modulesToRegister.add(new MapEditorModule());
+			modulemanager.modulesToRegister.add(NetworkCore.worldManager);
 			break;
 		default:
 			break;

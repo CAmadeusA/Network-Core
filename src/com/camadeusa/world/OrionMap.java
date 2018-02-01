@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.WorldCreator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -242,6 +243,13 @@ public class OrionMap {
 	public World getWorld() {
 		return Bukkit.getWorld(getWorldSpawn().getWorldName());
 	}
+	
+	public void createWorld() {
+		Bukkit.createWorld(new WorldCreator(getWorldSpawn().getWorldName()));
+		if (Bukkit.getWorld(getWorldSpawn().getWorldName()).setGameRuleValue("announceAdvancements", "false")) {
+			Bukkit.getLogger().info("Disabled Achievement Broadcasting on world: " + getWorldSpawn().getWorldName());
+		}
+	}
 
 	public static class SoftLocation {
 		private String worldName;
@@ -358,6 +366,14 @@ public class OrionMap {
 		
 		public void setYaw(double yaw) {
 			this.yaw = yaw;
+		}
+		
+		public SoftLocation add(double x, double y, double z) {
+			SoftLocation newThis = new SoftLocation(this.getWorldName(), this.getX(), this.getY(), this.getZ());
+			newThis.setX(getX() + x);
+			newThis.setY(getY() + y);
+			newThis.setZ(getZ() + z);
+			return newThis;
 		}
 		
 		public Location toLocation() {

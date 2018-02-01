@@ -2,7 +2,7 @@ package com.camadeusa.module.game;
 
 public enum Gamemode {
 	Hub("HUB"),
-	UHCSG("UHCSG"),
+	USG("USG"),
 	MAPEDITOR("MAPEDITOR");
 	
 	private final String value;
@@ -19,8 +19,8 @@ public enum Gamemode {
 		switch (s) {
 		case "HUB":
 			return Hub;
-		case "UHCSG":
-			return UHCSG;
+		case "USG":
+			return USG;
 		case "MAPEDITOR":
 			return MAPEDITOR;
 		default:

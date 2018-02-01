@@ -10,7 +10,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import com.camadeusa.NetworkCore;
 import com.camadeusa.network.Leaderboard;
 import com.camadeusa.player.NetworkPlayer;
-import com.camadeusa.timing.TickSecondEvent;
+import com.camadeusa.timing.TickThreeSecondEvent;
 
 public class HubScoreboard extends Leaderboard {
 	
@@ -25,7 +25,7 @@ public class HubScoreboard extends Leaderboard {
 	}
 	
 	@EventHandler
-	public void onTickSecond(TickSecondEvent event) {
+	public void onTickSecond(TickThreeSecondEvent event) {
 		NetworkPlayer.getOnlinePlayers().forEach(np -> {
 			this.sendToPlayer(np);
 		});

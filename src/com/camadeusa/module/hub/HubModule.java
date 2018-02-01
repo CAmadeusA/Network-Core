@@ -31,6 +31,7 @@ import com.camadeusa.player.PlayerRank;
 import com.camadeusa.player.PlayerState;
 import com.camadeusa.timing.TickSecondEvent;
 import com.camadeusa.utility.MathUtil;
+import com.camadeusa.utility.Random;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
 import com.camadeusa.world.OrionMap;
 import com.camadeusa.world.WorldManager;
@@ -51,6 +52,7 @@ public class HubModule extends Module {
 		Bukkit.getLogger().info("Activated");
 		
 		hubConfig = WorldManager.loadWorld("Hub");
+		hubConfig.createWorld();
 		
 		Bukkit.getWorld("Hub").setDifficulty(Difficulty.PEACEFUL);
 		
@@ -63,35 +65,33 @@ public class HubModule extends Module {
 	}
 	
 	@SuppressWarnings("deprecation")
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGH)
 	public void onJoin(PlayerJoinEvent event) {
+		
 		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
 		event.setJoinMessage("");
-		aP.getPlayer().teleport(hubConfig.getWorldSpawn().toLocation());
-		aP.getPlayer().setHealth(20);
-		aP.getPlayer().setFoodLevel(20);
-		aP.getPlayer().setAllowFlight(true);
-		aP.getPlayer().getInventory().clear();
-		aP.getPlayer().getActivePotionEffects().forEach(pe -> {
-			aP.getPlayer().removePotionEffect(pe.getType());
-		});
+		if (!aP.getData().has("requirepwonlogin")) {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
+		}
 		
-		NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString()).updatePlayerstate(PlayerState.NORMAL);
-		Bukkit.getScheduler().scheduleAsyncDelayedTask(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-				if (!aP.getData().has("requirepwonlogin")) {
-					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "requirepwonlogin", "false"));			
-				}
-				
-				if (aP.getData().has("requirepwonlogin") && (aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
-					aP.getPlayer().chat("/authenticate");
-				} else {
-					SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
-				}
-				
-			}
-		}, 7);
+		if (aP.getData().has("requirepwonlogin") && (aP.getData().getString("requirepwonlogin").equalsIgnoreCase("true") || aP.getPlayerRank().getValue() >= PlayerRank.Helper.getValue())) {
+			aP.getPlayer().chat("/authenticate");
+		} else {
+			SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(aP.getPlayer().getUniqueId().toString(), "authenticated", "true"));
+		}
+		if (aP.getPlayer() != null) {
+			aP.getPlayer().teleport(hubConfig.getWorldSpawn().add((Random.instance().nextInt(6) - 3) * (Random.instance().nextDouble() + 0.5), 0, (Random.instance().nextInt(6) - 3) * (Random.instance().nextDouble() + 0.5)).toLocation());
+			aP.getPlayer().setHealth(20);
+			aP.getPlayer().setFoodLevel(20);
+			aP.getPlayer().setAllowFlight(true);
+			aP.getPlayer().getInventory().clear();
+			aP.getPlayer().getActivePotionEffects().forEach(pe -> {
+				aP.getPlayer().removePotionEffect(pe.getType());
+			});	
+		}
+		if (aP.getPlayerState() != PlayerState.GHOST) {
+			aP.updatePlayerstate(PlayerState.NORMAL);
+		}
 		
 		
 	}
@@ -119,9 +119,7 @@ public class HubModule extends Module {
 	
 	@EventHandler
 	public void tickSecondSetTime(TickSecondEvent event) {
-		for (World w : Bukkit.getWorlds()) {
-			w.setTime(6000L);
-		}
+		hubConfig.getWorldSpawn().toLocation().getWorld().setTime(6000L);
 	}
 	
 	@EventHandler

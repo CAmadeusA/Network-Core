@@ -4,3 +4,4 @@ description: Voltcore-Network
 author: CAmadeusA
 # All rights reserved
 main: com.camadeusa.NetworkCore
+softdepend: [SubServers-Client-Bukkit]

@@ -1,6 +1,10 @@
 package com.camadeusa.module.anticheat.checks;
 
-import org.bukkit.Bukkit;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -20,7 +24,7 @@ public class ForcefieldCheck extends Check {
 
 	public ForcefieldCheck() {
 		this.setCheckType(CheckType.FORCEFIELD);
-		this.setMaxVL(5);
+		this.setMaxVL(10);
 	}
 	
 	public static Entity getTarget(final Player player) {
@@ -52,16 +56,18 @@ public class ForcefieldCheck extends Check {
 			if (target != null && target.getName().equalsIgnoreCase(event.getEntity().getName())) {
 				validHit = true;
 			}
-			if (!validHit) {
-				NetworkPlayer np = NetworkPlayer.getNetworkPlayerByUUID(event.getDamager().getUniqueId().toString());
+			NetworkPlayer np = NetworkPlayer.getNetworkPlayerByUUID(event.getDamager().getUniqueId().toString());
+			if (!validHit && getNearbyBlocks(event.getEntity().getLocation(), 1).size() == 0 && event.getDamager().getLocation().getPitch() > -60) {
 				if ((np.getViolationLevels().get(getCheckType()) != null ? (np.getViolationLevels().get(getCheckType())):(0)) <= getMaxVL()) {
 					incrementVL(NetworkPlayer.getNetworkPlayerByUUID(event.getDamager().getUniqueId().toString()));
 				} else {
 					vlTriggerAction(np);
 					resetVL(np);
 				}
-				np = null;
+			} else {
+				resetVL(np);
 			}
+			np = null;
 		}
 	}
 	
@@ -69,5 +75,19 @@ public class ForcefieldCheck extends Check {
 		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketPunishPlayer(np.getPlayer().getUniqueId().toString(), PunishType.BAN, Long.MAX_VALUE, "Zeus: Hacking - Forcefield (VL: " + getMaxVL() + ")", "Zues"));
 		
 	}
+	
+	public static List<Block> getNearbyBlocks(Location location, int radius) {
+        List<Block> blocks = new ArrayList<Block>();
+        for(int y = location.getBlockY(); y <= location.getBlockY() + 2; y++) {
+        		for(int x = location.getBlockX() - radius; x <= location.getBlockX() + radius; x++) {
+                for(int z = location.getBlockZ() - radius; z <= location.getBlockZ() + radius; z++) {
+                   if (location.getWorld().getBlockAt(x, y, z).getType().isSolid()) {
+                	   		blocks.add(location.getWorld().getBlockAt(x, y, z));
+                   }
+                }
+            }
+        }
+        return blocks;
+    }
 	
 }

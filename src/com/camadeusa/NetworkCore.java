@@ -8,8 +8,10 @@ import com.camadeusa.chat.ChatManager;
 import com.camadeusa.chat.Profanity;
 import com.camadeusa.module.anticheat.AnticheatCore;
 import com.camadeusa.module.game.GamemodeManager;
-import com.camadeusa.module.game.uhcsg.UHCSGCommands;
+import com.camadeusa.module.game.usg.USGCommands;
 import com.camadeusa.module.mapeditor.MapEditorCommands;
+import com.camadeusa.network.ServerMode;
+import com.camadeusa.network.ServerMode.ServerJoinMode;
 import com.camadeusa.network.command.NetworkCommands;
 import com.camadeusa.network.command.StaffCommands;
 import com.camadeusa.network.event.NetworkCommandEvents;
@@ -23,6 +25,7 @@ import com.camadeusa.utility.subservers.event.SubserversEvents;
 import com.camadeusa.utility.subservers.packet.PacketDownloadNetworkSettings;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
+import com.camadeusa.utility.subservers.packet.PacketDownloadOrionServerList;
 import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketLogChatMessage;
 import com.camadeusa.utility.subservers.packet.PacketLogLeaderboardStats;
@@ -45,6 +48,7 @@ public class NetworkCore extends JavaPlugin {
 	public static String prefixError = ChatColor.RED + "" + ChatColor.BOLD + "Orion" + ChatColor.GRAY + ">> " + ChatColor.RESET;
 	XoreBoardUtil xbu;
 	Connection con;
+	public static WorldManager worldManager;
 	
 	int totalNetworkPlayers = 0;
 
@@ -66,7 +70,7 @@ public class NetworkCore extends JavaPlugin {
 		xbu = new XoreBoardUtil();
 		xbu.init();
 		configManager = new ConfigUtil();
-		new WorldManager();
+		worldManager = new WorldManager();
 		gamemodeManager = new GamemodeManager();
 		gamemodeManager.activateGametype();
 		registerEvents();
@@ -83,7 +87,8 @@ public class NetworkCore extends JavaPlugin {
 		frameWork.registerCommands(new StaffCommands());
 		frameWork.registerCommands(new NetworkCommands());
 		frameWork.registerCommands(new MapEditorCommands());
-		frameWork.registerCommands(new UHCSGCommands());
+		frameWork.registerCommands(new USGCommands());
+		frameWork.registerCommands(new ServerMode());
 		
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_7_10);
 		ProtocolSupportAPI.disableProtocolVersion(ProtocolVersion.MINECRAFT_1_7_5);
@@ -109,6 +114,8 @@ public class NetworkCore extends JavaPlugin {
 		SubDataClient.registerPacket(new PacketLogChatMessage(), "PacketLogChatMessage");
 		SubDataClient.registerPacket(PacketLogChatMessage.class, "PacketLogChatMessage");
 		SubDataClient.registerPacket(PacketLogLeaderboardStats.class, "PacketLogLeaderboardStats");
+		SubDataClient.registerPacket(new PacketDownloadOrionServerList(), "PacketDownloadOrionServerList");
+		SubDataClient.registerPacket(PacketDownloadOrionServerList.class, "PacketDownloadOrionServerList");
 			
 	}
 	
