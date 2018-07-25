@@ -1,5 +1,7 @@
 package com.camadeusa.player;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,6 +30,8 @@ import com.camadeusa.utility.Random;
 import com.camadeusa.utility.subservers.event.SubserversEvents;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import com.rethinkdb.RethinkDB;
 import com.rethinkdb.net.Cursor;
 
@@ -39,6 +43,9 @@ public class NetworkPlayer implements Listener {
 	private PlayerRank rank;
 	private HashMap<String, JSONObject> datacache = new HashMap<>();
 	String playeruuid;
+	String originalPlayerName;
+	String textures;
+	String textureSignature;
 	JSONObject data;
 	HashMap<CheckType, Integer> violationLevels = new HashMap<>();
 	boolean finishedJoining;
@@ -208,6 +215,14 @@ public class NetworkPlayer implements Listener {
 		this.violationLevels = violationLevels;
 	}
 
+	public String getOriginalPlayerName() {
+		return originalPlayerName;
+	}
+
+	public void setOriginalPlayerName(String originalPlayerName) {
+		this.originalPlayerName = originalPlayerName;
+	}
+
 	public static ArrayList<NetworkPlayer> getOnlinePlayers() {
 		ArrayList<NetworkPlayer> aList = new ArrayList<>();
 		for (NetworkPlayer ap : getNetworkPlayerList()) {
@@ -335,10 +350,10 @@ public class NetworkPlayer implements Listener {
 				NetworkPlayer aP = new NetworkPlayer(event.getUniqueId().toString());
 				aP.setData(jsoninfo.getJSONObject("data"));
 				aP.setRank(PlayerRank.fromString(aP.getData().getString("rank")));
-				aP.setPlayerstate(
-						PlayerState.fromString(aP.getData().getString("state")));
+				aP.setPlayerstate(PlayerState.fromString(aP.getData().getString("state")));
 				
 				archrPlayerList.add(aP);
+				SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(event.getUniqueId().toString(), "lastLogin", System.currentTimeMillis() + ""));
 				aP.setFinishedJoining(false);
 				bool.set(true);
 			}));	
@@ -357,12 +372,13 @@ public class NetworkPlayer implements Listener {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		event.setJoinMessage("");
 		NetworkPlayer aP = NetworkPlayer.getNetworkPlayerByUUID(event.getPlayer().getUniqueId().toString());
-		aP.getPlayer().setDisplayName(PlayerRank.formatNameByRank(aP));
 		if (aP.getPlayerRank().getValue() >= PlayerRank.Admin.getValue()) {
 			aP.getPlayer().setOp(true);
 		}
-		aP.setFinishedJoining(true);
 		
+		aP.setOriginalPlayerName(event.getPlayer().getName());
+		
+        aP.setFinishedJoining(true);		
 	}
 	
 	

@@ -1,11 +1,13 @@
 package com.camadeusa.utility;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
@@ -15,6 +17,12 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.json.JSONObject;
+
+import com.camadeusa.player.GameProfileManager;
+import com.camadeusa.utility.fetcher.UUIDFetcher;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 
 public class ItemStackBuilderUtil {
 
@@ -220,7 +228,20 @@ public class ItemStackBuilderUtil {
 
 			// Edit skull meta
 			SkullMeta meta = (SkullMeta) skull.getItemMeta();
-			meta.setOwner(owner);
+			
+			try {
+				Field profileField = meta.getClass().getDeclaredField("profile");
+				profileField.setAccessible(true);
+				
+				UUID uuid = UUIDFetcher.getUUID(owner);
+				GameProfile profile = new GameProfile(uuid, owner);
+				JSONObject skin = GameProfileManager.fetchSkinBlobs(uuid);
+				profile.getProperties().put("textures", new Property("textures", skin.getString("value"), skin.getString("signature")));
+				
+				profileField.set(meta, profile);
+			} catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
+				meta.setOwner(owner);
+			}
 			skull.setItemMeta(meta);
 
 			// Lastly, return the skull

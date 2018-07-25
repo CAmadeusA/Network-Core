@@ -118,7 +118,7 @@ public enum PlayerRank {
 			colorPrefix = ChatColor.DARK_PURPLE + "";
 			break;
 		case Developer:
-			colorPrefix = TextUtil.toRainbow(a.getPlayer().getName());
+			colorPrefix = TextUtil.toRainbow(a.getOriginalPlayerName());
 			break;
 		case Manager: 
 			colorPrefix = ChatColor.DARK_RED + "" + ChatColor.ITALIC;
@@ -172,7 +172,7 @@ public enum PlayerRank {
 			colorPrefix = ChatColor.BLACK + "";
 			break;
 		}
-			return (colorPrefix + a.getPlayer().getName() + ChatColor.RESET);			
+			return (colorPrefix + a.getOriginalPlayerName() + ChatColor.RESET);			
 
 		
 	}

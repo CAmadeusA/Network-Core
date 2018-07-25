@@ -11,7 +11,6 @@ import com.camadeusa.module.game.GamemodeManager;
 import com.camadeusa.module.game.usg.USGCommands;
 import com.camadeusa.module.mapeditor.MapEditorCommands;
 import com.camadeusa.network.ServerMode;
-import com.camadeusa.network.ServerMode.ServerJoinMode;
 import com.camadeusa.network.command.NetworkCommands;
 import com.camadeusa.network.command.StaffCommands;
 import com.camadeusa.network.event.NetworkCommandEvents;
@@ -23,9 +22,9 @@ import com.camadeusa.utility.command.CommandFramework;
 import com.camadeusa.utility.command.prompt.listener.CommandListener;
 import com.camadeusa.utility.subservers.event.SubserversEvents;
 import com.camadeusa.utility.subservers.packet.PacketDownloadNetworkSettings;
+import com.camadeusa.utility.subservers.packet.PacketDownloadOrionServerList;
 import com.camadeusa.utility.subservers.packet.PacketDownloadPlayerInfo;
 import com.camadeusa.utility.subservers.packet.PacketDownloadServerConfigInfo;
-import com.camadeusa.utility.subservers.packet.PacketDownloadOrionServerList;
 import com.camadeusa.utility.subservers.packet.PacketGetServerConfigInfo;
 import com.camadeusa.utility.subservers.packet.PacketLogChatMessage;
 import com.camadeusa.utility.subservers.packet.PacketLogLeaderboardStats;
@@ -117,6 +116,7 @@ public class NetworkCore extends JavaPlugin {
 		SubDataClient.registerPacket(new PacketDownloadOrionServerList(), "PacketDownloadOrionServerList");
 		SubDataClient.registerPacket(PacketDownloadOrionServerList.class, "PacketDownloadOrionServerList");
 			
+	
 	}
 	
 	public void registerEvents() {

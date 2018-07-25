@@ -12,7 +12,7 @@ import com.camadeusa.module.hub.HubHotbar;
 import com.camadeusa.module.hub.HubModule;
 import com.camadeusa.module.hub.HubScoreboard;
 import com.camadeusa.module.mapeditor.MapEditorModule;
-import com.camadeusa.world.WorldManager;
+import com.camadeusa.player.GameProfileManager;
 
 public class GamemodeManager {
 	ModuleManager modulemanager;
@@ -58,12 +58,13 @@ public class GamemodeManager {
 	}
 
 	public void activateGametype() {
+		modulemanager.modulesToRegister.add(NetworkCore.worldManager);
+		modulemanager.modulesToRegister.add(new GameProfileManager());
 		switch (gamemode) {
 		case Hub:
 			modulemanager.modulesToRegister.add(new HubModule());
 			modulemanager.modulesToRegister.add(new HubScoreboard());
 			modulemanager.modulesToRegister.add(new HubHotbar());
-			modulemanager.modulesToRegister.add(NetworkCore.worldManager);
 			break;
 		case USG:
 			USGOrionGame game = new USGOrionGame();
@@ -74,11 +75,9 @@ public class GamemodeManager {
 			modulemanager.modulesToRegister.add(new GoldenHead());
 			modulemanager.modulesToRegister.add(new GameTime());
 			modulemanager.modulesToRegister.add(new USGScoreboard());
-			modulemanager.modulesToRegister.add(NetworkCore.worldManager);
 			break;
 		case MAPEDITOR:
 			modulemanager.modulesToRegister.add(new MapEditorModule());
-			modulemanager.modulesToRegister.add(NetworkCore.worldManager);
 			break;
 		default:
 			break;

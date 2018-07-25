@@ -3,6 +3,8 @@ package com.camadeusa.utility.subservers.event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
+import com.camadeusa.player.GameProfileManager;
+
 import net.ME1312.SubServers.Client.Bukkit.Event.SubNetworkConnectEvent;
 
 public class SubserversEvents implements Listener {
@@ -12,7 +14,7 @@ public class SubserversEvents implements Listener {
 	@EventHandler
 	public void onConnect(SubNetworkConnectEvent event) {
 		connected = true;
-
+		GameProfileManager.gatherRandomSkins();
 	}
 	
 }

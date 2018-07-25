@@ -8,8 +8,13 @@ import java.nio.charset.Charset;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.json.JSONArray;
 
 import com.camadeusa.NetworkCore;
+import com.camadeusa.utility.subservers.packet.PacketUpdateDatabaseValue;
+import com.rethinkdb.RethinkDB;
+
+import net.ME1312.SubServers.Client.Bukkit.SubAPI;
 
 /*
 Uncomment this if you want the helper method for BungeeCord:
@@ -54,6 +59,17 @@ public class UUIDFetcher {
 	 * @return The UUID of the given player
 	 */
 	public static UUID getUUID(String playername) {
+		if (Bukkit.getPlayer(playername) != null) {
+			return Bukkit.getPlayer(playername).getUniqueId();
+		}
+		
+		String dataLookup = RethinkDB.r.table("playerdata").filter(RethinkDB.r.hashMap("name", playername)).orderBy(RethinkDB.r.desc("lastLogin")).toJson().run(NetworkCore.getInstance().getCon());
+		if (!dataLookup.equals("null")) {
+			JSONArray jsonLookup = new JSONArray(dataLookup);
+			return UUID.fromString(jsonLookup.getJSONObject(0).getString("id"));
+		}
+		
+		
 		String output = callURL("https://api.mojang.com/users/profiles/minecraft/" + playername);
 
 		StringBuilder result = new StringBuilder();
@@ -71,6 +87,7 @@ public class UUIDFetcher {
 			}
 		}
 
+		SubAPI.getInstance().getSubDataNetwork().sendPacket(new PacketUpdateDatabaseValue(uuid, "name", playername));
 		return UUID.fromString(uuid);
 	}
 
@@ -124,23 +141,5 @@ public class UUIDFetcher {
 				}
 
 		return sb.toString();
-	}
-	
-	public static void callFetchAsync(String playername, ArchrCallback<UUID> callback) {
-		Bukkit.getScheduler().runTaskAsynchronously(NetworkCore.getInstance(), new Runnable() {
-			@Override
-			public void run() {
-				UUID result = getUUID(playername);
-				
-				// go back to the tick loop
-				Bukkit.getScheduler().runTask(NetworkCore.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						// call the callback with the result
-						callback.onFetchDone(result);
-					}
-				});
-			}
-		});
 	}
 }
